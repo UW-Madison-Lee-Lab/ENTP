@@ -1,3 +1,4 @@
+from os import path
 from contextlib import nullcontext
 from collections import defaultdict
 import torch
@@ -17,6 +18,7 @@ pin_memory = device == "cuda"
 pin_memory_device = device if device == "cuda" else ""
 
 MODEL_PATH = "models/plain_decoder.pt"
+OUT_DIR = "out"
 
 N_EMBD = 384
 N_LAYER = 6
@@ -72,8 +74,8 @@ if __name__ == "__main__":
     for line, line_data in zip(lines, lines_data):
         line_groups[line_data].append(line)
 
-    batches = []
-    batch_eq_idxs = []
+    batches: list[Tensor] = []
+    batch_eq_idxs: list[int] = []
 
     for (_, eq_idx), grouped_lines in line_groups.items():
         for i in range(0, len(grouped_lines), BATCH_SIZE):
@@ -91,19 +93,40 @@ if __name__ == "__main__":
         total=len(batches),
     )
 
+    incorrect_examples = []
+
     for batch, eq_idx in progress_bar:
-        batch = batch.to(device)
-        input_ids = batch[:, : eq_idx + 1]
+        input_ids = batch[:, : eq_idx + 1].to(device)
 
         with context:
             output_ids = model.generate(input_ids, max_new_tokens=5)
 
-        target = batch[:, eq_idx + 1 :]
-        output_ids = output_ids[:, eq_idx + 1 : batch.shape[1]]
+        output_ids = output_ids[:, eq_idx + 1 : batch.shape[1]].cpu()
+        target_ids = batch[:, eq_idx + 1 :]
 
-        n_correct += torch.sum(torch.all(output_ids == target, dim=1).int()).item()
+        correct = torch.all(output_ids == target_ids, dim=1)
+
+        for i, c in enumerate(correct):
+            if not c:
+                example = (
+                    batch[i, : eq_idx + 1].tolist(),
+                    output_ids[i].tolist(),
+                    target_ids[i].tolist(),
+                )
+                incorrect_examples.append(example)
+
+        n_correct += torch.sum(correct.int()).item()
         n_total += len(output_ids)
 
         progress_bar.set_description(f"[{100 * n_correct / n_total:.2f}% accuracy]")
 
     print(f"{n_correct}/{n_total} correct")
+
+    incorrect_examples_text = ""
+    for input_ids, output_ids, target_ids in incorrect_examples:
+        output_str = decode(input_ids + output_ids, int2char).removesuffix("\n")
+        target_str = decode(input_ids + target_ids, int2char).removesuffix("\n")
+        incorrect_examples_text += f"{output_str},{target_str}\n"
+
+    with open(path.join(OUT_DIR, "incorrect_examples.txt"), "w") as f:
+        f.write(incorrect_examples_text)
