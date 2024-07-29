@@ -19,6 +19,9 @@ context = nullcontext() if device == "mps" else torch.autocast(device)
 pin_memory = device == "cuda"
 pin_memory_device = device if device == "cuda" else ""
 
+ADDITION_TYPE = "reversed"
+
+DATA_DIR = "data"
 OUT_DIR = "out"
 CHECKPOINT_NAME = "checkpoint.pt"
 RESUME = False
@@ -206,16 +209,18 @@ if __name__ == "__main__":
             "betas": BETAS,
             "seed": SEED,
         },
-        name="plain",
+        name=ADDITION_TYPE,
         resume=RESUME,
     )
 
     seed_everything(SEED)
 
-    with open("data/train_plain.txt", "r", encoding="utf-8") as f:
+    train_data_path = path.join(DATA_DIR, f"train_{ADDITION_TYPE}.txt")
+    with open(train_data_path, "r", encoding="utf-8") as f:
         train_text = f.read()
 
-    with open("data/test_plain.txt", "r", encoding="utf-8") as f:
+    test_data_path = path.join(DATA_DIR, f"test_{ADDITION_TYPE}.txt")
+    with open(test_data_path, "r", encoding="utf-8") as f:
         test_text = f.read()
 
     chars = sorted(list(set(train_text)))
