@@ -17,8 +17,12 @@ context = nullcontext() if device == "mps" else torch.autocast(device)
 pin_memory = device == "cuda"
 pin_memory_device = device if device == "cuda" else ""
 
-MODEL_PATH = "models/plain_decoder.pt"
+ADDITION_TYPE = "reversed"
+
+DATA_DIR = "data"
 OUT_DIR = "out"
+MODEL_DIR = "models"
+MODEL_NAME = f"{ADDITION_TYPE}_decoder.pt"
 
 N_EMBD = 384
 N_LAYER = 6
@@ -40,7 +44,8 @@ def decode(y: list[int] | Tensor, int2char: dict[int, str]) -> str:
 
 
 if __name__ == "__main__":
-    with open("data/test_plain.txt", "r", encoding="utf-8") as f:
+    test_data_path = path.join(DATA_DIR, f"test_{ADDITION_TYPE}.txt")
+    with open("data/test_reversed.txt", "r", encoding="utf-8") as f:
         test_text = f.read()
 
     chars = sorted(list(set(test_text)))
@@ -60,7 +65,8 @@ if __name__ == "__main__":
 
     model = TransformerLMHead(config).to(device)
 
-    checkpoint = torch.load("models/plain_decoder.pt", weights_only=False)
+    model_path = path.join(MODEL_DIR, MODEL_NAME)
+    checkpoint = torch.load(model_path, weights_only=False)
     model.load_state_dict(checkpoint["model"])
     model.eval()
 
