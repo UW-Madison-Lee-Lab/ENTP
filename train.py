@@ -1,0 +1,251 @@
+import time
+import random
+from os import path
+from contextlib import nullcontext
+import numpy as np
+import torch
+from torch import optim, Tensor
+from torch.utils import data
+import wandb
+from nano_model import TransformerConfig, TransformerLMHead, flat_cross_entropy
+
+if torch.cuda.is_available():
+    device = "cuda"
+elif torch.backends.mps.is_available():
+    device = "mps"
+else:
+    device = "cpu"
+
+context = nullcontext() if device == "mps" else torch.autocast(device)
+pin_memory = device == "cuda"
+pin_memory_device = device if device == "cuda" else ""
+
+OUT_DIR = "out"
+
+N_EMBD = 384
+N_LAYER = 6
+N_HEAD = 6
+
+EVAL_INTERVAL = 2
+
+BLOCK_SIZE = 32
+BATCH_SIZE = 16
+
+MAX_ITERS = 600000
+
+MIN_LR = 6e-5
+MAX_LR = 6e-4
+WARMUP_ITERS = 2000
+LR_DECAY_ITERS = MAX_ITERS
+
+WEIGHT_DECAY = 0.1
+BETAS = (0.9, 0.95)
+
+SEED = 42
+
+
+class BlockDataset(data.Dataset):
+    def __init__(self, data: Tensor, block_size=BLOCK_SIZE):
+        self.data = data
+        self.block_size = block_size
+
+    def __len__(self) -> int:
+        return (len(self.data) - 1) // self.block_size
+
+    def __getitem__(self, i: int) -> Tensor:
+        x = self.data[self.block_size * i : self.block_size * (i + 1)]
+        y = self.data[self.block_size * i + 1 : self.block_size * (i + 1) + 1]
+        return x, y
+
+
+def seed_everything(seed: int) -> None:
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+
+
+def encode(s: str, char2int: dict[str, int]) -> Tensor:
+    return torch.tensor([char2int[c] for c in s if c in char2int])
+
+
+def decode(y: list[int] | Tensor, int2char: dict[int, str]) -> str:
+    return "".join([int2char[int(i)] for i in y if int(i) in int2char])
+
+
+def get_lr(iter_num: int) -> float:
+    if iter_num < WARMUP_ITERS:
+        return MAX_LR * iter_num / WARMUP_ITERS
+
+    if iter_num > LR_DECAY_ITERS:
+        return MIN_LR
+
+    decay_ratio = (iter_num - WARMUP_ITERS) / (LR_DECAY_ITERS - WARMUP_ITERS)
+    assert 0 <= decay_ratio and decay_ratio <= 1
+    coeff = 0.5 * (1.0 + np.cos(np.pi * decay_ratio))
+    return MIN_LR + coeff * (MAX_LR - MIN_LR)
+
+
+@torch.no_grad()
+def evaluate_loss(
+    model: TransformerLMHead, dataset: data.Dataset, max_iters=100
+) -> float:
+    data_loader = data.DataLoader(
+        dataset,
+        batch_size=BATCH_SIZE,
+        shuffle=True,
+        pin_memory=pin_memory,
+        pin_memory_device=pin_memory_device,
+    )
+
+    loss_sum = 0
+    cnt = 0
+    for i, (x, y) in enumerate(data_loader):
+        if i >= max_iters:
+            break
+
+        if device == "mps":
+            x = x.to(device)
+            y = y.to(device)
+
+        logits = model(x)
+        loss = flat_cross_entropy(logits, y).cpu()
+        loss_sum += loss.cpu() * len(x)
+        cnt += len(x)
+
+    return loss_sum / cnt
+
+
+def train(
+    model: TransformerLMHead,
+    optimizer: optim.Optimizer,
+    train_dataset: data.Dataset,
+    test_dataset: data.Dataset,
+    load_checkpoint_name: str | None = None,
+    save_checkpoint_name: str | None = None,
+) -> None:
+    i = 0
+    best_test_loss = float("inf")
+
+    if load_checkpoint_name is not None:
+        load_checkpoint_path = path.join(OUT_DIR, load_checkpoint_name)
+        checkpoint = torch.load(load_checkpoint_path, weights_only=True)
+        model.load_state_dict(checkpoint["model"])
+        optimizer.load_state_dict(checkpoint["optimizer"])
+        i = checkpoint["i"]
+        best_test_loss = checkpoint["best_test_loss"]
+
+    while i < MAX_ITERS:
+        train_data_loader = data.DataLoader(
+            train_dataset,
+            batch_size=BATCH_SIZE,
+            shuffle=True,
+            pin_memory=pin_memory,
+            pin_memory_device=pin_memory_device,
+        )
+
+        for x, y in train_data_loader:
+            if i >= MAX_ITERS:
+                break
+
+            lr = get_lr(i)
+            for param_group in optimizer.param_groups:
+                param_group["lr"] = lr
+
+            if device == "mps":
+                x = x.to(device)
+                y = y.to(device)
+
+            with context:
+                logits = model(x)
+                loss = flat_cross_entropy(logits, y)
+
+            loss.backward()
+            optimizer.step()
+            optimizer.zero_grad(set_to_none=True)
+
+            wandb.log({"train_loss": loss.item()}, step=i)
+
+            if (i + 1) % EVAL_INTERVAL == 0:
+                test_loss = evaluate_loss(model, test_dataset)
+                wandb.log({"test_loss": test_loss}, step=i)
+
+                if test_loss < best_test_loss and save_checkpoint_name is not None:
+                    best_test_loss = test_loss
+                    checkpoint = {
+                        "model": model.state_dict(),
+                        "optimizer": optimizer.state_dict(),
+                        "i": i,
+                        "best_test_loss": best_test_loss,
+                    }
+                    save_checkpoint_path = path.join(OUT_DIR, save_checkpoint_name)
+                    torch.save(checkpoint, save_checkpoint_path)
+
+            i += 1
+
+
+if __name__ == "__main__":
+    wandb.init(
+        dir=OUT_DIR,
+        project="encoder-addition",
+        config={
+            "n_embd": N_EMBD,
+            "n_layer": N_LAYER,
+            "n_head": N_HEAD,
+            "block_size": BLOCK_SIZE,
+            "batch_size": BATCH_SIZE,
+            "max_iters": MAX_ITERS,
+            "min_lr": MIN_LR,
+            "max_lr": MAX_LR,
+            "warmup_iters": WARMUP_ITERS,
+            "lr_decay_iters": LR_DECAY_ITERS,
+            "weight_decay": WEIGHT_DECAY,
+            "betas": BETAS,
+            "seed": SEED,
+        },
+        name="plain",
+        resume=True,
+    )
+
+    seed_everything(SEED)
+
+    with open("data/train_plain.txt", "r", encoding="utf-8") as f:
+        train_text = f.read()
+
+    with open("data/test_plain.txt", "r", encoding="utf-8") as f:
+        test_text = f.read()
+
+    chars = sorted(list(set(train_text)))
+    vocab_size = len(chars)
+
+    char2int = {c: i for i, c in enumerate(chars)}
+    int2char = {i: c for i, c in enumerate(chars)}
+
+    train_dataset = BlockDataset(encode(train_text, char2int))
+    test_dataset = BlockDataset(encode(test_text, char2int))
+
+    config = TransformerConfig(
+        n_positions=BLOCK_SIZE,
+        vocab_size=vocab_size,
+        n_layer=N_LAYER,
+        n_head=N_HEAD,
+        n_embd=N_EMBD,
+    )
+
+    model = TransformerLMHead(config).to(device)
+
+    optimizer = model.configure_optimizers(
+        lr=MIN_LR,
+        betas=BETAS,
+        weight_decay=WEIGHT_DECAY,
+        device=device,
+    )
+
+    train(
+        model,
+        optimizer,
+        train_dataset,
+        test_dataset,
+        load_checkpoint_name=None,
+        save_checkpoint_name="test_save.pt",
+    )
