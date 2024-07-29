@@ -72,6 +72,7 @@ class TransformerLMHead(nn.Module):
 
     def __init__(self, config: TransformerConfig) -> None:
         super().__init__()
+        self.n_positions = config.n_positions
         self.transformer = Transformer(config)
         self.lm_head = nn.Linear(config.n_embd, config.vocab_size, bias=False)
         self.lm_head.weight = self.transformer.wte.weight
@@ -84,6 +85,23 @@ class TransformerLMHead(nn.Module):
     ) -> Tensor:
         x = self.transformer(input_ids, decoder, forward_idxs)
         return self.lm_head(x)
+
+    @torch.no_grad()
+    def generate(
+        self,
+        input_ids: Tensor,
+        max_new_tokens: int,
+        decoder: bool = True,
+    ) -> Tensor:
+        for _ in range(max_new_tokens):
+            if input_ids.shape[1] > self.n_positions:
+                input_ids = input_ids[:, -self.n_positions :]
+
+            logits = self(input_ids, decoder)
+            next_id = torch.argmax(logits[:, -1:, :], dim=2)
+            input_ids = torch.cat((input_ids, next_id), dim=1)
+
+        return input_ids
 
     def configure_optimizers(
         self,

@@ -4,3 +4,4 @@ __pycache__/
 data/*.txt
 out/*.pt
 out/wandb
+models/*.pt

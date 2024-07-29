@@ -1,4 +1,3 @@
-import time
 import random
 from os import path
 from contextlib import nullcontext
@@ -21,15 +20,17 @@ pin_memory = device == "cuda"
 pin_memory_device = device if device == "cuda" else ""
 
 OUT_DIR = "out"
+CHECKPOINT_NAME = "checkpoint.pt"
+RESUME = False
 
 N_EMBD = 384
 N_LAYER = 6
 N_HEAD = 6
 
-EVAL_INTERVAL = 2
+EVAL_INTERVAL = 500
 
-BLOCK_SIZE = 32
-BATCH_SIZE = 16
+BLOCK_SIZE = 128
+BATCH_SIZE = 256
 
 MAX_ITERS = 600000
 
@@ -88,7 +89,9 @@ def get_lr(iter_num: int) -> float:
 
 @torch.no_grad()
 def evaluate_loss(
-    model: TransformerLMHead, dataset: data.Dataset, max_iters=100
+    model: TransformerLMHead,
+    dataset: data.Dataset,
+    max_iters=100,
 ) -> float:
     data_loader = data.DataLoader(
         dataset,
@@ -129,7 +132,7 @@ def train(
 
     if load_checkpoint_name is not None:
         load_checkpoint_path = path.join(OUT_DIR, load_checkpoint_name)
-        checkpoint = torch.load(load_checkpoint_path, weights_only=True)
+        checkpoint = torch.load(load_checkpoint_path, weights_only=False)
         model.load_state_dict(checkpoint["model"])
         optimizer.load_state_dict(checkpoint["optimizer"])
         i = checkpoint["i"]
@@ -204,7 +207,7 @@ if __name__ == "__main__":
             "seed": SEED,
         },
         name="plain",
-        resume=True,
+        resume=RESUME,
     )
 
     seed_everything(SEED)
@@ -246,6 +249,6 @@ if __name__ == "__main__":
         optimizer,
         train_dataset,
         test_dataset,
-        load_checkpoint_name=None,
-        save_checkpoint_name="test_save.pt",
+        load_checkpoint_name=CHECKPOINT_NAME if RESUME else None,
+        save_checkpoint_name=CHECKPOINT_NAME,
     )
