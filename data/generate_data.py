@@ -1,5 +1,9 @@
 from sklearn.model_selection import train_test_split  # type: ignore
 
+TRAIN_SIZE: int = 5000
+TEST_SIZE: int = 25000
+SEED: int = 42
+
 
 def count_digits(n1: int, n2: int) -> int:
     return max(len(str(n1)), len(str(n2)))
@@ -29,69 +33,90 @@ def make_file(inputs: list[tuple[int, int]], outputs: list[int], name: str) -> N
         f.write(text)
 
 
-max_digits = 3
+if __name__ == "__main__":
+    max_digits = 3
+    assert TRAIN_SIZE + TEST_SIZE <= 10 ** (2 * max_digits)
 
-inputs = []
-outputs = []
-digits = []
-carrys = []
+    inputs = []
+    outputs = []
+    digits = []
+    carrys = []
 
-for i in range(10**max_digits):
-    for j in range(10**max_digits):
-        inputs.append((i, j))
-        outputs.append(i + j)
-        digits.append(count_digits(i, j))
-        carrys.append(count_carrys(i, j))
+    for i in range(10**max_digits):
+        for j in range(10**max_digits):
+            if count_digits(i, j) > 1:
+                inputs.append((i, j))
+                outputs.append(i + j)
+                digits.append(count_digits(i, j))
+                carrys.append(count_carrys(i, j))
 
-(
-    train_inputs,
-    test_inputs,
-    train_outputs,
-    test_outputs,
-    train_digits,
-    test_digits,
-    train_carrys,
-    test_carrys,
-) = train_test_split(
-    inputs,
-    outputs,
-    digits,
-    carrys,
-    test_size=0.1,
-    shuffle=True,
-    stratify=[t for t in zip(digits, carrys)],
-    random_state=42,
-)
+    (
+        train_inputs,
+        test_inputs,
+        train_outputs,
+        test_outputs,
+        train_digits,
+        test_digits,
+        train_carrys,
+        test_carrys,
+    ) = train_test_split(
+        inputs,
+        outputs,
+        digits,
+        carrys,
+        train_size=TRAIN_SIZE - 100,
+        test_size=TEST_SIZE,
+        shuffle=True,
+        stratify=[t for t in zip(digits, carrys)],
+        random_state=SEED,
+    )
 
-for i in range(len(train_inputs)):
-    n1, n2 = train_inputs[i]
-    assert train_outputs[i] == n1 + n2
-    assert train_digits[i] == count_digits(n1, n2)
-    assert train_carrys[i] == count_carrys(n1, n2)
+    for i in range(10):
+        for j in range(10):
+            train_inputs.append((i, j))
+            train_outputs.append(i + j)
+            train_digits.append(count_digits(i, j))
+            train_carrys.append(count_carrys(i, j))
 
-for i in range(len(test_inputs)):
-    n1, n2 = test_inputs[i]
-    assert test_outputs[i] == n1 + n2
-    assert test_digits[i] == count_digits(n1, n2)
-    assert test_carrys[i] == count_carrys(n1, n2)
+    assert len(train_inputs) == TRAIN_SIZE and len(train_outputs) == TRAIN_SIZE
 
-n_bad_ratios = 0
+    for i in range(len(train_inputs)):
+        n1, n2 = train_inputs[i]
+        assert train_outputs[i] == n1 + n2
+        assert train_digits[i] == count_digits(n1, n2)
+        assert train_carrys[i] == count_carrys(n1, n2)
 
-for d in set(digits):
-    for c in set(carrys):
-        if c > d:
-            continue
-        n_train = sum(d == nd and c == nc for nd, nc in zip(train_digits, train_carrys))
-        n_test = sum(d == nd and c == nc for nd, nc in zip(test_digits, test_carrys))
-        ratio = n_test / (n_train + n_test)
-        n_bad_ratios += ratio < 0.095 or 0.105 < ratio
+    for i in range(len(test_inputs)):
+        n1, n2 = test_inputs[i]
+        assert test_outputs[i] == n1 + n2
+        assert test_digits[i] == count_digits(n1, n2)
+        assert test_carrys[i] == count_carrys(n1, n2)
 
-assert n_bad_ratios <= 2
+    for d in set(digits):
+        for c in set(carrys):
+            if c > d:
+                continue
 
-train_outputs_reversed = [int(str(n)[::-1]) for n in train_outputs]
-test_outputs_reversed = [int(str(n)[::-1]) for n in test_outputs]
+            n_train = sum(
+                d == nd and c == nc for nd, nc in zip(train_digits, train_carrys)
+            )
+            n_test = sum(
+                d == nd and c == nc for nd, nc in zip(test_digits, test_carrys)
+            )
 
-make_file(train_inputs, train_outputs, "train_plain")
-make_file(train_inputs, train_outputs_reversed, "train_reversed")
-make_file(test_inputs, test_outputs, "test_plain")
-make_file(test_inputs, test_outputs_reversed, "test_reversed")
+            if d == 1:
+                assert n_train == 100
+                assert n_test == 0
+            else:
+                min_ratio = 0.95 * (TEST_SIZE / (TRAIN_SIZE - 100))
+                max_ratio = 1.05 * (TEST_SIZE / (TRAIN_SIZE - 100))
+                ratio = n_test / n_train
+                assert min_ratio < ratio and ratio < max_ratio
+
+    train_outputs_reversed = [int(str(n)[::-1]) for n in train_outputs]
+    test_outputs_reversed = [int(str(n)[::-1]) for n in test_outputs]
+
+    make_file(train_inputs, train_outputs, "train_plain")
+    make_file(train_inputs, train_outputs_reversed, "train_reversed")
+    make_file(test_inputs, test_outputs, "test_plain")
+    make_file(test_inputs, test_outputs_reversed, "test_reversed")
