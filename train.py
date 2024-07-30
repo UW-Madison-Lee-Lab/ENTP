@@ -11,19 +11,21 @@ from torch.utils import data
 
 from nano_transformer import TransformerConfig, TransformerLMHead, flat_cross_entropy
 
+context: ContextManager = nullcontext()
+pin_memory = False
+pin_memory_device = ""
+
 if torch.cuda.is_available():
     device = "cuda"
+    context = torch.autocast(device, dtype=torch.bfloat16)
+    pin_memory = True
+    pin_memory_device = "cuda"
 elif torch.backends.mps.is_available():
     device = "mps"
 else:
     device = "cpu"
 
-context: ContextManager = (
-    nullcontext() if device == "mps" else torch.autocast(device, dtype=torch.bfloat16)  # type: ignore
-)
-
-pin_memory = device == "cuda"
-pin_memory_device = device if device == "cuda" else ""
+print(f"{device=}, {type(context)=}, {pin_memory=}, {pin_memory_device=}")
 
 ADDITION_TYPE: Literal["plain", "reversed"] = "plain"
 DECODER: bool = True
@@ -40,7 +42,7 @@ N_HEAD: int = 6
 EVAL_INTERVAL: int = 250
 
 BLOCK_SIZE: int = 64
-BATCH_SIZE: int = 256
+BATCH_SIZE: int = 96
 
 MAX_ITERS: int = 600000
 

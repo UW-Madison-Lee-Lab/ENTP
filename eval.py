@@ -9,18 +9,21 @@ from tqdm import tqdm  # type: ignore
 
 from nano_transformer import TransformerConfig, TransformerLMHead
 
+context: ContextManager = nullcontext()
+pin_memory = False
+pin_memory_device = ""
+
 if torch.cuda.is_available():
     device = "cuda"
+    context = torch.autocast(device, dtype=torch.bfloat16)
+    pin_memory = True
+    pin_memory_device = "cuda"
 elif torch.backends.mps.is_available():
     device = "mps"
 else:
     device = "cpu"
 
-context: ContextManager = (
-    nullcontext() if device == "mps" else torch.autocast(device, dtype=torch.bfloat16)  # type: ignore
-)
-pin_memory = device == "cuda"
-pin_memory_device = device if device == "cuda" else ""
+print(f"{device=}, {type(context)=}, {pin_memory=}, {pin_memory_device=}")
 
 ADDITION_TYPE = "reversed"
 

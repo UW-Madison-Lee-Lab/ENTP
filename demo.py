@@ -7,18 +7,15 @@ from torch import Tensor
 
 from nano_transformer import TransformerConfig, TransformerLMHead
 
+context: ContextManager = nullcontext()
+
 if torch.cuda.is_available():
     device = "cuda"
+    context = torch.autocast(device, dtype=torch.bfloat16)
 elif torch.backends.mps.is_available():
     device = "mps"
 else:
     device = "cpu"
-
-context: ContextManager = (
-    nullcontext() if device == "mps" else torch.autocast(device, dtype=torch.bfloat16)  # type: ignore
-)
-pin_memory = device == "cuda"
-pin_memory_device = device if device == "cuda" else ""
 
 MODEL_PATH = "models/plain_decoder.pt"
 

@@ -1,7 +1,7 @@
 from sklearn.model_selection import train_test_split  # type: ignore
 
-TRAIN_SIZE: int = 5000
-TEST_SIZE: int = 25000
+TRAIN_SIZE: int = 90000
+TEST_SIZE: int = 10000
 SEED: int = 42
 
 
