@@ -1,9 +1,10 @@
 import sys
 from contextlib import nullcontext
+
 import torch
 from torch import Tensor
+
 from nano_model import TransformerConfig, TransformerLMHead
-from tqdm import tqdm
 
 if torch.cuda.is_available():
     device = "cuda"

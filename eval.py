@@ -1,10 +1,12 @@
-from os import path
-from contextlib import nullcontext
 from collections import defaultdict
+from contextlib import nullcontext
+from os import path
+
 import torch
 from torch import Tensor
-from nano_model import TransformerConfig, TransformerLMHead
 from tqdm import tqdm
+
+from nano_model import TransformerConfig, TransformerLMHead
 
 if torch.cuda.is_available():
     device = "cuda"

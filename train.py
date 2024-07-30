@@ -1,11 +1,14 @@
 import random
-from os import path
 from contextlib import nullcontext
+from os import path
+from typing import Literal
+
 import numpy as np
 import torch
-from torch import optim, Tensor
-from torch.utils import data
 import wandb
+from torch import Tensor, optim
+from torch.utils import data
+
 from nano_model import TransformerConfig, TransformerLMHead, flat_cross_entropy
 
 if torch.cuda.is_available():
@@ -19,33 +22,34 @@ context = nullcontext() if device == "mps" else torch.autocast(device)
 pin_memory = device == "cuda"
 pin_memory_device = device if device == "cuda" else ""
 
-ADDITION_TYPE = "reversed"
+ADDITION_TYPE: Literal["plain", "reversed"] = "plain"
+DECODER: bool = True
 
-DATA_DIR = "data"
-OUT_DIR = "out"
-CHECKPOINT_NAME = "checkpoint.pt"
-RESUME = False
+DATA_DIR: str = "data"
+OUT_DIR: str = "out"
+CHECKPOINT_NAME: str = f"{ADDITION_TYPE}_{'decoder' if DECODER else 'encoder'}.pt"
+RESUME: bool = False
 
-N_EMBD = 384
-N_LAYER = 6
-N_HEAD = 6
+N_EMBD: int = 384
+N_LAYER: int = 6
+N_HEAD: int = 6
 
-EVAL_INTERVAL = 500
+EVAL_INTERVAL: int = 250
 
-BLOCK_SIZE = 128
-BATCH_SIZE = 256
+BLOCK_SIZE: int = 64
+BATCH_SIZE: int = 256
 
-MAX_ITERS = 600000
+MAX_ITERS: int = 600000
 
-MIN_LR = 6e-5
-MAX_LR = 6e-4
-WARMUP_ITERS = 2000
-LR_DECAY_ITERS = 600000
+MIN_LR: float = 6e-5
+MAX_LR: float = 6e-4
+WARMUP_ITERS: int = 2000
+LR_DECAY_ITERS: int = 600000
 
-WEIGHT_DECAY = 0.1
-BETAS = (0.9, 0.95)
+WEIGHT_DECAY: float = 0.1
+BETAS: tuple[float, float] = (0.9, 0.95)
 
-SEED = 42
+SEED: int = 42
 
 
 class BlockDataset(data.Dataset):
@@ -163,7 +167,7 @@ def train(
                 y = y.to(device)
 
             with context:
-                logits = model(x)
+                logits = model(x, decoder=DECODER)
                 loss = flat_cross_entropy(logits, y)
 
             loss.backward()

@@ -1,7 +1,8 @@
 from dataclasses import dataclass
-from math import sqrt, pi
+from math import pi, sqrt
+
 import torch
-from torch import nn, Tensor
+from torch import Tensor, nn
 from torch.nn import functional as F
 
 

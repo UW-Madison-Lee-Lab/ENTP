@@ -1,8 +1,10 @@
 import math
-from typing import Sequence, Optional
+from typing import Optional, Sequence
+
 import torch
-from torch import nn, optim, Tensor
-from .base import *
+from torch import Tensor, nn, optim
+
+from .base import Block, Linear, TransformerConfig
 
 
 class Transformer(nn.Module):
