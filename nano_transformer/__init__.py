@@ -9,12 +9,12 @@ from .base import (
 from .transformer import Transformer, TransformerLMHead
 
 __all__ = [
-    TransformerConfig,
-    Linear,
-    SelfAttention,
-    MLP,
-    Block,
-    flat_cross_entropy,
-    Transformer,
-    TransformerLMHead,
+    "TransformerConfig",
+    "Linear",
+    "SelfAttention",
+    "MLP",
+    "Block",
+    "flat_cross_entropy",
+    "Transformer",
+    "TransformerLMHead",
 ]
