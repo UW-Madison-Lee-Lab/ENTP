@@ -14,7 +14,9 @@ elif torch.backends.mps.is_available():
 else:
     device = "cpu"
 
-context: ContextManager = nullcontext() if device == "mps" else torch.autocast(device)  # type: ignore
+context: ContextManager = (
+    nullcontext() if device == "mps" else torch.autocast(device, dtype=torch.bfloat16)  # type: ignore
+)
 pin_memory = device == "cuda"
 pin_memory_device = device if device == "cuda" else ""
 
