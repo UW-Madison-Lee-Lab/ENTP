@@ -1,10 +1,11 @@
 from collections import defaultdict
 from contextlib import nullcontext
 from os import path
+from typing import ContextManager
 
 import torch
 from torch import Tensor
-from tqdm import tqdm
+from tqdm import tqdm  # type: ignore
 
 from nano_model import TransformerConfig, TransformerLMHead
 
@@ -15,7 +16,7 @@ elif torch.backends.mps.is_available():
 else:
     device = "cpu"
 
-context = nullcontext() if device == "mps" else torch.autocast(device)
+context: ContextManager = nullcontext() if device == "mps" else torch.autocast(device)  # type: ignore
 pin_memory = device == "cuda"
 pin_memory_device = device if device == "cuda" else ""
 
@@ -87,8 +88,8 @@ if __name__ == "__main__":
 
     for (_, eq_idx), grouped_lines in line_groups.items():
         for i in range(0, len(grouped_lines), BATCH_SIZE):
-            batch = grouped_lines[i : i + BATCH_SIZE]
-            batches.append(encode(batch, char2int))
+            unencoded_batch = grouped_lines[i : i + BATCH_SIZE]
+            batches.append(encode(unencoded_batch, char2int))
             batch_eq_idxs.append(eq_idx)
             assert torch.all(batches[-1][:, batch_eq_idxs[-1]] == char2int["="])
 
@@ -117,13 +118,13 @@ if __name__ == "__main__":
         for i, c in enumerate(correct):
             if not c:
                 example = (
-                    batch[i, : eq_idx + 1].tolist(),
-                    output_ids[i].tolist(),
-                    target_ids[i].tolist(),
+                    batch[i, : eq_idx + 1],
+                    output_ids[i],
+                    target_ids[i],
                 )
                 incorrect_examples.append(example)
 
-        n_correct += torch.sum(correct.int()).item()
+        n_correct += int(torch.sum(correct.int()))
         n_total += len(output_ids)
 
         progress_bar.set_description(f"[{100 * n_correct / n_total:.2f}% accuracy]")
@@ -132,9 +133,10 @@ if __name__ == "__main__":
 
     incorrect_examples_text = ""
     for input_ids, output_ids, target_ids in incorrect_examples:
-        output_str = decode(input_ids + output_ids, int2char).removesuffix("\n")
-        target_str = decode(input_ids + target_ids, int2char).removesuffix("\n")
-        incorrect_examples_text += f"{output_str},{target_str}\n"
+        input_str = decode(input_ids, int2char)
+        output_str = decode(output_ids, int2char).removesuffix("\n")
+        target_str = decode(target_ids, int2char).removesuffix("\n")
+        incorrect_examples_text += f"{input_str}{output_str},{input_str}{target_str}\n"
 
     with open(path.join(OUT_DIR, "incorrect_examples.txt"), "w") as f:
         f.write(incorrect_examples_text)

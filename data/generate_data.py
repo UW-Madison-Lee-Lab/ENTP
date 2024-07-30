@@ -1,4 +1,4 @@
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split  # type: ignore
 
 
 def count_digits(n1: int, n2: int) -> int:
@@ -88,8 +88,8 @@ for d in set(digits):
 
 assert n_bad_ratios <= 2
 
-train_outputs_reversed = [str(n)[::-1] for n in train_outputs]
-test_outputs_reversed = [str(n)[::-1] for n in test_outputs]
+train_outputs_reversed = [int(str(n)[::-1]) for n in train_outputs]
+test_outputs_reversed = [int(str(n)[::-1]) for n in test_outputs]
 
 make_file(train_inputs, train_outputs, "train_plain")
 make_file(train_inputs, train_outputs_reversed, "train_reversed")

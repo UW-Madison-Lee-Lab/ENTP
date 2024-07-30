@@ -1,5 +1,6 @@
 import sys
 from contextlib import nullcontext
+from typing import ContextManager
 
 import torch
 from torch import Tensor
@@ -13,7 +14,7 @@ elif torch.backends.mps.is_available():
 else:
     device = "cpu"
 
-context = nullcontext() if device == "mps" else torch.autocast(device)
+context: ContextManager = nullcontext() if device == "mps" else torch.autocast(device)  # type: ignore
 pin_memory = device == "cuda"
 pin_memory_device = device if device == "cuda" else ""
 

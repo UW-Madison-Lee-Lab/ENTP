@@ -3,12 +3,13 @@ import sys
 sys.path.append("..")
 
 import torch
-from torch import Tensor
 import torch.nn.functional as F
-from transformers import GPT2Config, GPT2Model, GPT2LMHeadModel
+from torch import Tensor
+from transformers import GPT2Config, GPT2LMHeadModel, GPT2Model  # type: ignore
+
 from nano_model import (
-    TransformerConfig,
     Transformer,
+    TransformerConfig,
     TransformerLMHead,
     flat_cross_entropy,
 )
@@ -20,7 +21,7 @@ def build_identical_models(
     n_embd=256,
     n_layer=12,
     n_head=8,
-) -> None:
+) -> tuple[GPT2Model | GPT2LMHeadModel, Transformer | TransformerLMHead]:
     cfg1 = GPT2Config(
         n_positions=2 * n_positions,
         n_embd=n_embd,
@@ -43,8 +44,8 @@ def build_identical_models(
     )
 
     if lm:
-        model1 = GPT2LMHeadModel(cfg1)
-        model2 = TransformerLMHead(cfg2)
+        model1: GPT2Model | GPT2LMHeadModel = GPT2LMHeadModel(cfg1)
+        model2: Transformer | TransformerLMHead = TransformerLMHead(cfg2)
     else:
         model1 = GPT2Model(cfg1)
         model2 = Transformer(cfg2)

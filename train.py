@@ -1,7 +1,7 @@
 import random
 from contextlib import nullcontext
 from os import path
-from typing import Literal
+from typing import ContextManager, Literal
 
 import numpy as np
 import torch
@@ -18,7 +18,7 @@ elif torch.backends.mps.is_available():
 else:
     device = "cpu"
 
-context = nullcontext() if device == "mps" else torch.autocast(device)
+context: ContextManager = nullcontext() if device == "mps" else torch.autocast(device)  # type: ignore
 pin_memory = device == "cuda"
 pin_memory_device = device if device == "cuda" else ""
 
@@ -60,7 +60,7 @@ class BlockDataset(data.Dataset):
     def __len__(self) -> int:
         return (len(self.data) - 1) // self.block_size
 
-    def __getitem__(self, i: int) -> Tensor:
+    def __getitem__(self, i: int) -> tuple[Tensor, Tensor]:
         x = self.data[self.block_size * i : self.block_size * (i + 1)]
         y = self.data[self.block_size * i + 1 : self.block_size * (i + 1) + 1]
         return x, y
@@ -108,7 +108,7 @@ def evaluate_loss(
         pin_memory_device=pin_memory_device,
     )
 
-    loss_sum = 0
+    loss_sum = 0.0
     cnt = 0
     for i, (x, y) in enumerate(data_loader):
         if i >= max_iters:
@@ -120,7 +120,7 @@ def evaluate_loss(
 
         logits = model(x)
         loss = flat_cross_entropy(logits, y).cpu()
-        loss_sum += loss.cpu() * len(x)
+        loss_sum += loss.cpu().item() * len(x)
         cnt += len(x)
 
     return loss_sum / cnt
