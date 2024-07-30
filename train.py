@@ -9,7 +9,7 @@ import wandb
 from torch import Tensor, optim
 from torch.utils import data
 
-from nano_model import TransformerConfig, TransformerLMHead, flat_cross_entropy
+from nano_transformer import TransformerConfig, TransformerLMHead, flat_cross_entropy
 
 if torch.cuda.is_available():
     device = "cuda"

@@ -3,7 +3,7 @@ import sys
 sys.path.append("..")
 
 import torch
-from nano_model import TransformerConfig, TransformerLMHead
+from nano_transformer import TransformerConfig, TransformerLMHead
 
 if torch.cuda.is_available():
     device = "cuda"

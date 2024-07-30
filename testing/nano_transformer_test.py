@@ -7,7 +7,7 @@ import torch.nn.functional as F
 from torch import Tensor
 from transformers import GPT2Config, GPT2LMHeadModel, GPT2Model  # type: ignore
 
-from nano_model import (
+from nano_transformer import (
     Transformer,
     TransformerConfig,
     TransformerLMHead,

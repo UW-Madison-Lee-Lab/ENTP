@@ -7,7 +7,7 @@ import torch
 from torch import Tensor
 from tqdm import tqdm  # type: ignore
 
-from nano_model import TransformerConfig, TransformerLMHead
+from nano_transformer import TransformerConfig, TransformerLMHead
 
 if torch.cuda.is_available():
     device = "cuda"
