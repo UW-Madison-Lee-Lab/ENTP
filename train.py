@@ -18,7 +18,10 @@ elif torch.backends.mps.is_available():
 else:
     device = "cpu"
 
-context: ContextManager = nullcontext() if device == "mps" else torch.autocast(device)  # type: ignore
+context: ContextManager = (
+    nullcontext() if device == "mps" else torch.autocast(device, dtype=torch.bfloat16)  # type: ignore
+)
+
 pin_memory = device == "cuda"
 pin_memory_device = device if device == "cuda" else ""
 
@@ -114,9 +117,8 @@ def evaluate_loss(
         if i >= max_iters:
             break
 
-        if device == "mps":
-            x = x.to(device)
-            y = y.to(device)
+        x = x.to(device)
+        y = y.to(device)
 
         logits = model(x)
         loss = flat_cross_entropy(logits, y).cpu()
@@ -162,9 +164,8 @@ def train(
             for param_group in optimizer.param_groups:
                 param_group["lr"] = lr
 
-            if device == "mps":
-                x = x.to(device)
-                y = y.to(device)
+            x = x.to(device)
+            y = y.to(device)
 
             with context:
                 logits = model(x, decoder=DECODER)
