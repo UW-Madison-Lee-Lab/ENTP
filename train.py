@@ -11,21 +11,25 @@ from torch.utils import data
 
 from nano_transformer import TransformerConfig, TransformerLMHead, flat_cross_entropy
 
+torch.set_float32_matmul_precision("high")
+
 context: ContextManager = nullcontext()
 pin_memory = False
 pin_memory_device = ""
+compile_blocks = False
 
 if torch.cuda.is_available():
     device = "cuda"
     context = torch.autocast(device, dtype=torch.bfloat16)
     pin_memory = True
     pin_memory_device = "cuda"
+    compile_blocks = True
 elif torch.backends.mps.is_available():
     device = "mps"
 else:
     device = "cpu"
 
-print(f"{device=}, {type(context)=}, {pin_memory=}, {pin_memory_device=}")
+print(f"{device=}, {type(context)=}, {pin_memory=}, {pin_memory_device=}, {compile_blocks=}")
 
 ADDITION_TYPE: Literal["plain", "reversed"] = "plain"
 DECODER: bool = False
@@ -35,13 +39,9 @@ OUT_DIR: str = "out"
 CHECKPOINT_NAME: str = f"{ADDITION_TYPE}_{'decoder' if DECODER else 'encoder'}.pt"
 RESUME: bool = False
 
-# N_EMBD: int = 384
-# N_LAYER: int = 6
-# N_HEAD: int = 6
-
-N_EMBD: int = 128
-N_LAYER: int = 2
-N_HEAD: int = 2
+N_EMBD: int = 384
+N_LAYER: int = 6
+N_HEAD: int = 6
 
 EVAL_INTERVAL: int = 100
 
@@ -251,7 +251,7 @@ if __name__ == "__main__":
         n_embd=N_EMBD,
     )
 
-    model = TransformerLMHead(config).to(device)
+    model = TransformerLMHead(config, compile_blocks).to(device)
 
     optimizer = model.configure_optimizers(
         lr=MIN_LR,
