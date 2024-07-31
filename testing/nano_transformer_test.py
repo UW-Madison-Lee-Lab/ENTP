@@ -1,4 +1,7 @@
 import sys
+import time
+from contextlib import nullcontext
+from typing import ContextManager
 
 sys.path.append("..")
 
@@ -227,6 +230,52 @@ def test_lm_gradients_huggingface(
             assert torch.allclose(grads1[p_name], grads2[p_name])
 
 
+def benchmark(
+    n_positions=80,
+    n_embd=64,
+    n_layer=3,
+    n_head=2,
+    device="cpu",
+    autocast=False,
+    compile=False,
+    n_iters=5,
+) -> None:
+    model = TransformerLMHead(
+        TransformerConfig(
+            n_positions=2 * n_positions,
+            n_embd=n_embd,
+            n_layer=n_layer,
+            n_head=n_head,
+            dropout=0,
+        )
+    ).to(device)
+
+    context: ContextManager = (
+        torch.autocast(device, dtype=torch.bfloat16) if autocast else nullcontext()  # type: ignore
+    )
+
+    if compile:
+        model = torch.compile(model)  # type: ignore
+
+    x = torch.randint(50256, (64, n_positions), device=device)
+
+    t0 = time.time()
+    for _ in range(n_iters):
+        with context:
+            _ = model(x, decoder=True)
+
+    decoder_t = time.time() - t0
+
+    t0 = time.time()
+    for _ in range(n_iters):
+        with context:
+            _ = model(x, decoder=False)
+
+    encoder_t = time.time() - t0
+
+    print(f"{device=}, {autocast=}, {compile=}, {decoder_t=:.3f}, {encoder_t=:.3f}")
+
+
 if __name__ == "__main__":
     test_outputs_huggingface()
     test_lm_outputs_huggingface()
@@ -237,3 +286,8 @@ if __name__ == "__main__":
         test_causal_gradients(forward_idxs, n_positions=80)
 
     print("all tests passed :D")
+
+    benchmark(device="cuda", autocast=False, compile=False)
+    benchmark(device="cuda", autocast=True, compile=False)
+    benchmark(device="cuda", autocast=False, compile=True)
+    benchmark(device="cuda", autocast=True, compile=True)
