@@ -1,7 +1,10 @@
-name: encoder-addition-dev
+name: encoder-addition
 
+channels:
+  - pytorch
+  
 dependencies:
-  - pytorch=2.3.1
+  - pytorch=2.4.0
   - numpy=1.26.4
   - python=3.12.2
   - scikit-learn=1.4.0
@@ -9,4 +12,4 @@ dependencies:
   - pip:
     - tqdm==4.66.1
     - wandb==0.17.5
-    - transformers==4.42.3
+  

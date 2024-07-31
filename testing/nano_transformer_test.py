@@ -238,6 +238,7 @@ def benchmark(
     device="cpu",
     autocast=False,
     compile=False,
+    decoder=True,
     n_iters=5,
 ) -> None:
     model = TransformerLMHead(
@@ -254,26 +255,34 @@ def benchmark(
         torch.autocast(device, dtype=torch.bfloat16) if autocast else nullcontext()  # type: ignore
     )
 
-    if compile:
-        model = torch.compile(model)  # type: ignore
+    optimizer = model.configure_optimizers(lr=6e-4, betas=(0.9, 0.95), weight_decay=0.1, device=device)
 
     x = torch.randint(50256, (64, n_positions), device=device)
+    y = torch.randint(50256, (64, n_positions), device=device)
+
+    if compile:
+        t0 = time.time()
+        model = torch.compile(model)  # type: ignore
+        with context:
+            logits = model(x, decoder=decoder)
+            loss = flat_cross_entropy(logits, y)
+        loss.backward()
+        optimizer.step()
+        optimizer.zero_grad(set_to_none=True)
+        t = time.time() - t0
+        print(f"{'decoder' if decoder else 'encoder'} compile time: {t:.3f}")
 
     t0 = time.time()
     for _ in range(n_iters):
         with context:
-            _ = model(x, decoder=True)
+            logits = model(x, decoder=decoder)
+            loss = flat_cross_entropy(logits, y)
+        loss.backward()
+        optimizer.step()
+        optimizer.zero_grad(set_to_none=True)
+    t = time.time() - t0
 
-    decoder_t = time.time() - t0
-
-    t0 = time.time()
-    for _ in range(n_iters):
-        with context:
-            _ = model(x, decoder=False)
-
-    encoder_t = time.time() - t0
-
-    print(f"{device=}, {autocast=}, {compile=}, {decoder_t=:.3f}, {encoder_t=:.3f}")
+    print(f"{'decoder' if decoder else 'encoder'}, {device=}, {autocast=}, {compile=}, {t=:.3f}")
 
 
 if __name__ == "__main__":
@@ -286,8 +295,3 @@ if __name__ == "__main__":
         test_causal_gradients(forward_idxs, n_positions=80)
 
     print("all tests passed :D")
-
-    benchmark(device="cuda", autocast=False, compile=False)
-    benchmark(device="cuda", autocast=True, compile=False)
-    benchmark(device="cuda", autocast=False, compile=True)
-    benchmark(device="cuda", autocast=True, compile=True)

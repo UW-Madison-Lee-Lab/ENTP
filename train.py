@@ -28,23 +28,27 @@ else:
 print(f"{device=}, {type(context)=}, {pin_memory=}, {pin_memory_device=}")
 
 ADDITION_TYPE: Literal["plain", "reversed"] = "plain"
-DECODER: bool = True
+DECODER: bool = False
 
 DATA_DIR: str = "data"
 OUT_DIR: str = "out"
 CHECKPOINT_NAME: str = f"{ADDITION_TYPE}_{'decoder' if DECODER else 'encoder'}.pt"
 RESUME: bool = False
 
-N_EMBD: int = 384
-N_LAYER: int = 6
-N_HEAD: int = 6
+# N_EMBD: int = 384
+# N_LAYER: int = 6
+# N_HEAD: int = 6
 
-EVAL_INTERVAL: int = 250
+N_EMBD: int = 128
+N_LAYER: int = 2
+N_HEAD: int = 2
+
+EVAL_INTERVAL: int = 100
 
 BLOCK_SIZE: int = 64
-BATCH_SIZE: int = 96
+BATCH_SIZE: int = 64
 
-MAX_ITERS: int = 600000
+MAX_ITERS: int = 5000
 
 MIN_LR: float = 6e-5
 MAX_LR: float = 6e-4
@@ -216,7 +220,7 @@ if __name__ == "__main__":
             "betas": BETAS,
             "seed": SEED,
         },
-        name=ADDITION_TYPE,
+        name=CHECKPOINT_NAME,
         resume=RESUME,
     )
 
