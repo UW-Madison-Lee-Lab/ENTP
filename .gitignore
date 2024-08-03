@@ -4,7 +4,7 @@ __pycache__/
 data/addition/*.txt
 data/shakespeare/t*.txt
 out/*.pt
-out/*.txt
-out/wandb
+results/*.txt
+results/wandb
 models/*.pt
 testing/models/*.pt

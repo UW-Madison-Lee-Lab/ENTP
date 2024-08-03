@@ -1,122 +1,30 @@
-import random
-from contextlib import nullcontext
-from os import path
-from typing import ContextManager, Literal
+import os
+import sys
+from pprint import pprint
 
-import numpy as np
 import torch
-import wandb
-from nano_transformer import TransformerConfig, TransformerLMHead, flat_cross_entropy
-from torch import Tensor, optim
 from torch.utils import data
 
-torch.set_float32_matmul_precision("high")
-
-context: ContextManager = nullcontext()
-pin_memory = False
-pin_memory_device = ""
-compile_blocks = False
-
-if torch.cuda.is_available():
-    device = "cuda"
-    context = torch.autocast(device, dtype=torch.bfloat16)
-    pin_memory = True
-    pin_memory_device = "cuda"
-    compile_blocks = True
-elif torch.backends.mps.is_available():
-    device = "mps"
-else:
-    device = "cpu"
-
-TASK: Literal["plain_addition", "reversed_addition", "shakespeare"] = (
-    "reversed_addition"
-)
-DECODER: bool = False
-
-DATA_DIR: str = "data/addition"
-OUT_DIR: str = "out"
-CHECKPOINT_NAME: str = f"{TASK}_{'decoder' if DECODER else 'encoder'}.pt"
-RESUME: bool = False
-
-N_EMBD: int = 384
-N_LAYER: int = 6
-N_HEAD: int = 6
-
-EVAL_INTERVAL: int = 100
-
-BLOCK_SIZE: int = 64
-BATCH_SIZE: int = 64
-
-MAX_ITERS: int = 4000
-
-MIN_LR: float = 6e-5
-MAX_LR: float = 6e-4
-WARMUP_ITERS: int = 2000
-LR_DECAY_ITERS: int = 600000
-
-WEIGHT_DECAY: float = 0.1
-BETAS: tuple[float, float] = (0.9, 0.95)
-
-SEED: int = 42
-
-print(f"{device=}, context={str(type(context))[8 : -2]}", end=", ")
-print(f"{pin_memory=}, {pin_memory_device=}, {compile_blocks=}, {DECODER=}, {TASK=}")
-
-
-class BlockDataset(data.Dataset):
-    def __init__(self, data: Tensor, block_size=BLOCK_SIZE):
-        self.data = data
-        self.block_size = block_size
-
-    def __len__(self) -> int:
-        return (len(self.data) - 1) // self.block_size
-
-    def __getitem__(self, i: int) -> tuple[Tensor, Tensor]:
-        x = self.data[self.block_size * i : self.block_size * (i + 1)]
-        y = self.data[self.block_size * i + 1 : self.block_size * (i + 1) + 1]
-        return x, y
-
-
-def seed_everything(seed: int) -> None:
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
-
-
-def encode(s: str, char2int: dict[str, int]) -> Tensor:
-    return torch.tensor([char2int[c] for c in s if c in char2int])
-
-
-def decode(y: list[int] | Tensor, int2char: dict[int, str]) -> str:
-    return "".join([int2char[int(i)] for i in y if int(i) in int2char])
-
-
-def get_lr(iter_num: int) -> float:
-    if iter_num < WARMUP_ITERS:
-        return MAX_LR * iter_num / WARMUP_ITERS
-
-    if iter_num > LR_DECAY_ITERS:
-        return MIN_LR
-
-    decay_ratio = (iter_num - WARMUP_ITERS) / (LR_DECAY_ITERS - WARMUP_ITERS)
-    assert 0 <= decay_ratio and decay_ratio <= 1
-    coeff = 0.5 * (1.0 + np.cos(np.pi * decay_ratio))
-    return MIN_LR + coeff * (MAX_LR - MIN_LR)
+import wandb
+from eval_addition import eval_model
+from nano_transformer import TransformerConfig, TransformerLMHead, flat_cross_entropy
+from util import Config, Environment, LRSchedule, load_data, seed_everything
 
 
 @torch.no_grad()
 def evaluate_loss(
+    config: Config,
+    env: Environment,
     model: TransformerLMHead,
     dataset: data.Dataset,
     max_iters=100,
 ) -> float:
     data_loader = data.DataLoader(
         dataset,
-        batch_size=BATCH_SIZE,
+        batch_size=config.batch_size,
         shuffle=True,
-        pin_memory=pin_memory,
-        pin_memory_device=pin_memory_device,
+        pin_memory=env.pin_memory,
+        pin_memory_device=env.pin_memory_device,
     )
 
     loss_sum = 0.0
@@ -125,11 +33,11 @@ def evaluate_loss(
         if i >= max_iters:
             break
 
-        x = x.to(device)
-        y = y.to(device)
+        x = x.to(env.device)
+        y = y.to(env.device)
 
-        with context:
-            logits = model(x, decoder=DECODER)
+        with env.context:
+            logits = model(x, decoder=config.decoder)
             loss = flat_cross_entropy(logits, y)
 
         loss_sum += loss.cpu().item() * len(x)
@@ -138,47 +46,77 @@ def evaluate_loss(
     return loss_sum / cnt
 
 
-def train(
-    model: TransformerLMHead,
-    optimizer: optim.Optimizer,
-    train_dataset: data.Dataset,
-    val_dataset: data.Dataset,
-    load_checkpoint_name: str | None = None,
-    save_checkpoint_name: str | None = None,
-) -> None:
+def train(config: Config, resume: bool = False) -> None:
+    env = Environment()
+
+    print(f"{env.device=}, env.context={str(type(env.context))[8 : -2]}", end=", ")
+    print(f"{env.pin_memory=}, {env.pin_memory_device=}, {env.compile_blocks=}")
+    pprint(config.to_dict())
+
+    run = wandb.init(
+        dir=config.results_dir,
+        project="encoder-addition",
+        config=config.to_dict(),
+        name=config.name,
+        resume=resume,
+    )
+
+    seed_everything(config.seed)
+
+    train_dataset, char2int = load_data(config, split="train")
+    val_dataset, _ = load_data(config, split="val", char2int=char2int)
+
+    model_config = TransformerConfig(
+        n_positions=config.block_size,
+        vocab_size=len(char2int),
+        n_layer=config.n_layer,
+        n_head=config.n_head,
+        n_embd=config.n_embd,
+    )
+
+    model = TransformerLMHead(model_config, env.compile_blocks).to(env.device)
+
+    optimizer = model.configure_optimizers(
+        lr=config.min_lr,
+        betas=(config.beta1, config.beta2),
+        weight_decay=config.weight_decay,
+        device=env.device,
+    )
+
+    lr_schedule = LRSchedule(config)
     i = 1
     best_val_loss = float("inf")
 
-    if load_checkpoint_name is not None:
-        load_checkpoint_path = path.join(OUT_DIR, load_checkpoint_name)
-        checkpoint = torch.load(load_checkpoint_path, weights_only=False)
+    if resume:
+        load_path = os.path.join(config.model_dir, config.checkpoint_name)
+        checkpoint = torch.load(load_path, weights_only=False)
         model.load_state_dict(checkpoint["model"])
         optimizer.load_state_dict(checkpoint["optimizer"])
         i = checkpoint["i"]
         best_val_loss = checkpoint["best_val_loss"]
 
-    while i <= MAX_ITERS:
+    while i <= config.max_iters:
         train_data_loader = data.DataLoader(
             train_dataset,
-            batch_size=BATCH_SIZE,
+            batch_size=config.batch_size,
             shuffle=True,
-            pin_memory=pin_memory,
-            pin_memory_device=pin_memory_device,
+            pin_memory=env.pin_memory,
+            pin_memory_device=env.pin_memory_device,
         )
 
         for x, y in train_data_loader:
-            if i > MAX_ITERS:
+            if i > config.max_iters:
                 break
 
-            lr = get_lr(i)
+            lr = lr_schedule(i)
             for param_group in optimizer.param_groups:
                 param_group["lr"] = lr
 
-            x = x.to(device)
-            y = y.to(device)
+            x = x.to(env.device)
+            y = y.to(env.device)
 
-            with context:
-                logits = model(x, decoder=DECODER)
+            with env.context:
+                logits = model(x, decoder=config.decoder)
                 loss = flat_cross_entropy(logits, y)
 
             loss.backward()
@@ -187,11 +125,11 @@ def train(
 
             wandb.log({"train_loss": loss.item()}, step=i)
 
-            if i % EVAL_INTERVAL == 0:
-                val_loss = evaluate_loss(model, val_dataset)
+            if i % config.eval_interval == 0:
+                val_loss = evaluate_loss(config, env, model, val_dataset)
                 wandb.log({"val_loss": val_loss}, step=i)
 
-                if val_loss < best_val_loss and save_checkpoint_name is not None:
+                if val_loss < best_val_loss:
                     print(f"saved checkpoint at {i=}, {val_loss=:.2f}")
                     best_val_loss = val_loss
                     checkpoint = {
@@ -200,76 +138,20 @@ def train(
                         "i": i,
                         "best_val_loss": best_val_loss,
                     }
-                    save_checkpoint_path = path.join(OUT_DIR, save_checkpoint_name)
-                    torch.save(checkpoint, save_checkpoint_path)
+                    save_path = os.path.join(config.model_dir, config.checkpoint_name)
+                    torch.save(checkpoint, save_path)
 
             i += 1
 
+    run.finish()
+
 
 if __name__ == "__main__":
-    wandb.init(
-        dir=OUT_DIR,
-        project="encoder-addition",
-        config={
-            "n_embd": N_EMBD,
-            "n_layer": N_LAYER,
-            "n_head": N_HEAD,
-            "block_size": BLOCK_SIZE,
-            "batch_size": BATCH_SIZE,
-            "max_iters": MAX_ITERS,
-            "min_lr": MIN_LR,
-            "max_lr": MAX_LR,
-            "warmup_iters": WARMUP_ITERS,
-            "lr_decay_iters": LR_DECAY_ITERS,
-            "weight_decay": WEIGHT_DECAY,
-            "betas": BETAS,
-            "seed": SEED,
-        },
-        name=CHECKPOINT_NAME[:-3],
-        resume=RESUME,
-    )
+    if len(sys.argv) != 2:
+        print("usage: python train.py config-path.json")
+        exit(1)
 
-    seed_everything(SEED)
+    config = Config(sys.argv[1])
 
-    train_data_path = path.join(DATA_DIR, f"train_{TASK}.txt")
-    with open(train_data_path, "r", encoding="utf-8") as f:
-        train_text = f.read()
-
-    val_data_path = path.join(DATA_DIR, f"val_{TASK}.txt")
-    with open(val_data_path, "r", encoding="utf-8") as f:
-        val_text = f.read()
-
-    chars = sorted(list(set(train_text)))
-    vocab_size = len(chars)
-
-    char2int = {c: i for i, c in enumerate(chars)}
-    int2char = {i: c for i, c in enumerate(chars)}
-
-    train_dataset = BlockDataset(encode(train_text, char2int))
-    val_dataset = BlockDataset(encode(val_text, char2int))
-
-    config = TransformerConfig(
-        n_positions=BLOCK_SIZE,
-        vocab_size=vocab_size,
-        n_layer=N_LAYER,
-        n_head=N_HEAD,
-        n_embd=N_EMBD,
-    )
-
-    model = TransformerLMHead(config, compile_blocks).to(device)
-
-    optimizer = model.configure_optimizers(
-        lr=MIN_LR,
-        betas=BETAS,
-        weight_decay=WEIGHT_DECAY,
-        device=device,
-    )
-
-    train(
-        model,
-        optimizer,
-        train_dataset,
-        val_dataset,
-        load_checkpoint_name=CHECKPOINT_NAME if RESUME else None,
-        save_checkpoint_name=CHECKPOINT_NAME,
-    )
+    train(config)
+    eval_model(config)

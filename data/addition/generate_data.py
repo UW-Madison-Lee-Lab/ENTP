@@ -1,9 +1,10 @@
+import sys
+
+sys.path.append("../..")
+
 from sklearn.model_selection import train_test_split  # type: ignore
 
-TRAIN_SIZE: int = 15000
-VAL_SIZE: int = 10000
-TEST_SIZE: int = 50000
-SEED: int = 42
+from util import Config
 
 
 def count_digits(n1: int, n2: int) -> int:
@@ -35,8 +36,14 @@ def make_file(inputs: list[tuple[int, int]], outputs: list[int], name: str) -> N
 
 
 if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        print("usage: python generate_data.py config-path.json")
+        exit(1)
+
+    config = Config(sys.argv[1])
+
     max_digits = 3
-    assert TRAIN_SIZE + VAL_SIZE + TEST_SIZE <= 10 ** (2 * max_digits)
+    assert config.n_train + config.n_val + config.n_test <= 10 ** (2 * max_digits)
 
     inputs = []
     outputs = []
@@ -65,11 +72,11 @@ if __name__ == "__main__":
         outputs,
         digits,
         carrys,
-        train_size=TRAIN_SIZE - 100,
-        test_size=VAL_SIZE + TEST_SIZE,
+        train_size=config.n_train - 100,
+        test_size=config.n_val + config.n_test,
         shuffle=True,
         stratify=[t for t in zip(digits, carrys)],
-        random_state=SEED,
+        random_state=config.seed,
     )
 
     (
@@ -86,11 +93,11 @@ if __name__ == "__main__":
         holdout_outputs,
         holdout_digits,
         holdout_carrys,
-        train_size=VAL_SIZE,
-        test_size=TEST_SIZE,
+        train_size=config.n_val,
+        test_size=config.n_test,
         shuffle=True,
         stratify=[t for t in zip(holdout_digits, holdout_carrys)],
-        random_state=SEED,
+        random_state=config.seed,
     )
 
     for i in range(10):
@@ -100,9 +107,9 @@ if __name__ == "__main__":
             train_digits.append(count_digits(i, j))
             train_carrys.append(count_carrys(i, j))
 
-    assert len(train_inputs) == TRAIN_SIZE and len(train_outputs) == TRAIN_SIZE
-    assert len(val_inputs) == VAL_SIZE and len(val_outputs) == VAL_SIZE
-    assert len(test_inputs) == TEST_SIZE and len(test_outputs) == TEST_SIZE
+    assert len(train_inputs) == config.n_train and len(train_outputs) == config.n_train
+    assert len(val_inputs) == config.n_val and len(val_outputs) == config.n_val
+    assert len(test_inputs) == config.n_test and len(test_outputs) == config.n_test
 
     for i in range(len(train_inputs)):
         n1, n2 = train_inputs[i]
@@ -138,8 +145,8 @@ if __name__ == "__main__":
                 assert n_train == 100
                 assert n_test == 0
             else:
-                min_ratio = 0.95 * (TEST_SIZE / (TRAIN_SIZE - 100))
-                max_ratio = 1.05 * (TEST_SIZE / (TRAIN_SIZE - 100))
+                min_ratio = 0.95 * (config.n_test / (config.n_train - 100))
+                max_ratio = 1.05 * (config.n_test / (config.n_train - 100))
                 ratio = n_test / n_train
                 assert min_ratio < ratio and ratio < max_ratio
 

@@ -1,66 +1,31 @@
+import sys
 from collections import defaultdict
 from contextlib import nullcontext
 from os import path
-from typing import ContextManager, Literal
+from typing import ContextManager
 
 import torch
-from nano_transformer import TransformerConfig, TransformerLMHead
 from torch import Tensor
 from tqdm import tqdm  # type: ignore
 
-torch.set_float32_matmul_precision("high")
-
-context: ContextManager = nullcontext()
-pin_memory = False
-pin_memory_device = ""
-compile_blocks = False
-
-if torch.cuda.is_available():
-    device = "cuda"
-    context = torch.autocast(device, dtype=torch.bfloat16)
-    pin_memory = True
-    pin_memory_device = "cuda"
-    compile_blocks = True
-elif torch.backends.mps.is_available():
-    device = "mps"
-else:
-    device = "cpu"
-
-TASK: Literal["plain_addition", "reversed_addition"] = "reversed_addition"
-DECODER: bool = False
-
-DATA_DIR: str = "data/addition"
-OUT_DIR: str = "out"
-MODEL_DIR: str = "models"
-MODEL_NAME_POSTFIX: str = "15k"
-MODEL_NAME: str = (
-    f"{TASK}_{'decoder' if DECODER else 'encoder'}_{MODEL_NAME_POSTFIX}.pt"
-)
-
-N_EMBD: int = 384
-N_LAYER: int = 6
-N_HEAD: int = 6
-
-BLOCK_SIZE: int = 64
-BATCH_SIZE: int = 2500
-
-print(f"{device=}, context={str(type(context))[8 : -2]}", end=", ")
-print(f"{pin_memory=}, {pin_memory_device=}, {compile_blocks=}, {DECODER=}, {TASK=}")
+from nano_transformer import TransformerConfig, TransformerLMHead
+from util import Config, decode, encode
 
 
-def encode(text: str | list[str], char2int: dict[str, int]) -> Tensor:
-    if isinstance(text, list):
-        return torch.tensor([[char2int[c] for c in s if c in char2int] for s in text])
+def eval_model(config: Config) -> None:
+    torch.set_float32_matmul_precision("high")
+
+    context: ContextManager = nullcontext()
+
+    if torch.cuda.is_available():
+        device = "cuda"
+        context = torch.autocast(device, dtype=torch.bfloat16)
+    elif torch.backends.mps.is_available():
+        device = "mps"
     else:
-        return torch.tensor([char2int[c] for c in text if c in char2int])
+        device = "cpu"
 
-
-def decode(y: list[int] | Tensor, int2char: dict[int, str]) -> str:
-    return "".join([int2char[int(i)] for i in y if int(i) in int2char])
-
-
-if __name__ == "__main__":
-    test_data_path = path.join(DATA_DIR, f"test_{TASK}.txt")
+    test_data_path = path.join(config.data_dir, f"test_{config.task}.txt")
     with open(test_data_path, "r", encoding="utf-8") as f:
         test_text = f.read()
 
@@ -71,17 +36,17 @@ if __name__ == "__main__":
     char2int = {c: i for i, c in enumerate(chars)}
     int2char = {i: c for i, c in enumerate(chars)}
 
-    config = TransformerConfig(
-        n_positions=BLOCK_SIZE,
+    model_config = TransformerConfig(
+        n_positions=config.block_size,
         vocab_size=vocab_size,
-        n_layer=N_LAYER,
-        n_head=N_HEAD,
-        n_embd=N_EMBD,
+        n_layer=config.n_layer,
+        n_head=config.n_head,
+        n_embd=config.n_embd,
     )
 
-    model = TransformerLMHead(config).to(device)
+    model = TransformerLMHead(model_config).to(device)
 
-    model_path = path.join(MODEL_DIR, MODEL_NAME)
+    model_path = path.join(config.model_dir, config.checkpoint_name)
     checkpoint = torch.load(model_path, weights_only=False)
     model.load_state_dict(checkpoint["model"])
     model.eval()
@@ -100,8 +65,8 @@ if __name__ == "__main__":
     batch_eq_idxs: list[int] = []
 
     for (_, eq_idx), grouped_lines in line_groups.items():
-        for i in range(0, len(grouped_lines), BATCH_SIZE):
-            unencoded_batch = grouped_lines[i : i + BATCH_SIZE]
+        for i in range(0, len(grouped_lines), config.test_batch_size):
+            unencoded_batch = grouped_lines[i : i + config.test_batch_size]
             batches.append(encode(unencoded_batch, char2int))
             batch_eq_idxs.append(eq_idx)
             assert torch.all(batches[-1][:, batch_eq_idxs[-1]] == char2int["="])
@@ -121,7 +86,11 @@ if __name__ == "__main__":
         input_ids = batch[:, : eq_idx + 1].to(device)
 
         with context:
-            output_ids = model.generate(input_ids, max_new_tokens=5, decoder=DECODER)
+            output_ids = model.generate(
+                input_ids,
+                max_new_tokens=5,
+                decoder=config.decoder,
+            )
 
         output_ids = output_ids[:, eq_idx + 1 : batch.shape[1]].cpu()
         target_ids = batch[:, eq_idx + 1 :]
@@ -144,13 +113,23 @@ if __name__ == "__main__":
 
     print(f"{n_correct}/{n_total} correct")
 
-    incorrect_examples_text = ""
+    results_test = f"{n_correct}/{n_total}\n{str(config.to_dict())}\n"
+
     for input_ids, output_ids, target_ids in incorrect_examples:
         input_str = decode(input_ids, int2char)
         output_str = decode(output_ids, int2char).removesuffix("\n")
         target_str = decode(target_ids, int2char).removesuffix("\n")
-        incorrect_examples_text += f"{input_str}{output_str},{input_str}{target_str}\n"
+        results_test += f"{input_str}{output_str},{input_str}{target_str}\n"
 
-    f_name = f"{TASK}_{'decoder' if DECODER else 'encoder'}_incorrect_examples.txt"
-    with open(path.join(OUT_DIR, f_name), "w") as f:
-        f.write(incorrect_examples_text)
+    f_name = f"{config.name}_results.txt"
+    with open(path.join(config.results_dir, f_name), "w") as f:
+        f.write(results_test)
+
+
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        print("usage: python eval-addition.py config-path.json")
+        exit(1)
+
+    config = Config(sys.argv[1])
+    eval_model(config)
