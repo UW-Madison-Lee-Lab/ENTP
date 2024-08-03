@@ -222,7 +222,7 @@ if __name__ == "__main__":
             "betas": BETAS,
             "seed": SEED,
         },
-        name=TASK,
+        name=CHECKPOINT_NAME[:-3],
         resume=RESUME,
     )
 
