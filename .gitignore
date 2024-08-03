@@ -2,6 +2,7 @@ __pycache__/
 .vscode/
 .ipynb_checkpoints
 data/addition/*.txt
+data/shakespeare/t*.txt
 out/*.pt
 out/*.txt
 out/wandb
