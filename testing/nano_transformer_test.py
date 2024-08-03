@@ -17,6 +17,7 @@ from nano_transformer import (
     flat_cross_entropy,
 )
 
+torch.set_float32_matmul_precision("high")
 
 def build_identical_models(
     lm: bool,
@@ -81,6 +82,7 @@ def test_causal_outputs(
     n_embd=256,
     n_layer=12,
     n_head=8,
+    device="cpu",
 ) -> None:
     model = Transformer(
         TransformerConfig(
@@ -90,9 +92,9 @@ def test_causal_outputs(
             n_head=n_head,
             dropout=0,
         )
-    )
+    ).to(device)
 
-    x = torch.randn(2, n_positions, n_embd)
+    x = torch.randn(2, n_positions, n_embd, device=device)
 
     y1 = model._Transformer__decoder_forward(x, is_causal=True)
     y2 = model._Transformer__encoder_forward(
@@ -113,6 +115,7 @@ def test_causal_gradients(
     n_embd=256,
     n_layer=12,
     n_head=8,
+    device="cpu",
 ) -> None:
     model = Transformer(
         TransformerConfig(
@@ -122,10 +125,10 @@ def test_causal_gradients(
             n_head=n_head,
             dropout=0,
         )
-    )
+    ).to(device)
 
-    x = torch.randn(2, n_positions, n_embd)
-    y_true = torch.randn(2, n_positions, n_embd)
+    x = torch.randn(2, n_positions, n_embd, device=device)
+    y_true = torch.randn(2, n_positions, n_embd, device="cuda")
 
     y1 = model._Transformer__decoder_forward(x, is_causal=True)
     loss1 = F.mse_loss(y1[:, forward_idxs], y_true[:, forward_idxs])
@@ -238,6 +241,7 @@ def benchmark(
     device="cpu",
     autocast=False,
     compile=False,
+    decoder=True,
     n_iters=5,
 ) -> None:
     model = TransformerLMHead(
@@ -247,33 +251,40 @@ def benchmark(
             n_layer=n_layer,
             n_head=n_head,
             dropout=0,
-        )
+        ),
+        compile,
     ).to(device)
 
     context: ContextManager = (
         torch.autocast(device, dtype=torch.bfloat16) if autocast else nullcontext()  # type: ignore
     )
 
-    if compile:
-        model = torch.compile(model)  # type: ignore
+    optimizer = model.configure_optimizers(lr=6e-4, betas=(0.9, 0.95), weight_decay=0.1, device=device)
 
     x = torch.randint(50256, (64, n_positions), device=device)
+    y = torch.randint(50256, (64, n_positions), device=device)
+
+    t0 = time.time()
+    if compile:
+        with context:
+            logits = model(x, decoder=decoder)
+            loss = flat_cross_entropy(logits, y)
+        loss.backward()
+        optimizer.step()
+        optimizer.zero_grad(set_to_none=True)
+    compile_t = time.time() - t0
 
     t0 = time.time()
     for _ in range(n_iters):
         with context:
-            _ = model(x, decoder=True)
+            logits = model(x, decoder=decoder)
+            loss = flat_cross_entropy(logits, y)
+        loss.backward()
+        optimizer.step()
+        optimizer.zero_grad(set_to_none=True)
+    t = time.time() - t0
 
-    decoder_t = time.time() - t0
-
-    t0 = time.time()
-    for _ in range(n_iters):
-        with context:
-            _ = model(x, decoder=False)
-
-    encoder_t = time.time() - t0
-
-    print(f"{device=}, {autocast=}, {compile=}, {decoder_t=:.3f}, {encoder_t=:.3f}")
+    print(f"{'decoder' if decoder else 'encoder'}, {device=}, {autocast=}, {compile=}, {t=:.3f}, {compile_t=:.3f}")
 
 
 if __name__ == "__main__":
@@ -282,12 +293,7 @@ if __name__ == "__main__":
     test_lm_gradients_huggingface()
 
     for forward_idxs in [torch.arange(0, 80, 1), torch.arange(0, 80, 2)]:
-        test_causal_outputs(forward_idxs, n_positions=80)
-        test_causal_gradients(forward_idxs, n_positions=80)
+        test_causal_outputs(forward_idxs, n_positions=80, device="cuda")
+        test_causal_gradients(forward_idxs, n_positions=80, device="cuda")
 
     print("all tests passed :D")
-
-    benchmark(device="cuda", autocast=False, compile=False)
-    benchmark(device="cuda", autocast=True, compile=False)
-    benchmark(device="cuda", autocast=False, compile=True)
-    benchmark(device="cuda", autocast=True, compile=True)

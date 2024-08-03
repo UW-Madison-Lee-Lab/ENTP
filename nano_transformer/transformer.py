@@ -10,7 +10,7 @@ from .base import Block, Linear, TransformerConfig
 class Transformer(nn.Module):
     """Transformer model without lm-head, with optional causal encoder."""
 
-    def __init__(self, config: TransformerConfig) -> None:
+    def __init__(self, config: TransformerConfig, compile_blocks=False) -> None:
         super().__init__()
         self.config = config
         self.wte = nn.Embedding(config.vocab_size, config.n_embd)
@@ -21,6 +21,10 @@ class Transformer(nn.Module):
         for p_name, p in self.named_parameters():
             if p_name.endswith("c_proj.weight"):
                 nn.init.normal_(p, mean=0.0, std=0.02 / math.sqrt(2 * config.n_layer))
+        if compile_blocks:
+            for block in self.h:
+                block.compile()
+            
 
     @staticmethod
     def __init_weights(module: nn.Module) -> None:
@@ -72,10 +76,10 @@ class Transformer(nn.Module):
 class TransformerLMHead(nn.Module):
     """Transformer language model, with optional causal encoder."""
 
-    def __init__(self, config: TransformerConfig) -> None:
+    def __init__(self, config: TransformerConfig, compile_blocks=False) -> None:
         super().__init__()
         self.n_positions = config.n_positions
-        self.transformer = Transformer(config)
+        self.transformer = Transformer(config, compile_blocks)
         self.lm_head = nn.Linear(config.n_embd, config.vocab_size, bias=False)
         self.lm_head.weight = self.transformer.wte.weight
 

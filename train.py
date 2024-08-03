@@ -11,21 +11,27 @@ from torch.utils import data
 
 from nano_transformer import TransformerConfig, TransformerLMHead, flat_cross_entropy
 
+torch.set_float32_matmul_precision("high")
+
 context: ContextManager = nullcontext()
 pin_memory = False
 pin_memory_device = ""
+compile_blocks = False
 
 if torch.cuda.is_available():
     device = "cuda"
     context = torch.autocast(device, dtype=torch.bfloat16)
     pin_memory = True
     pin_memory_device = "cuda"
+    compile_blocks = True
 elif torch.backends.mps.is_available():
     device = "mps"
 else:
     device = "cpu"
 
-print(f"{device=}, {type(context)=}, {pin_memory=}, {pin_memory_device=}")
+print(
+    f"{device=}, {type(context)=}, {pin_memory=}, {pin_memory_device=}, {compile_blocks=}"
+)
 
 TASK: Literal["plain_addition", "reversed_addition", "shakespeare"] = "shakespeare"
 DECODER: bool = True
@@ -39,12 +45,12 @@ N_EMBD: int = 384
 N_LAYER: int = 6
 N_HEAD: int = 6
 
-EVAL_INTERVAL: int = 250
+EVAL_INTERVAL: int = 100
 
 BLOCK_SIZE: int = 64
-BATCH_SIZE: int = 96
+BATCH_SIZE: int = 64
 
-MAX_ITERS: int = 600000
+MAX_ITERS: int = 5000
 
 MIN_LR: float = 6e-5
 MAX_LR: float = 6e-4
@@ -247,7 +253,7 @@ if __name__ == "__main__":
         n_embd=N_EMBD,
     )
 
-    model = TransformerLMHead(config).to(device)
+    model = TransformerLMHead(config, compile_blocks).to(device)
 
     optimizer = model.configure_optimizers(
         lr=MIN_LR,

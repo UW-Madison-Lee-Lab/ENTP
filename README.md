@@ -1,13 +1,7 @@
 # Environment
-### Standard (Training and Evaluation)
 ```
-conda env create -f env.yml
+conda env create -f environments/<env-name>.yml
 conda activate encoder-addition
-```
-### Devolopement (Training, Evaluation, and Testing)
-```
-conda env create -f env-dev.yml
-conda activate encoder-addition-dev
 ```
 
 # Results
