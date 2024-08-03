@@ -33,10 +33,10 @@ print(
     f"{device=}, {type(context)=}, {pin_memory=}, {pin_memory_device=}, {compile_blocks=}"
 )
 
-TASK: Literal["plain_addition", "reversed_addition", "shakespeare"] = "shakespeare"
+TASK: Literal["plain_addition", "reversed_addition", "shakespeare"] = "plain_addition"
 DECODER: bool = True
 
-DATA_DIR: str = "data/shakespeare"
+DATA_DIR: str = "data/addition"
 OUT_DIR: str = "out"
 CHECKPOINT_NAME: str = f"{TASK}_{'decoder' if DECODER else 'encoder'}.pt"
 RESUME: bool = False
@@ -128,8 +128,10 @@ def evaluate_loss(
         x = x.to(device)
         y = y.to(device)
 
-        logits = model(x)
-        loss = flat_cross_entropy(logits, y).cpu()
+        with context:
+            logits = model(x, decoder=DECODER)
+            loss = flat_cross_entropy(logits, y)
+
         loss_sum += loss.cpu().item() * len(x)
         cnt += len(x)
 
