@@ -36,7 +36,7 @@ def make_file(inputs: list[tuple[int, int]], outputs: list[int], name: str) -> N
 
 if __name__ == "__main__":
     max_digits = 3
-    assert TRAIN_SIZE + TEST_SIZE <= 10 ** (2 * max_digits)
+    assert TRAIN_SIZE + VAL_SIZE + TEST_SIZE <= 10 ** (2 * max_digits)
 
     inputs = []
     outputs = []

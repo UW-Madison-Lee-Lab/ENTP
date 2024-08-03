@@ -26,7 +26,7 @@ elif torch.backends.mps.is_available():
 else:
     device = "cpu"
 
-TASK: Literal["plain_addition", "reversed_addition"] = "plain_addition"
+TASK: Literal["plain_addition", "reversed_addition"] = "reversed_addition"
 DECODER: bool = False
 
 DATA_DIR: str = "data/addition"

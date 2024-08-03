@@ -28,7 +28,9 @@ elif torch.backends.mps.is_available():
 else:
     device = "cpu"
 
-TASK: Literal["plain_addition", "reversed_addition", "shakespeare"] = "plain_addition"
+TASK: Literal["plain_addition", "reversed_addition", "shakespeare"] = (
+    "reversed_addition"
+)
 DECODER: bool = False
 
 DATA_DIR: str = "data/addition"
@@ -45,7 +47,7 @@ EVAL_INTERVAL: int = 100
 BLOCK_SIZE: int = 64
 BATCH_SIZE: int = 64
 
-MAX_ITERS: int = 5000
+MAX_ITERS: int = 4000
 
 MIN_LR: float = 6e-5
 MAX_LR: float = 6e-4
