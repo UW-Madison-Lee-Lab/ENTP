@@ -19,6 +19,7 @@ from nano_transformer import (
 
 torch.set_float32_matmul_precision("high")
 
+
 def build_identical_models(
     lm: bool,
     n_positions=80,
@@ -128,7 +129,7 @@ def test_causal_gradients(
     ).to(device)
 
     x = torch.randn(2, n_positions, n_embd, device=device)
-    y_true = torch.randn(2, n_positions, n_embd, device="cuda")
+    y_true = torch.randn(2, n_positions, n_embd, device=device)
 
     y1 = model._Transformer__decoder_forward(x, is_causal=True)
     loss1 = F.mse_loss(y1[:, forward_idxs], y_true[:, forward_idxs])
@@ -259,7 +260,9 @@ def benchmark(
         torch.autocast(device, dtype=torch.bfloat16) if autocast else nullcontext()  # type: ignore
     )
 
-    optimizer = model.configure_optimizers(lr=6e-4, betas=(0.9, 0.95), weight_decay=0.1, device=device)
+    optimizer = model.configure_optimizers(
+        lr=6e-4, betas=(0.9, 0.95), weight_decay=0.1, device=device
+    )
 
     x = torch.randint(50256, (64, n_positions), device=device)
     y = torch.randint(50256, (64, n_positions), device=device)
@@ -284,7 +287,9 @@ def benchmark(
         optimizer.zero_grad(set_to_none=True)
     t = time.time() - t0
 
-    print(f"{'decoder' if decoder else 'encoder'}, {device=}, {autocast=}, {compile=}, {t=:.3f}, {compile_t=:.3f}")
+    print(
+        f"{'decoder' if decoder else 'encoder'}, {device=}, {autocast=}, {compile=}, {t=:.3f}, {compile_t=:.3f}"
+    )
 
 
 if __name__ == "__main__":
@@ -293,7 +298,7 @@ if __name__ == "__main__":
     test_lm_gradients_huggingface()
 
     for forward_idxs in [torch.arange(0, 80, 1), torch.arange(0, 80, 2)]:
-        test_causal_outputs(forward_idxs, n_positions=80, device="cuda")
-        test_causal_gradients(forward_idxs, n_positions=80, device="cuda")
+        test_causal_outputs(forward_idxs, n_positions=80, device="cpu")
+        test_causal_gradients(forward_idxs, n_positions=80, device="cpu")
 
     print("all tests passed :D")
