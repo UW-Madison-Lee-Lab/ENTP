@@ -29,12 +29,8 @@ elif torch.backends.mps.is_available():
 else:
     device = "cpu"
 
-print(
-    f"{device=}, {type(context)=}, {pin_memory=}, {pin_memory_device=}, {compile_blocks=}"
-)
-
 TASK: Literal["plain_addition", "reversed_addition", "shakespeare"] = "plain_addition"
-DECODER: bool = True
+DECODER: bool = False
 
 DATA_DIR: str = "data/addition"
 OUT_DIR: str = "out"
@@ -61,6 +57,9 @@ WEIGHT_DECAY: float = 0.1
 BETAS: tuple[float, float] = (0.9, 0.95)
 
 SEED: int = 42
+
+print(f"{device=}, context={str(type(context))[8 : -2]}", end=", ")
+print(f"{pin_memory=}, {pin_memory_device=}, {compile_blocks=}, {DECODER=}, {TASK=}")
 
 
 class BlockDataset(data.Dataset):

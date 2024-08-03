@@ -8,10 +8,10 @@ conda activate encoder-addition
 
 ### Plain Addition Decoder Model 90000 training examples
 - Converged by 3000 iterations
-- Final train and test loss was around 1.01
-- 99676/100000 correct on test dataset
+- Final train and test loss was around 1.06
+- 9474/10000 correct on test dataset
 
-### Reversed Addition Decoder Model 90000 training examples
+### Plain Addition Encoder Model 90000 training examples
 - Converged by 3000 iterations
-- Final train and test loss was around 1.01
-- 97827/100000 correct on test dataset
+- Final train and test loss was around 1.06
+- 9666/10000 correct on test dataset

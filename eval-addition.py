@@ -1,7 +1,7 @@
 from collections import defaultdict
 from contextlib import nullcontext
 from os import path
-from typing import ContextManager
+from typing import ContextManager, Literal
 
 import torch
 from torch import Tensor
@@ -9,35 +9,41 @@ from tqdm import tqdm  # type: ignore
 
 from nano_transformer import TransformerConfig, TransformerLMHead
 
+torch.set_float32_matmul_precision("high")
+
 context: ContextManager = nullcontext()
 pin_memory = False
 pin_memory_device = ""
+compile_blocks = False
 
 if torch.cuda.is_available():
     device = "cuda"
     context = torch.autocast(device, dtype=torch.bfloat16)
     pin_memory = True
     pin_memory_device = "cuda"
+    compile_blocks = True
 elif torch.backends.mps.is_available():
     device = "mps"
 else:
     device = "cpu"
 
-print(f"{device=}, {type(context)=}, {pin_memory=}, {pin_memory_device=}")
+TASK: Literal["plain_addition", "reversed_addition"] = "plain_addition"
+DECODER: bool = False
 
-ADDITION_TYPE = "reversed"
+DATA_DIR: str = "data/addition"
+OUT_DIR: str = "out"
+MODEL_DIR: str = "models"
+MODEL_NAME: str = f"{TASK}_{'decoder' if DECODER else 'encoder'}.pt"
 
-DATA_DIR = "data"
-OUT_DIR = "out"
-MODEL_DIR = "models"
-MODEL_NAME = f"{ADDITION_TYPE}_decoder.pt"
+N_EMBD: int = 384
+N_LAYER: int = 6
+N_HEAD: int = 6
 
-N_EMBD = 384
-N_LAYER = 6
-N_HEAD = 6
+BLOCK_SIZE: int = 64
+BATCH_SIZE: int = 2500
 
-BLOCK_SIZE = 128
-BATCH_SIZE = 2500
+print(f"{device=}, context={str(type(context))[8 : -2]}", end=", ")
+print(f"{pin_memory=}, {pin_memory_device=}, {compile_blocks=}, {DECODER=}, {TASK=}")
 
 
 def encode(text: str | list[str], char2int: dict[str, int]) -> Tensor:
@@ -52,8 +58,8 @@ def decode(y: list[int] | Tensor, int2char: dict[int, str]) -> str:
 
 
 if __name__ == "__main__":
-    test_data_path = path.join(DATA_DIR, f"test_{ADDITION_TYPE}.txt")
-    with open("data/test_reversed.txt", "r", encoding="utf-8") as f:
+    test_data_path = path.join(DATA_DIR, f"test_{TASK}.txt")
+    with open(test_data_path, "r", encoding="utf-8") as f:
         test_text = f.read()
 
     chars = sorted(list(set(test_text)))
@@ -113,7 +119,7 @@ if __name__ == "__main__":
         input_ids = batch[:, : eq_idx + 1].to(device)
 
         with context:
-            output_ids = model.generate(input_ids, max_new_tokens=5)
+            output_ids = model.generate(input_ids, max_new_tokens=5, decoder=DECODER)
 
         output_ids = output_ids[:, eq_idx + 1 : batch.shape[1]].cpu()
         target_ids = batch[:, eq_idx + 1 :]
@@ -143,5 +149,6 @@ if __name__ == "__main__":
         target_str = decode(target_ids, int2char).removesuffix("\n")
         incorrect_examples_text += f"{input_str}{output_str},{input_str}{target_str}\n"
 
-    with open(path.join(OUT_DIR, "incorrect_examples.txt"), "w") as f:
+    f_name = f"{TASK}_{'decoder' if DECODER else 'encoder'}_incorrect_examples.txt"
+    with open(path.join(OUT_DIR, f_name), "w") as f:
         f.write(incorrect_examples_text)
