@@ -6,10 +6,9 @@ from typing import ContextManager, Literal
 import numpy as np
 import torch
 import wandb
+from nano_transformer import TransformerConfig, TransformerLMHead, flat_cross_entropy
 from torch import Tensor, optim
 from torch.utils import data
-
-from nano_transformer import TransformerConfig, TransformerLMHead, flat_cross_entropy
 
 torch.set_float32_matmul_precision("high")
 
@@ -141,12 +140,12 @@ def train(
     model: TransformerLMHead,
     optimizer: optim.Optimizer,
     train_dataset: data.Dataset,
-    test_dataset: data.Dataset,
+    val_dataset: data.Dataset,
     load_checkpoint_name: str | None = None,
     save_checkpoint_name: str | None = None,
 ) -> None:
-    i = 0
-    best_test_loss = float("inf")
+    i = 1
+    best_val_loss = float("inf")
 
     if load_checkpoint_name is not None:
         load_checkpoint_path = path.join(OUT_DIR, load_checkpoint_name)
@@ -154,9 +153,9 @@ def train(
         model.load_state_dict(checkpoint["model"])
         optimizer.load_state_dict(checkpoint["optimizer"])
         i = checkpoint["i"]
-        best_test_loss = checkpoint["best_test_loss"]
+        best_val_loss = checkpoint["best_val_loss"]
 
-    while i < MAX_ITERS:
+    while i <= MAX_ITERS:
         train_data_loader = data.DataLoader(
             train_dataset,
             batch_size=BATCH_SIZE,
@@ -166,7 +165,7 @@ def train(
         )
 
         for x, y in train_data_loader:
-            if i >= MAX_ITERS:
+            if i > MAX_ITERS:
                 break
 
             lr = get_lr(i)
@@ -186,17 +185,18 @@ def train(
 
             wandb.log({"train_loss": loss.item()}, step=i)
 
-            if (i + 1) % EVAL_INTERVAL == 0:
-                test_loss = evaluate_loss(model, test_dataset)
-                wandb.log({"test_loss": test_loss}, step=i)
+            if i % EVAL_INTERVAL == 0:
+                val_loss = evaluate_loss(model, val_dataset)
+                wandb.log({"val_loss": val_loss}, step=i)
 
-                if test_loss < best_test_loss and save_checkpoint_name is not None:
-                    best_test_loss = test_loss
+                if val_loss < best_val_loss and save_checkpoint_name is not None:
+                    print(f"saved checkpoint at {i=}, {val_loss=:.2f}")
+                    best_val_loss = val_loss
                     checkpoint = {
                         "model": model.state_dict(),
                         "optimizer": optimizer.state_dict(),
                         "i": i,
-                        "best_test_loss": best_test_loss,
+                        "best_val_loss": best_val_loss,
                     }
                     save_checkpoint_path = path.join(OUT_DIR, save_checkpoint_name)
                     torch.save(checkpoint, save_checkpoint_path)
@@ -233,9 +233,9 @@ if __name__ == "__main__":
     with open(train_data_path, "r", encoding="utf-8") as f:
         train_text = f.read()
 
-    test_data_path = path.join(DATA_DIR, f"test_{TASK}.txt")
-    with open(test_data_path, "r", encoding="utf-8") as f:
-        test_text = f.read()
+    val_data_path = path.join(DATA_DIR, f"val_{TASK}.txt")
+    with open(val_data_path, "r", encoding="utf-8") as f:
+        val_text = f.read()
 
     chars = sorted(list(set(train_text)))
     vocab_size = len(chars)
@@ -244,7 +244,7 @@ if __name__ == "__main__":
     int2char = {i: c for i, c in enumerate(chars)}
 
     train_dataset = BlockDataset(encode(train_text, char2int))
-    test_dataset = BlockDataset(encode(test_text, char2int))
+    val_dataset = BlockDataset(encode(val_text, char2int))
 
     config = TransformerConfig(
         n_positions=BLOCK_SIZE,
@@ -267,7 +267,7 @@ if __name__ == "__main__":
         model,
         optimizer,
         train_dataset,
-        test_dataset,
+        val_dataset,
         load_checkpoint_name=CHECKPOINT_NAME if RESUME else None,
         save_checkpoint_name=CHECKPOINT_NAME,
     )

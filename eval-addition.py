@@ -4,10 +4,9 @@ from os import path
 from typing import ContextManager, Literal
 
 import torch
+from nano_transformer import TransformerConfig, TransformerLMHead
 from torch import Tensor
 from tqdm import tqdm  # type: ignore
-
-from nano_transformer import TransformerConfig, TransformerLMHead
 
 torch.set_float32_matmul_precision("high")
 
@@ -33,7 +32,10 @@ DECODER: bool = False
 DATA_DIR: str = "data/addition"
 OUT_DIR: str = "out"
 MODEL_DIR: str = "models"
-MODEL_NAME: str = f"{TASK}_{'decoder' if DECODER else 'encoder'}.pt"
+MODEL_NAME_POSTFIX: str = "15k"
+MODEL_NAME: str = (
+    f"{TASK}_{'decoder' if DECODER else 'encoder'}_{MODEL_NAME_POSTFIX}.pt"
+)
 
 N_EMBD: int = 384
 N_LAYER: int = 6

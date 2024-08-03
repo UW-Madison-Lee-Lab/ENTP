@@ -1,25 +1,23 @@
-TEST_FRACTION: float = 0.2
-TEST_BEGIN: bool = False
+VAL_FRACTION: float = 0.2
+VAL_BEGIN: bool = False
 
 if __name__ == "__main__":
     with open("shakespeare.txt", "r") as f:
         text = f.read()
 
-    n_test = int(len(text) * TEST_FRACTION)
+    n_test = int(len(text) * VAL_FRACTION)
 
-    if TEST_BEGIN:
-        test_text = text[:n_test]
+    if VAL_BEGIN:
+        val_text = text[:n_test]
         train_text = text[n_test:]
     else:
-        test_text = text[-n_test:]
+        val_text = text[-n_test:]
         train_text = text[:-n_test]
 
-    assert (
-        abs(len(test_text) / (len(train_text) + len(test_text)) - TEST_FRACTION) < 0.01
-    )
+    assert abs(len(val_text) / (len(train_text) + len(val_text)) - VAL_FRACTION) < 0.01
 
     with open("train_shakespeare.txt", "w") as f:
         f.write(train_text)
 
-    with open("test_shakespeare.txt", "w") as f:
-        f.write(test_text)
+    with open("val_shakespeare.txt", "w") as f:
+        f.write(val_text)
