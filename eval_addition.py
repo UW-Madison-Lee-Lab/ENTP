@@ -1,29 +1,17 @@
 import sys
 from collections import defaultdict
-from contextlib import nullcontext
 from os import path
-from typing import ContextManager
 
 import torch
 from torch import Tensor
 from tqdm import tqdm  # type: ignore
 
 from nano_transformer import TransformerConfig, TransformerLMHead
-from util import Config, decode, encode
+from util import Config, Environment, decode, encode
 
 
 def eval_model(config: Config) -> None:
-    torch.set_float32_matmul_precision("high")
-
-    context: ContextManager = nullcontext()
-
-    if torch.cuda.is_available():
-        device = "cuda"
-        context = torch.autocast(device, dtype=torch.bfloat16)
-    elif torch.backends.mps.is_available():
-        device = "mps"
-    else:
-        device = "cpu"
+    env = Environment()
 
     test_data_path = path.join(config.data_dir, f"test_{config.task}.txt")
     with open(test_data_path, "r", encoding="utf-8") as f:
@@ -44,7 +32,7 @@ def eval_model(config: Config) -> None:
         n_embd=config.n_embd,
     )
 
-    model = TransformerLMHead(model_config).to(device)
+    model = TransformerLMHead(model_config).to(env.device)
 
     model_path = path.join(config.model_dir, config.checkpoint_name)
     checkpoint = torch.load(model_path, weights_only=False)
@@ -83,9 +71,9 @@ def eval_model(config: Config) -> None:
     incorrect_examples = []
 
     for batch, eq_idx in progress_bar:
-        input_ids = batch[:, : eq_idx + 1].to(device)
+        input_ids = batch[:, : eq_idx + 1].to(env.device)
 
-        with context:
+        with env.context:
             output_ids = model.generate(
                 input_ids,
                 max_new_tokens=5,

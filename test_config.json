@@ -1,6 +1,0 @@
-{
-    "max_iters": "2",
-    "decoder": "false",
-    "eval_interval": "1",
-    "batch_size": "8"
-}
