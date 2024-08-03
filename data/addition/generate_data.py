@@ -1,7 +1,8 @@
 from sklearn.model_selection import train_test_split  # type: ignore
 
-TRAIN_SIZE: int = 90000
-TEST_SIZE: int = 10000
+TRAIN_SIZE: int = 15000
+VAL_SIZE: int = 10000
+TEST_SIZE: int = 50000
 SEED: int = 42
 
 
@@ -52,22 +53,43 @@ if __name__ == "__main__":
 
     (
         train_inputs,
-        test_inputs,
+        holdout_inputs,
         train_outputs,
-        test_outputs,
+        holdout_outputs,
         train_digits,
-        test_digits,
+        holdout_digits,
         train_carrys,
-        test_carrys,
+        holdout_carrys,
     ) = train_test_split(
         inputs,
         outputs,
         digits,
         carrys,
         train_size=TRAIN_SIZE - 100,
-        test_size=TEST_SIZE,
+        test_size=VAL_SIZE + TEST_SIZE,
         shuffle=True,
         stratify=[t for t in zip(digits, carrys)],
+        random_state=SEED,
+    )
+
+    (
+        val_inputs,
+        test_inputs,
+        val_outputs,
+        test_outputs,
+        val_digits,
+        test_digits,
+        val_carrys,
+        test_carrys,
+    ) = train_test_split(
+        holdout_inputs,
+        holdout_outputs,
+        holdout_digits,
+        holdout_carrys,
+        train_size=VAL_SIZE,
+        test_size=TEST_SIZE,
+        shuffle=True,
+        stratify=[t for t in zip(holdout_digits, holdout_carrys)],
         random_state=SEED,
     )
 
@@ -79,12 +101,20 @@ if __name__ == "__main__":
             train_carrys.append(count_carrys(i, j))
 
     assert len(train_inputs) == TRAIN_SIZE and len(train_outputs) == TRAIN_SIZE
+    assert len(val_inputs) == VAL_SIZE and len(val_outputs) == VAL_SIZE
+    assert len(test_inputs) == TEST_SIZE and len(test_outputs) == TEST_SIZE
 
     for i in range(len(train_inputs)):
         n1, n2 = train_inputs[i]
         assert train_outputs[i] == n1 + n2
         assert train_digits[i] == count_digits(n1, n2)
         assert train_carrys[i] == count_carrys(n1, n2)
+
+    for i in range(len(val_inputs)):
+        n1, n2 = val_inputs[i]
+        assert val_outputs[i] == n1 + n2
+        assert val_digits[i] == count_digits(n1, n2)
+        assert val_carrys[i] == count_carrys(n1, n2)
 
     for i in range(len(test_inputs)):
         n1, n2 = test_inputs[i]
@@ -114,9 +144,14 @@ if __name__ == "__main__":
                 assert min_ratio < ratio and ratio < max_ratio
 
     train_outputs_reversed = [int(str(n)[::-1]) for n in train_outputs]
+    val_outputs_reversed = [int(str(n)[::-1]) for n in val_outputs]
     test_outputs_reversed = [int(str(n)[::-1]) for n in test_outputs]
 
     make_file(train_inputs, train_outputs, "train_plain_addition")
     make_file(train_inputs, train_outputs_reversed, "train_reversed_addition")
+
+    make_file(val_inputs, val_outputs, "val_plain_addition")
+    make_file(val_inputs, val_outputs_reversed, "val_reversed_addition")
+
     make_file(test_inputs, test_outputs, "test_plain_addition")
     make_file(test_inputs, test_outputs_reversed, "test_reversed_addition")
