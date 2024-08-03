@@ -116,7 +116,7 @@ if __name__ == "__main__":
     train_outputs_reversed = [int(str(n)[::-1]) for n in train_outputs]
     test_outputs_reversed = [int(str(n)[::-1]) for n in test_outputs]
 
-    make_file(train_inputs, train_outputs, "train_plain")
-    make_file(train_inputs, train_outputs_reversed, "train_reversed")
-    make_file(test_inputs, test_outputs, "test_plain")
-    make_file(test_inputs, test_outputs_reversed, "test_reversed")
+    make_file(train_inputs, train_outputs, "train_plain_addition")
+    make_file(train_inputs, train_outputs_reversed, "train_reversed_addition")
+    make_file(test_inputs, test_outputs, "test_plain_addition")
+    make_file(test_inputs, test_outputs_reversed, "test_reversed_addition")

@@ -27,12 +27,12 @@ else:
 
 print(f"{device=}, {type(context)=}, {pin_memory=}, {pin_memory_device=}")
 
-ADDITION_TYPE: Literal["plain", "reversed"] = "plain"
+TASK: Literal["plain_addition", "reversed_addition", "shakespeare"] = "shakespeare"
 DECODER: bool = True
 
-DATA_DIR: str = "data"
+DATA_DIR: str = "data/shakespeare"
 OUT_DIR: str = "out"
-CHECKPOINT_NAME: str = f"{ADDITION_TYPE}_{'decoder' if DECODER else 'encoder'}.pt"
+CHECKPOINT_NAME: str = f"{TASK}_{'decoder' if DECODER else 'encoder'}.pt"
 RESUME: bool = False
 
 N_EMBD: int = 384
@@ -216,17 +216,17 @@ if __name__ == "__main__":
             "betas": BETAS,
             "seed": SEED,
         },
-        name=ADDITION_TYPE,
+        name=TASK,
         resume=RESUME,
     )
 
     seed_everything(SEED)
 
-    train_data_path = path.join(DATA_DIR, f"train_{ADDITION_TYPE}.txt")
+    train_data_path = path.join(DATA_DIR, f"train_{TASK}.txt")
     with open(train_data_path, "r", encoding="utf-8") as f:
         train_text = f.read()
 
-    test_data_path = path.join(DATA_DIR, f"test_{ADDITION_TYPE}.txt")
+    test_data_path = path.join(DATA_DIR, f"test_{TASK}.txt")
     with open(test_data_path, "r", encoding="utf-8") as f:
         test_text = f.read()
 

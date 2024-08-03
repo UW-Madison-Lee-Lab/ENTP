@@ -1,7 +1,7 @@
 __pycache__/
 .vscode/
 .ipynb_checkpoints
-data/*.txt
+data/addition/*.txt
 out/*.pt
 out/*.txt
 out/wandb
