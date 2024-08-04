@@ -3,10 +3,9 @@ from collections import defaultdict
 from os import path
 
 import torch
+from nano_transformer import TransformerConfig, TransformerLMHead
 from torch import Tensor
 from tqdm import tqdm  # type: ignore
-
-from nano_transformer import TransformerConfig, TransformerLMHead
 from util import Config, Environment, decode, encode
 
 
@@ -19,7 +18,10 @@ def eval_model(config: Config, log_incorrect_examples=False) -> None:
 
     chars = sorted(list(set(test_text)))
     vocab_size = len(chars)
-    assert vocab_size == 14
+    if config.use_dollar_signs:
+        assert vocab_size == 14
+    else:
+        assert vocab_size == 13
 
     char2int = {c: i for i, c in enumerate(chars)}
     int2char = {i: c for i, c in enumerate(chars)}

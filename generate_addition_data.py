@@ -2,7 +2,6 @@ import os
 import sys
 
 from sklearn.model_selection import train_test_split  # type: ignore
-
 from util import Config
 
 
@@ -29,10 +28,18 @@ def count_carrys(n1: int, n2: int) -> int:
 
 
 def make_file(
-    config: Config, inputs: list[tuple[int, int]], outputs: list[int], name: str
+    config: Config,
+    inputs: list[tuple[int, int]],
+    outputs: list[int],
+    name: str,
+    use_dollar_signs: bool,
 ) -> None:
+    if use_dollar_signs:
+        text = "".join(f"${i}+{j}={k}$\n" for (i, j), k in zip(inputs, outputs))
+    else:
+        text = "".join(f"{i}+{j}={k}\n" for (i, j), k in zip(inputs, outputs))
+
     file_path = os.path.join(config.data_dir, f"{name}.txt")
-    text = "".join(f"${i}+{j}={k}$\n" for (i, j), k in zip(inputs, outputs))
     with open(file_path, "w") as f:
         f.write(text)
 
@@ -156,11 +163,11 @@ if __name__ == "__main__":
     val_outputs_reversed = [int(str(n)[::-1]) for n in val_outputs]
     test_outputs_reversed = [int(str(n)[::-1]) for n in test_outputs]
 
-    make_file(config, train_inputs, train_outputs, "train_plain_addition")
-    make_file(config, train_inputs, train_outputs_reversed, "train_reversed_addition")
+    make_file(config, train_inputs, train_outputs, "train_plain_addition", config.use_dollar_signs)
+    make_file(config, train_inputs, train_outputs_reversed, "train_reversed_addition", config.use_dollar_signs)
 
-    make_file(config, val_inputs, val_outputs, "val_plain_addition")
-    make_file(config, val_inputs, val_outputs_reversed, "val_reversed_addition")
+    make_file(config, val_inputs, val_outputs, "val_plain_addition", config.use_dollar_signs)
+    make_file(config, val_inputs, val_outputs_reversed, "val_reversed_addition", config.use_dollar_signs)
 
-    make_file(config, test_inputs, test_outputs, "test_plain_addition")
-    make_file(config, test_inputs, test_outputs_reversed, "test_reversed_addition")
+    make_file(config, test_inputs, test_outputs, "test_plain_addition", config.use_dollar_signs)
+    make_file(config, test_inputs, test_outputs_reversed, "test_reversed_addition", config.use_dollar_signs)

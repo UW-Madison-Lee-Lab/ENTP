@@ -35,9 +35,9 @@ def seed_everything(seed: int) -> None:
 
 
 class Config:
-    task: Literal[
-        "plain_addition", "reversed_addition", "shakespeare"
-    ] = "plain_addition"
+    task: Literal["plain_addition", "reversed_addition", "shakespeare"] = (
+        "plain_addition"
+    )
     decoder: bool = True
     data_dir: str = "data/addition"
     model_dir: str = "models"
@@ -63,6 +63,8 @@ class Config:
     n_train: int = 15000
     n_val: int = 10000
     n_test: int = 50000
+    use_dollar_signs: bool = True
+    name: str | None = None
 
     key_to_type: dict[str, Callable[[str], bool | int | float | str]] = {
         "task": str,
@@ -91,11 +93,15 @@ class Config:
         "n_train": int,
         "n_val": int,
         "n_test": int,
+        "use_dollar_signs": str_to_bool,
+        "name": str,
     }
 
     def __init__(self, config_path: str | None = None) -> None:
         if config_path is not None:
             self.update(config_path)
+
+        assert self.name is not None
 
     def update(self, config_path: str) -> None:
         with open(config_path, "r") as f:
@@ -110,12 +116,7 @@ class Config:
         for k in self.key_to_type.keys():
             d[k] = getattr(self, k)
 
-        d["name"] = self.name
         return d
-
-    @property
-    def name(self) -> str:
-        return f"{self.task}_{'decoder' if self.decoder else 'encoder'}_{self.seed}"
 
     @property
     def checkpoint_name(self) -> str:
