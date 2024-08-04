@@ -7,7 +7,7 @@ if __name__ == "__main__":
         "n_train": "15000",
         "n_val": "10000",
         "n_test": "50000",
-        "max_iters": "3000",
+        "max_iters": "4000",
         "eval_interval": "100",
         "decoder": "true",
     }

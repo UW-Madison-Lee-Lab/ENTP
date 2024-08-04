@@ -1,0 +1,34 @@
+2024-08-04 17:18:32,441 INFO    MainThread:1228785 [wandb_setup.py:_flush():76] Current SDK version is 0.17.5
+2024-08-04 17:18:32,441 INFO    MainThread:1228785 [wandb_setup.py:_flush():76] Configure stats pid to 1228785
+2024-08-04 17:18:32,442 INFO    MainThread:1228785 [wandb_setup.py:_flush():76] Loading settings from /root/.config/wandb/settings
+2024-08-04 17:18:32,442 INFO    MainThread:1228785 [wandb_setup.py:_flush():76] Loading settings from /workspace/encoder-addition/wandb/settings
+2024-08-04 17:18:32,442 INFO    MainThread:1228785 [wandb_setup.py:_flush():76] Loading settings from environment variables: {}
+2024-08-04 17:18:32,442 INFO    MainThread:1228785 [wandb_setup.py:_flush():76] Applying setup settings: {'_disable_service': False}
+2024-08-04 17:18:32,442 INFO    MainThread:1228785 [wandb_setup.py:_flush():76] Inferring run settings from compute environment: {'program_relpath': 'train.py', 'program_abspath': '/workspace/encoder-addition/train.py', 'program': '/workspace/encoder-addition/train.py'}
+2024-08-04 17:18:32,442 INFO    MainThread:1228785 [wandb_setup.py:_flush():76] Applying login settings: {}
+2024-08-04 17:18:32,442 INFO    MainThread:1228785 [wandb_init.py:_log_setup():529] Logging user logs to results/15k_dollar_signs/wandb/run-20240804_171832-o05u80rx/logs/debug.log
+2024-08-04 17:18:32,442 INFO    MainThread:1228785 [wandb_init.py:_log_setup():530] Logging internal logs to results/15k_dollar_signs/wandb/run-20240804_171832-o05u80rx/logs/debug-internal.log
+2024-08-04 17:18:32,442 INFO    MainThread:1228785 [wandb_init.py:init():569] calling init triggers
+2024-08-04 17:18:32,442 INFO    MainThread:1228785 [wandb_init.py:init():576] wandb.init called with sweep_config: {}
+config: {'task': 'plain_addition', 'decoder': True, 'data_dir': 'data/addition', 'model_dir': 'models', 'results_dir': 'results/15k_dollar_signs', 'resume': False, 'n_embd': 384, 'n_layer': 6, 'n_head': 6, 'block_size': 64, 'batch_size': 64, 'test_batch_size': 2048, 'max_iters': 4000, 'eval_interval': 100, 'min_lr': 6e-05, 'max_lr': 0.0006, 'warmup_iters': 2000, 'lr_decay_iters': 600000, 'weight_decay': 0.1, 'beta1': 0.9, 'beta2': 0.95, 'seed': 0, 'n_digits': 3, 'n_train': 15000, 'n_val': 10000, 'n_test': 50000, 'use_dollar_signs': False, 'name': 'plain_addition_dollar_signs_false_0'}
+2024-08-04 17:18:32,443 INFO    MainThread:1228785 [wandb_init.py:init():619] starting backend
+2024-08-04 17:18:32,443 INFO    MainThread:1228785 [wandb_init.py:init():623] setting up manager
+2024-08-04 17:18:32,447 INFO    MainThread:1228785 [backend.py:_multiprocessing_setup():105] multiprocessing start_methods=fork,spawn,forkserver, using: spawn
+2024-08-04 17:18:32,449 INFO    MainThread:1228785 [wandb_init.py:init():631] backend started and connected
+2024-08-04 17:18:32,455 INFO    MainThread:1228785 [wandb_init.py:init():720] updated telemetry
+2024-08-04 17:18:32,468 INFO    MainThread:1228785 [wandb_init.py:init():753] communicating run to backend with 90.0 second timeout
+2024-08-04 17:18:33,007 INFO    MainThread:1228785 [wandb_run.py:_on_init():2435] communicating current version
+2024-08-04 17:18:33,063 INFO    MainThread:1228785 [wandb_run.py:_on_init():2444] got version response 
+2024-08-04 17:18:33,063 INFO    MainThread:1228785 [wandb_init.py:init():804] starting run threads in backend
+2024-08-04 17:18:37,422 INFO    MainThread:1228785 [wandb_run.py:_console_start():2413] atexit reg
+2024-08-04 17:18:37,422 INFO    MainThread:1228785 [wandb_run.py:_redirect():2255] redirect: wrap_raw
+2024-08-04 17:18:37,422 INFO    MainThread:1228785 [wandb_run.py:_redirect():2320] Wrapping output streams.
+2024-08-04 17:18:37,422 INFO    MainThread:1228785 [wandb_run.py:_redirect():2345] Redirects installed.
+2024-08-04 17:18:37,424 INFO    MainThread:1228785 [wandb_init.py:init():847] run started, returning control to user process
+2024-08-04 17:20:17,972 INFO    MainThread:1228785 [wandb_run.py:_finish():2107] finishing run eewer-uw-madison/encoder-addition/o05u80rx
+2024-08-04 17:20:17,972 INFO    MainThread:1228785 [wandb_run.py:_atexit_cleanup():2374] got exitcode: 0
+2024-08-04 17:20:17,973 INFO    MainThread:1228785 [wandb_run.py:_restore():2352] restore
+2024-08-04 17:20:17,973 INFO    MainThread:1228785 [wandb_run.py:_restore():2358] restore done
+2024-08-04 17:20:27,399 INFO    MainThread:1228785 [wandb_run.py:_footer_history_summary_info():4016] rendering history
+2024-08-04 17:20:27,400 INFO    MainThread:1228785 [wandb_run.py:_footer_history_summary_info():4048] rendering summary
+2024-08-04 17:20:27,414 INFO    MainThread:1228785 [wandb_run.py:_footer_sync_info():3975] logging synced files

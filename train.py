@@ -3,11 +3,10 @@ import sys
 from pprint import pprint
 
 import torch
-from torch.utils import data
-
 import wandb
 from eval_addition import eval_model
 from nano_transformer import TransformerConfig, TransformerLMHead, flat_cross_entropy
+from torch.utils import data
 from util import Config, Environment, LRSchedule, load_data, seed_everything
 
 
@@ -154,4 +153,4 @@ if __name__ == "__main__":
     config = Config(sys.argv[1])
 
     train(config)
-    eval_model(config)
+    eval_model(config, log_incorrect_examples=True)
