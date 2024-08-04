@@ -10,7 +10,7 @@ from nano_transformer import TransformerConfig, TransformerLMHead
 from util import Config, Environment, decode, encode
 
 
-def eval_model(config: Config) -> None:
+def eval_model(config: Config, log_incorrect_examples=False) -> None:
     env = Environment()
 
     test_data_path = path.join(config.data_dir, f"test_{config.task}.txt")
@@ -103,11 +103,12 @@ def eval_model(config: Config) -> None:
 
     results_test = f"{n_correct}/{n_total}\n{str(config.to_dict())}\n"
 
-    for input_ids, output_ids, target_ids in incorrect_examples:
-        input_str = decode(input_ids, int2char)
-        output_str = decode(output_ids, int2char).removesuffix("\n")
-        target_str = decode(target_ids, int2char).removesuffix("\n")
-        results_test += f"{input_str}{output_str},{input_str}{target_str}\n"
+    if log_incorrect_examples:
+        for input_ids, output_ids, target_ids in incorrect_examples:
+            input_str = decode(input_ids, int2char)
+            output_str = decode(output_ids, int2char).removesuffix("\n")
+            target_str = decode(target_ids, int2char).removesuffix("\n")
+            results_test += f"{input_str}{output_str},{input_str}{target_str}\n"
 
     f_name = f"{config.name}_results.txt"
     with open(path.join(config.results_dir, f_name), "w") as f:
@@ -120,4 +121,4 @@ if __name__ == "__main__":
         exit(1)
 
     config = Config(sys.argv[1])
-    eval_model(config)
+    eval_model(config, log_incorrect_examples=True)

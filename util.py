@@ -115,7 +115,7 @@ class Config:
 
     @property
     def name(self) -> str:
-        return f"{self.task}_{'decoder' if self.decoder else 'encoder'}[{self.seed}]"
+        return f"{self.task}_{'decoder' if self.decoder else 'encoder'}_{self.seed}"
 
     @property
     def checkpoint_name(self) -> str:

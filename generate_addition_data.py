@@ -1,6 +1,5 @@
+import os
 import sys
-
-sys.path.append("../..")
 
 from sklearn.model_selection import train_test_split  # type: ignore
 
@@ -29,9 +28,12 @@ def count_carrys(n1: int, n2: int) -> int:
     return res
 
 
-def make_file(inputs: list[tuple[int, int]], outputs: list[int], name: str) -> None:
+def make_file(
+    config: Config, inputs: list[tuple[int, int]], outputs: list[int], name: str
+) -> None:
+    file_path = os.path.join(config.data_dir, f"{name}.txt")
     text = "".join(f"${i}+{j}={k}$\n" for (i, j), k in zip(inputs, outputs))
-    with open(f"{name}.txt", "w") as f:
+    with open(file_path, "w") as f:
         f.write(text)
 
 
@@ -154,11 +156,11 @@ if __name__ == "__main__":
     val_outputs_reversed = [int(str(n)[::-1]) for n in val_outputs]
     test_outputs_reversed = [int(str(n)[::-1]) for n in test_outputs]
 
-    make_file(train_inputs, train_outputs, "train_plain_addition")
-    make_file(train_inputs, train_outputs_reversed, "train_reversed_addition")
+    make_file(config, train_inputs, train_outputs, "train_plain_addition")
+    make_file(config, train_inputs, train_outputs_reversed, "train_reversed_addition")
 
-    make_file(val_inputs, val_outputs, "val_plain_addition")
-    make_file(val_inputs, val_outputs_reversed, "val_reversed_addition")
+    make_file(config, val_inputs, val_outputs, "val_plain_addition")
+    make_file(config, val_inputs, val_outputs_reversed, "val_reversed_addition")
 
-    make_file(test_inputs, test_outputs, "test_plain_addition")
-    make_file(test_inputs, test_outputs_reversed, "test_reversed_addition")
+    make_file(config, test_inputs, test_outputs, "test_plain_addition")
+    make_file(config, test_inputs, test_outputs_reversed, "test_reversed_addition")
