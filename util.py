@@ -35,9 +35,9 @@ def seed_everything(seed: int) -> None:
 
 
 class Config:
-    task: Literal["plain_addition", "reversed_addition", "shakespeare"] = (
-        "plain_addition"
-    )
+    task: Literal[
+        "plain_addition", "reversed_addition", "shakespeare"
+    ] = "plain_addition"
     decoder: bool = True
     data_dir: str = "data/addition"
     model_dir: str = "models"
@@ -64,7 +64,8 @@ class Config:
     n_val: int = 10000
     n_test: int = 50000
     use_dollar_signs: bool = True
-    name: str | None = None
+    resample_data: bool = False
+    name: str = ""
 
     key_to_type: dict[str, Callable[[str], bool | int | float | str]] = {
         "task": str,
@@ -94,6 +95,7 @@ class Config:
         "n_val": int,
         "n_test": int,
         "use_dollar_signs": str_to_bool,
+        "resample_data": str_to_bool,
         "name": str,
     }
 
@@ -101,7 +103,7 @@ class Config:
         if config_path is not None:
             self.update(config_path)
 
-        assert self.name is not None
+        assert self.name != ""
 
     def update(self, config_path: str) -> None:
         with open(config_path, "r") as f:

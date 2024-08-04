@@ -2,6 +2,7 @@ import os
 import sys
 
 from sklearn.model_selection import train_test_split  # type: ignore
+
 from util import Config
 
 
@@ -27,14 +28,57 @@ def count_carrys(n1: int, n2: int) -> int:
     return res
 
 
+def resample(
+    config: Config,
+    inputs: list[tuple[int, int]],
+    outputs: list[int],
+    digits: list[int],
+    carrys: list[int],
+) -> tuple[list[tuple[int, int]], list[int], list[int], list[int]]:
+    if config.n_digits != 3:
+        raise NotImplementedError()
+
+    def split(arr: list) -> tuple[list, list]:
+        arr2 = []
+        arr3 = []
+        for i, d in enumerate(digits):
+            assert d == 2 or d == 3
+            if d == 2:
+                arr2.append(arr[i])
+            elif d == 3:
+                arr3.append(arr[i])
+
+        return arr2, arr3
+
+    inputs2, inputs3 = split(inputs)
+    outputs2, outputs3 = split(outputs)
+    carrys2, carrys3 = split(carrys)
+
+    new_inputs3, _, new_outputs3, _, new_carrys3, _ = train_test_split(
+        inputs3,
+        outputs3,
+        carrys3,
+        train_size=0.1,
+        shuffle=True,
+        stratify=carrys3,
+        random_state=config.seed,
+    )
+
+    new_inputs = inputs2 + new_inputs3
+    new_outputs = outputs2 + new_outputs3
+    new_carrys = carrys2 + new_carrys3
+    new_digits = [2] * len(inputs2) + [3] * len(new_inputs3)
+
+    return new_inputs, new_outputs, new_digits, new_carrys
+
+
 def make_file(
     config: Config,
     inputs: list[tuple[int, int]],
     outputs: list[int],
     name: str,
-    use_dollar_signs: bool,
 ) -> None:
-    if use_dollar_signs:
+    if config.use_dollar_signs:
         text = "".join(f"${i}+{j}={k}$\n" for (i, j), k in zip(inputs, outputs))
     else:
         text = "".join(f"{i}+{j}={k}\n" for (i, j), k in zip(inputs, outputs))
@@ -51,8 +95,7 @@ if __name__ == "__main__":
 
     config = Config(sys.argv[1])
 
-    max_digits = 3
-    assert config.n_train + config.n_val + config.n_test <= 10 ** (2 * max_digits)
+    max_digits = config.n_digits
 
     inputs = []
     outputs = []
@@ -66,6 +109,17 @@ if __name__ == "__main__":
                 outputs.append(i + j)
                 digits.append(count_digits(i, j))
                 carrys.append(count_carrys(i, j))
+
+    if config.resample_data:
+        inputs, outputs, digits, carrys = resample(
+            config,
+            inputs,
+            outputs,
+            digits,
+            carrys,
+        )
+
+    assert config.n_train + config.n_val + config.n_test <= len(inputs)
 
     (
         train_inputs,
@@ -163,11 +217,11 @@ if __name__ == "__main__":
     val_outputs_reversed = [int(str(n)[::-1]) for n in val_outputs]
     test_outputs_reversed = [int(str(n)[::-1]) for n in test_outputs]
 
-    make_file(config, train_inputs, train_outputs, "train_plain_addition", config.use_dollar_signs)
-    make_file(config, train_inputs, train_outputs_reversed, "train_reversed_addition", config.use_dollar_signs)
+    make_file(config, train_inputs, train_outputs, "train_plain_addition")
+    make_file(config, train_inputs, train_outputs_reversed, "train_reversed_addition")
 
-    make_file(config, val_inputs, val_outputs, "val_plain_addition", config.use_dollar_signs)
-    make_file(config, val_inputs, val_outputs_reversed, "val_reversed_addition", config.use_dollar_signs)
+    make_file(config, val_inputs, val_outputs, "val_plain_addition")
+    make_file(config, val_inputs, val_outputs_reversed, "val_reversed_addition")
 
-    make_file(config, test_inputs, test_outputs, "test_plain_addition", config.use_dollar_signs)
-    make_file(config, test_inputs, test_outputs_reversed, "test_reversed_addition", config.use_dollar_signs)
+    make_file(config, test_inputs, test_outputs, "test_plain_addition")
+    make_file(config, test_inputs, test_outputs_reversed, "test_reversed_addition")
