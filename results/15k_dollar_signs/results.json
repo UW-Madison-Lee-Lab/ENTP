@@ -1,0 +1,1 @@
+{"experiment": ["plain_addition_dollar_signs_true", "reversed_addition_dollar_signs_true", "plain_addition_dollar_signs_false", "reversed_addition_dollar_signs_false"], "accuracy_mean": [0.8471679999999999, 0.771972, 0.685608, 0.357752], "accuracy_std": [0.022567082576177185, 0.05162108654416336, 0.07015453410863762, 0.21753073846240675], "n_trials": [5, 5, 5, 5]}
