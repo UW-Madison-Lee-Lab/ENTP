@@ -1,0 +1,1 @@
+{"data_dir": "data/addition", "n_train": "15000", "n_val": "10000", "n_test": "50000", "max_iters": "4000", "eval_interval": "100", "decoder": "false", "task": "plain_addition", "seed": "1"}
