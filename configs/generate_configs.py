@@ -3,9 +3,9 @@ import json
 if __name__ == "__main__":
     config = {
         "data_dir": "data/addition",
-        "results_dir": "results/10k",
+        "results_dir": "results/5k",
         "decoder": "true",
-        "n_train": 10000,
+        "n_train": 5000,
         "n_val": 10000,
         "n_test": 75000,
         "use_dollar_signs": "true",

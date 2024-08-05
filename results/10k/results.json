@@ -1,1 +1,1 @@
-{"experiment": ["plain_addition_decoder", "reversed_addition_decoder"], "accuracy_mean": [0.9013919999999999, 0.9927040000000001], "accuracy_std": [0.03542749074439855, 0.005021343954671028], "n_trials": [5, 5]}
+{"experiment": ["plain_addition_decoder", "reversed_addition_decoder", "plain_addition_encoder", "reversed_addition_encoder"], "accuracy_mean": [0.9013919999999999, 0.9927040000000001, 0.9382346666666667, 0.9831413333333334], "accuracy_std": [0.03542749074439855, 0.005021343954671028, 0.03011109692824594, 0.011703321010152062], "n_trials": [5, 5, 5, 5]}
