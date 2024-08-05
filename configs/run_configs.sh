@@ -2,7 +2,7 @@
 
 cd ..
 
-for i in {10..19} 
+for i in {5..9} 
 do 
     config_file="configs/config$i.json"
     python generate_addition_data.py "$config_file"

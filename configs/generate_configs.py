@@ -10,7 +10,7 @@ if __name__ == "__main__":
         "n_test": 75000,
         "use_dollar_signs": "true",
         "resample_data": "true",
-        "max_iters": 5000,
+        "max_iters": 4000,
         "eval_interval": 100,
         "block_size": 64,
         "batch_size": 64,
