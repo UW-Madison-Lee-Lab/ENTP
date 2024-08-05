@@ -19,6 +19,7 @@ def evaluate_loss(
     dataset: data.Dataset,
     max_iters=100,
 ) -> float:
+    """Evaluates `model` loss on `dataset`."""
     model.eval()
     data_loader = data.DataLoader(
         dataset,
@@ -48,6 +49,11 @@ def evaluate_loss(
 
 
 def train(config: Config, resume: bool = False) -> None:
+    """
+    Trains model using config parameters. Assumes data is in `config.data_dir`.
+    Saves model in `config.model_dir`. Evaluates model after training.
+    """
+
     env = Environment()
 
     print(f"{env.device=}, env.context={str(type(env.context))[8 : -2]}", end=", ")

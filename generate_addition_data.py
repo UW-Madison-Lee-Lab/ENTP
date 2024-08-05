@@ -10,10 +10,12 @@ T = TypeVar("T")
 
 
 def count_digits(n1: int, n2: int) -> int:
+    """Returns the number of digits in the largest number."""
     return max(len(str(n1)), len(str(n2)))
 
 
 def count_carrys(n1: int, n2: int) -> int:
+    """Returns the carry operations whan computing `n1 + n2`."""
     digits1 = [int(d) for d in str(n1)][::-1]
     digits2 = [int(d) for d in str(n2)][::-1]
 
@@ -38,6 +40,7 @@ def resample(
     digits: list[int],
     carrys: list[int],
 ) -> tuple[list[tuple[int, int]], list[int], list[int], list[int]]:
+    """Resamples data, removing 90% of the three digit examples."""
     if config.n_digits != 3:
         raise NotImplementedError()
 
@@ -81,6 +84,7 @@ def make_file(
     outputs: list[T],
     name: str,
 ) -> None:
+    """Saves data file to `config.data_dir`."""
     if config.use_dollar_signs:
         text = "".join(f"${i}+{j}={k}$\n" for (i, j), k in zip(inputs, outputs))
     else:
