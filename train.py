@@ -4,9 +4,10 @@ from pprint import pprint
 
 import torch
 import wandb
+from torch.utils import data
+
 from eval_addition import eval_model
 from nano_transformer import TransformerConfig, TransformerLMHead, flat_cross_entropy
-from torch.utils import data
 from util import Config, Environment, LRSchedule, load_data, seed_everything
 
 
@@ -18,6 +19,7 @@ def evaluate_loss(
     dataset: data.Dataset,
     max_iters=100,
 ) -> float:
+    """Evaluates `model` loss on `dataset`."""
     model.eval()
     data_loader = data.DataLoader(
         dataset,
@@ -47,6 +49,11 @@ def evaluate_loss(
 
 
 def train(config: Config, resume: bool = False) -> None:
+    """
+    Trains model using config parameters. Assumes data is in `config.data_dir`.
+    Saves model in `config.model_dir`. Evaluates model after training.
+    """
+
     env = Environment()
 
     print(f"{env.device=}, env.context={str(type(env.context))[8 : -2]}", end=", ")

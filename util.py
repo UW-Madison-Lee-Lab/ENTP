@@ -11,12 +11,14 @@ from torch.utils import data
 
 
 def str_to_bool(b: str) -> bool:
+    """Converts `str` to `bool`."""
     b = b.lower()
     assert b == "true" or b == "false"
     return b == "true"
 
 
 def encode(text: str | list[str], char2int: dict[str, int]) -> Tensor:
+    """Encodes `text` at character level."""
     if isinstance(text, list):
         return torch.tensor([[char2int[c] for c in s if c in char2int] for s in text])
     else:
@@ -24,10 +26,12 @@ def encode(text: str | list[str], char2int: dict[str, int]) -> Tensor:
 
 
 def decode(y: list[int] | Tensor, int2char: dict[int, str]) -> str:
+    """Decodes `text` at character level."""
     return "".join([int2char[int(i)] for i in y if int(i) in int2char])
 
 
 def seed_everything(seed: int) -> None:
+    """Sets seeds for Python, NumPy, and Torch."""
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -35,9 +39,14 @@ def seed_everything(seed: int) -> None:
 
 
 class Config:
-    task: Literal["plain_addition", "reversed_addition", "shakespeare"] = (
-        "plain_addition"
-    )
+    """
+    Configuration for data generation, training, and evaluation.
+    `Config` can an be constructed from a `json` file.
+    """
+
+    task: Literal[
+        "plain_addition", "reversed_addition", "shakespeare"
+    ] = "plain_addition"
     decoder: bool = True
     data_dir: str = "data/addition"
     model_dir: str = "models"
@@ -108,6 +117,7 @@ class Config:
         assert self.name != ""
 
     def update(self, config_path: str) -> None:
+        """Updates config from a `json` file."""
         with open(config_path, "r") as f:
             config = json.load(f)
 
@@ -116,6 +126,7 @@ class Config:
                 setattr(self, k, constructor(config[k]))
 
     def to_dict(self) -> dict[str, bool | int | float | str]:
+        """Returns a `dict` with all configuration information."""
         d = {}
         for k in self.key_to_type.keys():
             d[k] = getattr(self, k)
@@ -128,6 +139,8 @@ class Config:
 
 
 class Environment:
+    """Configures the environment based on the backend that is available."""
+
     def __init__(self) -> None:
         torch.set_float32_matmul_precision("high")
         self.context: ContextManager = nullcontext()
@@ -148,6 +161,8 @@ class Environment:
 
 
 class LRSchedule:
+    """Cosine learning rate scheduler with warmup."""
+
     def __init__(self, config: Config) -> None:
         self.min_lr: float = config.min_lr
         self.max_lr: float = config.max_lr
@@ -170,6 +185,8 @@ class LRSchedule:
 
 
 class BlockDataset(data.Dataset):
+    """Groups time series data into blocks for autoregressive modeling."""
+
     def __init__(self, data: Tensor, config: Config):
         self.data = data
         self.block_size = config.block_size
@@ -190,6 +207,7 @@ def load_data(
     split: Literal["train", "val", "test"],
     char2int: dict[str, int] | None = None,
 ) -> tuple[BlockDataset, dict[str, int]]:
+    """Loads data specified by `config`. Return encoded data as `BlockDataset`."""
     data_path = os.path.join(config.data_dir, f"{split}_{config.task}.txt")
     with open(data_path, "r", encoding="utf-8") as f:
         text = f.read()

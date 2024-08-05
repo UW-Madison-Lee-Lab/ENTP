@@ -3,13 +3,18 @@ from collections import defaultdict
 from os import path
 
 import torch
-from nano_transformer import TransformerConfig, TransformerLMHead
 from torch import Tensor
 from tqdm import tqdm  # type: ignore
+
+from nano_transformer import TransformerConfig, TransformerLMHead
 from util import Config, Environment, decode, encode
 
 
 def eval_model(config: Config, log_incorrect_examples=False) -> None:
+    """
+    Evaluates model on test dataset. Assumes model is in `config.model_dir`.
+    Assumes data is in `config.data_dir`. Saves results in `config.results_dir`.
+    """
     env = Environment()
 
     test_data_path = path.join(config.data_dir, f"test_{config.task}.txt")

@@ -31,9 +31,9 @@ if __name__ == "__main__":
                 config["decoder"] = decoder
                 config["task"] = task
                 config["seed"] = seed
-                config["name"] = (
-                    f"{task}_{'decoder' if decoder == 'true' else 'encoder'}_{seed}"
-                )
+                config[
+                    "name"
+                ] = f"{task}_{'decoder' if decoder == 'true' else 'encoder'}_{seed}"
 
                 with open(f"config{i}.json", "w") as f:
                     json.dump(config, f)
