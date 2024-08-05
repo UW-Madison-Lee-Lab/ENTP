@@ -3,9 +3,10 @@ from collections import defaultdict
 from os import path
 
 import torch
-from nano_transformer import TransformerConfig, TransformerLMHead
 from torch import Tensor
 from tqdm import tqdm  # type: ignore
+
+from nano_transformer import TransformerConfig, TransformerLMHead
 from util import Config, Environment, decode, encode
 
 

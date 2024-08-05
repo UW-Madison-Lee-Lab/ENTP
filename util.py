@@ -35,9 +35,9 @@ def seed_everything(seed: int) -> None:
 
 
 class Config:
-    task: Literal["plain_addition", "reversed_addition", "shakespeare"] = (
-        "plain_addition"
-    )
+    task: Literal[
+        "plain_addition", "reversed_addition", "shakespeare"
+    ] = "plain_addition"
     decoder: bool = True
     data_dir: str = "data/addition"
     model_dir: str = "models"

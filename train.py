@@ -4,9 +4,10 @@ from pprint import pprint
 
 import torch
 import wandb
+from torch.utils import data
+
 from eval_addition import eval_model
 from nano_transformer import TransformerConfig, TransformerLMHead, flat_cross_entropy
-from torch.utils import data
 from util import Config, Environment, LRSchedule, load_data, seed_everything
 
 

@@ -1,8 +1,12 @@
 import os
 import sys
+from typing import TypeVar
 
 from sklearn.model_selection import train_test_split  # type: ignore
+
 from util import Config
+
+T = TypeVar("T")
 
 
 def count_digits(n1: int, n2: int) -> int:
@@ -73,8 +77,8 @@ def resample(
 
 def make_file(
     config: Config,
-    inputs: list[tuple[int | str, int | str]],
-    outputs: list[int | str],
+    inputs: list[tuple[T, T]],
+    outputs: list[T],
     name: str,
 ) -> None:
     if config.use_dollar_signs:
