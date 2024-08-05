@@ -3,11 +3,12 @@ import json
 if __name__ == "__main__":
     config = {
         "data_dir": "data/addition",
-        "results_dir": "results/15k_resampled",
+        "results_dir": "results/10k",
         "decoder": "true",
-        "n_train": 15000,
+        "n_train": 10000,
         "n_val": 10000,
         "n_test": 75000,
+        "use_dollar_signs": "true",
         "resample_data": "true",
         "max_iters": 5000,
         "eval_interval": 100,
@@ -24,14 +25,14 @@ if __name__ == "__main__":
 
     i = 0
 
-    for use_dollar_signs in ["true", "false"]:
+    for decoder in ["true", "false"]:
         for task in ["plain_addition", "reversed_addition"]:
             for seed in range(5):
-                config["use_dollar_signs"] = str(use_dollar_signs)
+                config["decoder"] = decoder
                 config["task"] = task
                 config["seed"] = seed
                 config["name"] = (
-                    f"{task}_dollar_signs_{use_dollar_signs}_{seed}_resampled"
+                    f"{task}_{'decoder' if decoder == 'true' else 'encoder'}_{seed}"
                 )
 
                 with open(f"config{i}.json", "w") as f:

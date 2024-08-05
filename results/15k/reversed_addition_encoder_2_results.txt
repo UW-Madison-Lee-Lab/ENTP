@@ -1,2 +1,0 @@
-45201/50000
-{'task': 'reversed_addition', 'decoder': False, 'data_dir': 'data/addition', 'model_dir': 'models', 'results_dir': 'results', 'resume': False, 'n_embd': 384, 'n_layer': 6, 'n_head': 6, 'block_size': 64, 'batch_size': 64, 'test_batch_size': 2048, 'max_iters': 4000, 'eval_interval': 100, 'min_lr': 6e-05, 'max_lr': 0.0006, 'warmup_iters': 2000, 'lr_decay_iters': 600000, 'weight_decay': 0.1, 'beta1': 0.9, 'beta2': 0.95, 'seed': 2, 'n_digits': 3, 'n_train': 15000, 'n_val': 10000, 'n_test': 50000, 'name': 'reversed_addition_encoder_2'}
