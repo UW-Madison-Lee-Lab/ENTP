@@ -18,6 +18,7 @@ def evaluate_loss(
     dataset: data.Dataset,
     max_iters=100,
 ) -> float:
+    model.eval()
     data_loader = data.DataLoader(
         dataset,
         batch_size=config.batch_size,
@@ -71,6 +72,7 @@ def train(config: Config, resume: bool = False) -> None:
         n_layer=config.n_layer,
         n_head=config.n_head,
         n_embd=config.n_embd,
+        dropout=config.dropout,
     )
 
     model = TransformerLMHead(model_config, env.compile_blocks).to(env.device)
@@ -106,6 +108,8 @@ def train(config: Config, resume: bool = False) -> None:
         for x, y in train_data_loader:
             if i > config.max_iters:
                 break
+
+            model.train()
 
             lr = lr_schedule(i)
             for param_group in optimizer.param_groups:

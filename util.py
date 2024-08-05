@@ -35,9 +35,9 @@ def seed_everything(seed: int) -> None:
 
 
 class Config:
-    task: Literal[
-        "plain_addition", "reversed_addition", "shakespeare"
-    ] = "plain_addition"
+    task: Literal["plain_addition", "reversed_addition", "shakespeare"] = (
+        "plain_addition"
+    )
     decoder: bool = True
     data_dir: str = "data/addition"
     model_dir: str = "models"
@@ -46,6 +46,7 @@ class Config:
     n_embd: int = 384
     n_layer: int = 6
     n_head: int = 6
+    dropout: float = 0.0
     block_size: int = 64
     batch_size: int = 64
     test_batch_size: int = 2048
@@ -64,7 +65,7 @@ class Config:
     n_val: int = 10000
     n_test: int = 50000
     use_dollar_signs: bool = True
-    resample_data: bool = False
+    resample_data: bool = True
     name: str = ""
 
     key_to_type: dict[str, Callable[[str], bool | int | float | str]] = {
@@ -77,6 +78,7 @@ class Config:
         "n_embd": int,
         "n_layer": int,
         "n_head": int,
+        "dropout": float,
         "block_size": int,
         "batch_size": int,
         "test_batch_size": int,
@@ -170,14 +172,16 @@ class LRSchedule:
 class BlockDataset(data.Dataset):
     def __init__(self, data: Tensor, config: Config):
         self.data = data
-        self.block_size = config.batch_size
+        self.block_size = config.block_size
+        self.block_idxs = np.random.permutation(len(data) - self.block_size)
 
     def __len__(self) -> int:
-        return (len(self.data) - 1) // self.block_size
+        return len(self.block_idxs)
 
     def __getitem__(self, i: int) -> tuple[Tensor, Tensor]:
-        x = self.data[self.block_size * i : self.block_size * (i + 1)]
-        y = self.data[self.block_size * i + 1 : self.block_size * (i + 1) + 1]
+        j = self.block_idxs[i]
+        x = self.data[j : j + self.block_size]
+        y = self.data[j + 1 : j + self.block_size + 1]
         return x, y
 
 

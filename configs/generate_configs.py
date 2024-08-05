@@ -4,13 +4,21 @@ if __name__ == "__main__":
     config = {
         "data_dir": "data/addition",
         "results_dir": "results/15k_resampled",
-        "n_train": "15000",
-        "n_val": "10000",
-        "n_test": "75000",
-        "resample_data": "true",
-        "max_iters": "4000",
-        "eval_interval": "100",
         "decoder": "true",
+        "n_train": 15000,
+        "n_val": 10000,
+        "n_test": 75000,
+        "resample_data": "true",
+        "max_iters": 6000,
+        "eval_interval": 100,
+        "block_size": 1024,
+        "batch_size": 12,
+        "max_lr": 1e-3,
+        "min_lr": 1e-4,
+        "dropout": 0.2,
+        "lr_decay_iters": 5000,
+        "warmup_iters": 100,
+        "beta2": 0.99,
     }
 
     i = 0
