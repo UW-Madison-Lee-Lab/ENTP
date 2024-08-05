@@ -2,7 +2,6 @@ import os
 import sys
 
 from sklearn.model_selection import train_test_split  # type: ignore
-
 from util import Config
 
 
@@ -74,8 +73,8 @@ def resample(
 
 def make_file(
     config: Config,
-    inputs: list[tuple[int, int]],
-    outputs: list[int],
+    inputs: list[tuple[int | str, int | str]],
+    outputs: list[int | str],
     name: str,
 ) -> None:
     if config.use_dollar_signs:
@@ -213,9 +212,9 @@ if __name__ == "__main__":
                 ratio = n_test / n_train
                 assert min_ratio < ratio and ratio < max_ratio
 
-    train_outputs_reversed = [int(str(n)[::-1]) for n in train_outputs]
-    val_outputs_reversed = [int(str(n)[::-1]) for n in val_outputs]
-    test_outputs_reversed = [int(str(n)[::-1]) for n in test_outputs]
+    train_outputs_reversed = [str(n)[::-1] for n in train_outputs]
+    val_outputs_reversed = [str(n)[::-1] for n in val_outputs]
+    test_outputs_reversed = [str(n)[::-1] for n in test_outputs]
 
     make_file(config, train_inputs, train_outputs, "train_plain_addition")
     make_file(config, train_inputs, train_outputs_reversed, "train_reversed_addition")

@@ -51,7 +51,7 @@ if __name__ == "__main__":
             for seed in range(n_seeds):
                 path = os.path.join(
                     results_dir,
-                    f"{task}_dollar_signs_{use_dollar_signs}_{seed}_results.txt",
+                    f"{task}_dollar_signs_{use_dollar_signs}_{seed}_resampled_results.txt",
                 )
                 with open(path, "r") as f:
                     text = f.read()

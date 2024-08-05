@@ -9,15 +9,16 @@ if __name__ == "__main__":
         "n_val": 10000,
         "n_test": 75000,
         "resample_data": "true",
-        "max_iters": 6000,
+        "max_iters": 5000,
         "eval_interval": 100,
-        "block_size": 1024,
-        "batch_size": 12,
-        "max_lr": 1e-3,
-        "min_lr": 1e-4,
-        "dropout": 0.2,
+        "block_size": 64,
+        "batch_size": 64,
+        "max_lr": 5e-4,
+        "min_lr": 5e-5,
+        "dropout": 0.0,
         "lr_decay_iters": 5000,
-        "warmup_iters": 100,
+        "warmup_iters": 150,
+        "beta1": 0.9,
         "beta2": 0.99,
     }
 
@@ -27,8 +28,8 @@ if __name__ == "__main__":
         for task in ["plain_addition", "reversed_addition"]:
             for seed in range(5):
                 config["use_dollar_signs"] = str(use_dollar_signs)
-                config["task"] = str(task)
-                config["seed"] = str(seed)
+                config["task"] = task
+                config["seed"] = seed
                 config["name"] = (
                     f"{task}_dollar_signs_{use_dollar_signs}_{seed}_resampled"
                 )
