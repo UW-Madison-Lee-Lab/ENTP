@@ -3,7 +3,7 @@ import copy
 from evaluate import evaluate
 from generate_addition_data import generate_addition_data
 from train import train
-from util import Config
+from util import Config, Environment
 
 BASE_CONFIG_DICT = {
     "data_dir": "data/addition",
@@ -41,7 +41,8 @@ if __name__ == "__main__":
                 )
 
                 config = Config(config_dict)
+                env = Environment()
 
                 generate_addition_data(config)
-                train(config)
-                evaluate(config)
+                train(config, env)
+                evaluate(config, env, log_incorrect_examples=True)
