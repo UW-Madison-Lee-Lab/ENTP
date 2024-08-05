@@ -4,11 +4,10 @@ from pprint import pprint
 
 import torch
 import wandb
-from torch.utils import data
-
-from eval_addition import eval_model
+from evaluate import evaluate
 from nano_transformer import TransformerConfig, TransformerLMHead, flat_cross_entropy
-from util import Config, Environment, LRSchedule, load_data, seed_everything
+from torch.utils import data
+from util import Config, Environment, LRSchedule, load_data
 
 
 @torch.no_grad()
@@ -48,13 +47,11 @@ def evaluate_loss(
     return loss_sum / cnt
 
 
-def train(config: Config, resume: bool = False) -> None:
+def train(config: Config, env: Environment, resume: bool = False) -> None:
     """
     Trains model using config parameters. Assumes data is in `config.data_dir`.
-    Saves model in `config.model_dir`. Evaluates model after training.
+    Saves model in `config.model_dir`.
     """
-
-    env = Environment()
 
     print(f"{env.device=}, env.context={str(type(env.context))[8 : -2]}", end=", ")
     print(f"{env.pin_memory=}, {env.pin_memory_device=}, {env.compile_blocks=}")
@@ -68,7 +65,7 @@ def train(config: Config, resume: bool = False) -> None:
         resume=resume,
     )
 
-    seed_everything(config.seed)
+    env.seed_everything(config.seed)
 
     train_dataset, char2int = load_data(config, split="train")
     val_dataset, _ = load_data(config, split="val", char2int=char2int)
@@ -140,7 +137,7 @@ def train(config: Config, resume: bool = False) -> None:
                 wandb.log({"val_loss": val_loss}, step=i)
 
                 if val_loss < best_val_loss:
-                    print(f"saved checkpoint at {i=}, {val_loss=:.2f}")
+                    print(f"saved checkpoint    {i=:5}    {val_loss=:.3f}")
                     best_val_loss = val_loss
                     checkpoint = {
                         "model": model.state_dict(),
@@ -158,10 +155,11 @@ def train(config: Config, resume: bool = False) -> None:
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("usage: python train.py config-path.json")
+        print("usage: python train.py <config-path>")
         exit(1)
 
-    config = Config(sys.argv[1])
+    config = Config.from_json(sys.argv[1])
+    env = Environment()
 
     train(config)
-    eval_model(config, log_incorrect_examples=True)
+    evaluate(config, log_incorrect_examples=True)

@@ -3,7 +3,6 @@ import sys
 from typing import TypeVar
 
 from sklearn.model_selection import train_test_split  # type: ignore
-
 from util import Config
 
 T = TypeVar("T")
@@ -95,13 +94,8 @@ def make_file(
         f.write(text)
 
 
-if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("usage: python generate_data.py config-path.json")
-        exit(1)
-
-    config = Config(sys.argv[1])
-
+def generate_addition_data(config: Config) -> None:
+    """Generates addition data and saves files to `config.data_dir`."""
     max_digits = config.n_digits
 
     inputs = []
@@ -232,3 +226,12 @@ if __name__ == "__main__":
 
     make_file(config, test_inputs, test_outputs, "test_plain_addition")
     make_file(config, test_inputs, test_outputs_reversed, "test_reversed_addition")
+
+
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        print("usage: python generate_data.py <config-path>")
+        exit(1)
+
+    config = Config.from_json(sys.argv[1])
+    generate_addition_data(config)

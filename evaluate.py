@@ -3,19 +3,17 @@ from collections import defaultdict
 from os import path
 
 import torch
+from nano_transformer import TransformerConfig, TransformerLMHead
 from torch import Tensor
 from tqdm import tqdm  # type: ignore
-
-from nano_transformer import TransformerConfig, TransformerLMHead
 from util import Config, Environment, decode, encode
 
 
-def eval_model(config: Config, log_incorrect_examples=False) -> None:
+def evaluate(config: Config, env: Environment, log_incorrect_examples=False) -> None:
     """
     Evaluates model on test dataset. Assumes model is in `config.model_dir`.
     Assumes data is in `config.data_dir`. Saves results in `config.results_dir`.
     """
-    env = Environment()
 
     test_data_path = path.join(config.data_dir, f"test_{config.task}.txt")
     with open(test_data_path, "r", encoding="utf-8") as f:
@@ -124,8 +122,9 @@ def eval_model(config: Config, log_incorrect_examples=False) -> None:
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("usage: python eval-addition.py config-path.json")
+        print("usage: python eval-addition.py <config-path>")
         exit(1)
 
-    config = Config(sys.argv[1])
-    eval_model(config, log_incorrect_examples=True)
+    config = Config.from_json(sys.argv[1])
+    env = Environment()
+    evaluate(config, env, log_incorrect_examples=True)
