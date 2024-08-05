@@ -4,9 +4,10 @@ from pprint import pprint
 
 import torch
 import wandb
+from torch.utils import data
+
 from evaluate import evaluate
 from nano_transformer import TransformerConfig, TransformerLMHead, flat_cross_entropy
-from torch.utils import data
 from util import Config, Environment, LRSchedule, load_data
 
 
@@ -161,5 +162,5 @@ if __name__ == "__main__":
     config = Config.from_json(sys.argv[1])
     env = Environment()
 
-    train(config)
-    evaluate(config, log_incorrect_examples=True)
+    train(config, env)
+    evaluate(config, env, log_incorrect_examples=True)

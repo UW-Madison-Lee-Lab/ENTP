@@ -36,9 +36,9 @@ if __name__ == "__main__":
                 config_dict["decoder"] = decoder
                 config_dict["task"] = task
                 config_dict["seed"] = seed
-                config_dict["name"] = (
-                    f"{task}_{'decoder' if decoder == 'true' else 'encoder'}_{seed}"
-                )
+                config_dict[
+                    "name"
+                ] = f"{task}_{'decoder' if decoder else 'encoder'}_{seed}"
 
                 config = Config(config_dict)
                 env = Environment()

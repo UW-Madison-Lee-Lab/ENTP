@@ -3,6 +3,7 @@ import sys
 from typing import TypeVar
 
 from sklearn.model_selection import train_test_split  # type: ignore
+
 from util import Config
 
 T = TypeVar("T")

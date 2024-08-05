@@ -1,5 +1,5 @@
 import json
-from typing import Callable, Literal, Self
+from typing import Callable, Literal
 
 
 def str_to_bool(b: str) -> bool:
@@ -12,9 +12,9 @@ def str_to_bool(b: str) -> bool:
 class Config:
     """Configuration for data generation, training, and evaluation."""
 
-    task: Literal["plain_addition", "reversed_addition", "shakespeare"] = (
-        "plain_addition"
-    )
+    task: Literal[
+        "plain_addition", "reversed_addition", "shakespeare"
+    ] = "plain_addition"
     decoder: bool = True
     data_dir: str = "data/addition"
     model_dir: str = "models"
@@ -97,7 +97,7 @@ class Config:
         return self.name + ".pt"
 
     @staticmethod
-    def from_json(path: str) -> Self:
+    def from_json(path: str) -> "Config":
         with open(path, "r") as f:
             config = json.load(f)
 
