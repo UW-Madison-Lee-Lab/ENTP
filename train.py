@@ -137,7 +137,7 @@ def train(config: Config, env: Environment, resume: bool = False) -> None:
                 wandb.log({"val_loss": val_loss}, step=i)
 
                 if val_loss < best_val_loss:
-                    print(f"saved checkpoint    {i=:5}    {val_loss=:.3f}")
+                    print(f"saved checkpoint    {f'{i=}':5}    {val_loss=:.3f}")
                     best_val_loss = val_loss
                     checkpoint = {
                         "model": model.state_dict(),
