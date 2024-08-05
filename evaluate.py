@@ -21,7 +21,7 @@ def evaluate(config: Config, env: Environment, log_incorrect_examples=False) -> 
 
     chars = sorted(list(set(test_text)))
     vocab_size = len(chars)
-    if config.use_dollar_signs:
+    if config.use_delimiter:
         assert vocab_size == 14
     else:
         assert vocab_size == 13
