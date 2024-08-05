@@ -8,12 +8,12 @@ from util import Config, Environment
 BASE_CONFIG_DICT = {
     "data_dir": "data/addition",
     "results_dir": "results/15k",
-    "decoder": "true",
+    "decoder": True,
     "n_train": 15000,
     "n_val": 10000,
     "n_test": 75000,
-    "use_dollar_signs": "true",
-    "resample_data": "true",
+    "use_delimiter": True,
+    "resample_data": True,
     "max_iters": 4000,
     "eval_interval": 100,
     "block_size": 64,
@@ -29,7 +29,7 @@ BASE_CONFIG_DICT = {
 
 
 if __name__ == "__main__":
-    for decoder in ["true", "false"]:
+    for decoder in [True, False]:
         for task in ["plain_addition", "reversed_addition"]:
             for seed in range(5):
                 config_dict = copy.deepcopy(BASE_CONFIG_DICT)

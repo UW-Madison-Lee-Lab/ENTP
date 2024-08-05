@@ -41,7 +41,7 @@ class Config:
     n_train: int = 10000
     n_val: int = 10000
     n_test: int = 75000
-    use_dollar_signs: bool = True
+    use_delimiter: bool = True
     resample_data: bool = True
     name: str = ""
 
@@ -73,7 +73,7 @@ class Config:
         "n_train": int,
         "n_val": int,
         "n_test": int,
-        "use_dollar_signs": str_to_bool,
+        "use_delimiter": str_to_bool,
         "resample_data": str_to_bool,
         "name": str,
     }

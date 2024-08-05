@@ -84,7 +84,7 @@ def make_file(
     name: str,
 ) -> None:
     """Saves data file to `config.data_dir`."""
-    if config.use_dollar_signs:
+    if config.use_delimiter:
         text = "".join(f"${i}+{j}={k}$\n" for (i, j), k in zip(inputs, outputs))
     else:
         text = "".join(f"{i}+{j}={k}\n" for (i, j), k in zip(inputs, outputs))
