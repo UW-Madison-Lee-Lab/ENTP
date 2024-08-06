@@ -12,71 +12,38 @@ def str_to_bool(b: str) -> bool:
 class Config:
     """Configuration for data generation, training, and evaluation."""
 
+    batch_size: int = 64
+    beta1: float = 0.9
+    beta2: float = 0.99
+    block_size: int = 64
+    data_dir: str = "data/addition"
+    decoder: bool = True
+    dropout: float = 0.0
+    eval_interval: int = 100
+    lr_decay_iters: int = 5000
+    max_iters: int = 5000
+    max_lr: float = 5e-4
+    min_lr: float = 5e-5
+    n_digits: int = 3
+    n_embd: int = 384
+    n_head: int = 6
+    n_layer: int = 6
+    n_test: int = 75000
+    n_train: int = 10000
+    n_val: int = 10000
+    name: str = ""
+    model_dir: str = "models"
+    resample_data: bool = True
+    results_dir: str = "results"
+    resume: bool = False
+    seed: int = 42
     task: Literal[
         "plain_addition", "reversed_addition", "shakespeare"
     ] = "plain_addition"
-    decoder: bool = True
-    data_dir: str = "data/addition"
-    model_dir: str = "models"
-    results_dir: str = "results"
-    resume: bool = False
-    n_embd: int = 384
-    n_layer: int = 6
-    n_head: int = 6
-    dropout: float = 0.0
-    block_size: int = 64
-    batch_size: int = 64
     test_batch_size: int = 2048
-    max_iters: int = 5000
-    eval_interval: int = 100
-    min_lr: float = 5e-5
-    max_lr: float = 5e-4
-    warmup_iters: int = 2000
-    lr_decay_iters: int = 5000
-    weight_decay: float = 0.1
-    beta1: float = 0.9
-    beta2: float = 0.99
-    seed: int = 42
-    n_digits: int = 3
-    n_train: int = 10000
-    n_val: int = 10000
-    n_test: int = 75000
     use_delimiter: bool = True
-    resample_data: bool = True
-    name: str = ""
-
-    key_to_type: dict[str, Callable[[str], bool | int | float | str]] = {
-        "task": str,
-        "decoder": str_to_bool,
-        "data_dir": str,
-        "model_dir": str,
-        "results_dir": str,
-        "resume": str_to_bool,
-        "n_embd": int,
-        "n_layer": int,
-        "n_head": int,
-        "dropout": float,
-        "block_size": int,
-        "batch_size": int,
-        "test_batch_size": int,
-        "max_iters": int,
-        "eval_interval": int,
-        "min_lr": float,
-        "max_lr": float,
-        "warmup_iters": int,
-        "lr_decay_iters": int,
-        "weight_decay": float,
-        "beta1": float,
-        "beta2": float,
-        "seed": int,
-        "n_digits": int,
-        "n_train": int,
-        "n_val": int,
-        "n_test": int,
-        "use_delimiter": str_to_bool,
-        "resample_data": str_to_bool,
-        "name": str,
-    }
+    warmup_iters: int = 100
+    weight_decay: float = 0.1
 
     def __init__(self, config: dict) -> None:
         for k, v in config.items():
@@ -87,8 +54,9 @@ class Config:
     def to_dict(self) -> dict[str, bool | int | float | str]:
         """Returns a `dict` with all configuration information."""
         d = {}
-        for k in self.key_to_type.keys():
-            d[k] = getattr(self, k)
+        for k in Config.__dict__.keys():
+            if "__" not in k:
+                d[k] = getattr(self, k)
 
         return d
 
