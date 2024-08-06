@@ -49,7 +49,7 @@ class Config:
         """Returns a `dict` with all configuration information."""
         d = {}
         for k in Config.__dict__.keys():
-            if "__" not in k:
+            if "__" not in k and k not in ("from_json", "to_dict"):
                 d[k] = getattr(self, k)
 
         return d
