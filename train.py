@@ -90,8 +90,9 @@ def train(config: Config, env: Environment, resume: bool = False) -> None:
     )
 
     lr_schedule = LRSchedule(config)
-    i = 1
+    i = 0
     best_val_loss = float("inf")
+    n_evals_without_improving = 0
 
     if resume:
         load_path = os.path.join(config.model_dir, config.checkpoint_name)
@@ -101,7 +102,7 @@ def train(config: Config, env: Environment, resume: bool = False) -> None:
         i = checkpoint["i"]
         best_val_loss = checkpoint["best_val_loss"]
 
-    while i <= config.max_iters:
+    while True:
         train_data_loader = data.DataLoader(
             train_dataset,
             batch_size=config.batch_size,
@@ -111,9 +112,8 @@ def train(config: Config, env: Environment, resume: bool = False) -> None:
         )
 
         for x, y in train_data_loader:
-            if i > config.max_iters:
-                break
-
+            i += 1
+            
             model.train()
 
             lr = lr_schedule(i)
@@ -138,6 +138,7 @@ def train(config: Config, env: Environment, resume: bool = False) -> None:
                 wandb.log({"val_loss": val_loss}, step=i)
 
                 if val_loss < best_val_loss:
+                    n_evals_without_improving = 0
                     print(f"saved checkpoint    {f'{i=}':8}  {val_loss=:.3f}")
                     best_val_loss = val_loss
                     checkpoint = {
@@ -148,10 +149,12 @@ def train(config: Config, env: Environment, resume: bool = False) -> None:
                     }
                     save_path = os.path.join(config.model_dir, config.checkpoint_name)
                     torch.save(checkpoint, save_path)
+                else:
+                    n_evals_without_improving += 1
 
-            i += 1
-
-    run.finish()
+            if i >= config.max_iters or n_evals_without_improving >= config.max_evals_without_improving:
+                run.finish()
+                return
 
 
 if __name__ == "__main__":

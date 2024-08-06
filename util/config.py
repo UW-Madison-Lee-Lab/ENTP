@@ -14,9 +14,11 @@ class Config:
     dropout: float = 0.0
     eval_interval: int = 100
     lr_decay_iters: int = 5000
+    max_evals_without_improving: int = 10
     max_iters: int = 5000
     max_lr: float = 5e-4
     min_lr: float = 5e-5
+    model_dir: str = "models"
     n_digits: int = 3
     n_embd: int = 384
     n_head: int = 6
@@ -25,7 +27,6 @@ class Config:
     n_train: int = 10000
     n_val: int = 10000
     name: str = ""
-    model_dir: str = "models"
     resample_data: bool = True
     results_dir: str = "results"
     resume: bool = False
