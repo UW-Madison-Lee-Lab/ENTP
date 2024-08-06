@@ -1,5 +1,7 @@
 #!/bin/bash
 
+trap "exit" INT
+
 for FILE in configs/*; do
     if [ -f "$FILE" ]; then
         if [[ "$FILE" == *.json ]]; then

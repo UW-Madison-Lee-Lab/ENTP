@@ -151,10 +151,13 @@ def train(config: Config, env: Environment, resume: bool = False) -> None:
                 else:
                     n_evals_without_improving += 1
 
-            if (
-                i >= config.max_iters
-                or n_evals_without_improving >= config.max_evals_without_improving
-            ):
+            if i >= config.max_iters:
+                run.finish()
+                return
+            
+            if n_evals_without_improving >= config.max_evals_without_improving:
+                print("stopping early", end=", ")
+                print(f"{n_evals_without_improving} evaluation intervals without improving")
                 run.finish()
                 return
 
