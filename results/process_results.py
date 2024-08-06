@@ -22,7 +22,7 @@ if __name__ == "__main__":
             prefix = f"{task}_{model}"
             n_seeds = len([f for f in os.listdir(results_dir) if prefix in f])
             for seed in range(n_seeds):
-                path = os.path.join(results_dir, f"{task}_{model}_{seed}_results.txt")
+                path = os.path.join(results_dir, f"{results_dir}_{task}_{model}_{seed}_results.txt")
                 with open(path, "r") as f:
                     text = f.read()
 
