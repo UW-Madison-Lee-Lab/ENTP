@@ -1,12 +1,5 @@
 import json
-from typing import Callable, Literal
-
-
-def str_to_bool(b: str) -> bool:
-    """Converts `str` to `bool`."""
-    b = b.lower()
-    assert b == "true" or b == "false"
-    return b == "true"
+from typing import Literal
 
 
 class Config:
@@ -45,7 +38,7 @@ class Config:
     warmup_iters: int = 100
     weight_decay: float = 0.1
 
-    def __init__(self, config: dict) -> None:
+    def __init__(self, config: dict[str, bool | int | float | str]) -> None:
         for k, v in config.items():
             setattr(self, k, v)
 

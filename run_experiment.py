@@ -5,7 +5,7 @@ from generate_addition_data import generate_addition_data
 from train import train
 from util import Config, Environment
 
-BASE_CONFIG_DICT = {
+BASE_CONFIG_DICT: dict[str, bool | int | float | str] = {
     "max_iters": 4000,
     # "n_test": 75000,
     # "n_train": 15000,
@@ -41,7 +41,7 @@ if __name__ == "__main__":
                 train(config, env)
                 evaluate(config, env, log_incorrect_examples=True)
 
-     # 20k experiment
+    # 20k experiment
     base_config_dict_20k = copy.deepcopy(BASE_CONFIG_DICT)
     base_config_dict_20k["n_test"] = 70000
     base_config_dict_20k["n_train"] = 20000
@@ -65,4 +65,3 @@ if __name__ == "__main__":
                 generate_addition_data(config)
                 train(config, env)
                 evaluate(config, env, log_incorrect_examples=True)
-
