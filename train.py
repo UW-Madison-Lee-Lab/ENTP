@@ -6,7 +6,6 @@ import torch
 import wandb
 from torch.utils import data
 
-from evaluate import evaluate
 from nano_transformer import TransformerConfig, TransformerLMHead, flat_cross_entropy
 from util import Config, Environment, LRSchedule, load_data
 
@@ -113,7 +112,7 @@ def train(config: Config, env: Environment, resume: bool = False) -> None:
 
         for x, y in train_data_loader:
             i += 1
-            
+
             model.train()
 
             lr = lr_schedule(i)
@@ -152,7 +151,10 @@ def train(config: Config, env: Environment, resume: bool = False) -> None:
                 else:
                     n_evals_without_improving += 1
 
-            if i >= config.max_iters or n_evals_without_improving >= config.max_evals_without_improving:
+            if (
+                i >= config.max_iters
+                or n_evals_without_improving >= config.max_evals_without_improving
+            ):
                 run.finish()
                 return
 
