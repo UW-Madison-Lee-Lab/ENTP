@@ -163,4 +163,3 @@ if __name__ == "__main__":
     env = Environment()
 
     train(config, env)
-    evaluate(config, env, log_incorrect_examples=True)
