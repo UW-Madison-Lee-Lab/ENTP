@@ -11,7 +11,7 @@ if __name__ == "__main__":
     for n_train in [5000, 10000, 15000, 20000]:
         for decoder in [True, False]:
             for task in ["plain_addition", "reversed_addition"]:
-                for seed in range(1):
+                for seed in range(5):
                     name = f"{n_train // 1000}k_{task}_{'decoder' if decoder else 'encoder'}_{seed}"
                     config = copy.deepcopy(BASE_CONFIG)
                     config["n_train"] = n_train
