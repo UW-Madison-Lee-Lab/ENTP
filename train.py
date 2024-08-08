@@ -150,14 +150,11 @@ def train(config: Config, env: Environment, resume: bool = False) -> None:
                     torch.save(checkpoint, save_path)
                 else:
                     n_evals_without_improving += 1
-
-            if i >= config.max_iters:
-                run.finish()
-                return
             
-            if n_evals_without_improving >= config.max_evals_without_improving:
-                print("stopping early", end=", ")
-                print(f"{n_evals_without_improving} evaluation intervals without improving")
+            if i >= config.max_iters or (
+                n_evals_without_improving >= config.max_evals_without_improving
+                and best_val_loss < config.max_loss_for_early_stopping
+            ):
                 run.finish()
                 return
 
