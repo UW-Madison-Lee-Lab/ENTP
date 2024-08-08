@@ -16,7 +16,7 @@ class Config:
     lr_decay_iters: int = 5000
     max_evals_without_improving: int = 10
     max_iters: int = 5000
-    max_loss_for_early_stopping: int = 1.1
+    max_loss_for_early_stopping: float = 1.1
     max_lr: float = 5e-4
     min_lr: float = 5e-5
     model_dir: str = "models"
