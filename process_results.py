@@ -1,5 +1,8 @@
 import ast
+import os
+import sys
 from collections import Counter
+from tqdm import tqdm
 
 from generate_addition_data import (
     count_carrys,
@@ -10,16 +13,19 @@ from util import Config
 
 
 def parse_line(s: str) -> tuple[int, int]:
-    if s[0] == "$":
-        s = s[1:]
+    try:
+        if s[0] == "$":
+            s = s[1:]
 
-    i = s.find("+")
-    j = s.find("=")
-    n1 = int(s[:i])
-    n2 = int(s[i + 1 : j])
-    n_digits = count_digits(n1, n2)
-    n_carrys = count_carrys(n1, n2)
-    return n_digits, n_carrys
+        i = s.find("+")
+        j = s.find("=")
+        n1 = int(s[:i])
+        n2 = int(s[i + 1 : j])
+        n_digits = count_digits(n1, n2)
+        n_carrys = count_carrys(n1, n2)
+        return n_digits, n_carrys
+    except:
+        return None
 
 
 def process_result_file(result_file_path: str, header=False) -> str:
@@ -37,12 +43,13 @@ def process_result_file(result_file_path: str, header=False) -> str:
 
     row = {"n_correct_test": n_correct, "accuracy_test": accuracy} | config
 
-    incorrect_counts = Counter([parse_line(line) for line in incorrect_examples])
+    parsed_incorrect_lines = [parse_line(line) for line in incorrect_examples]
+    incorrect_counts = Counter([line for line in parsed_incorrect_lines if line is not None])
 
     del config["checkpoint_name"]
     generate_addition_data(Config(config))
 
-    with open(f"{config['data_dir']}/test_plain_addition.txt") as f:
+    with open(f"{config['data_dir']}/test_plain_addition.txt", "r") as f:
         test_lines = f.readlines()
 
     test_counts = Counter([parse_line(line) for line in test_lines])
@@ -69,3 +76,40 @@ def process_result_file(result_file_path: str, header=False) -> str:
         return ",".join(row_keys) + "\n"
     else:
         return ",".join(str(row[k]) for k in row_keys) + "\n"
+
+
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        print("usage: python process_results.py results_dir")
+        exit(1)
+
+    results_dir = sys.argv[1]
+
+    header = None
+    rows = []
+    for f_name in tqdm(os.listdir(results_dir), desc="processing results"):
+        if f_name[-4:] == ".txt":
+            h = process_result_file(f"{results_dir}/{f_name}", header=True)
+            if header is None:
+                header = h
+            else:
+                assert header == h
+
+            rows.append(process_result_file(f"{results_dir}/{f_name}", header=False))
+
+    if "results.csv" in os.listdir("results"):
+        with open("results/results.csv", "r") as f:
+            results_lines = f.readlines()
+
+        assert header == results_lines[0]
+
+        with open("results/results.csv", "a") as f:
+            for row in rows:
+                if row not in results_lines:
+                    f.write(row)
+    
+    else:
+        with open("results/results.csv", "a") as f:
+            f.write(header)
+            for row in rows:
+                f.write(row)
