@@ -2,7 +2,8 @@ import ast
 import os
 import sys
 from collections import Counter
-from tqdm import tqdm
+
+from tqdm import tqdm  # type: ignore
 
 from generate_addition_data import (
     count_carrys,
@@ -12,7 +13,7 @@ from generate_addition_data import (
 from util import Config
 
 
-def parse_line(s: str) -> tuple[int, int]:
+def parse_line(s: str) -> tuple[int, int] | None:
     try:
         if s[0] == "$":
             s = s[1:]
@@ -24,7 +25,7 @@ def parse_line(s: str) -> tuple[int, int]:
         n_digits = count_digits(n1, n2)
         n_carrys = count_carrys(n1, n2)
         return n_digits, n_carrys
-    except:
+    except ValueError:
         return None
 
 
@@ -44,7 +45,9 @@ def process_result_file(result_file_path: str, header=False) -> str:
     row = {"n_correct_test": n_correct, "accuracy_test": accuracy} | config
 
     parsed_incorrect_lines = [parse_line(line) for line in incorrect_examples]
-    incorrect_counts = Counter([line for line in parsed_incorrect_lines if line is not None])
+    incorrect_counts = Counter(
+        [line for line in parsed_incorrect_lines if line is not None]
+    )
 
     del config["checkpoint_name"]
     generate_addition_data(Config(config))
@@ -52,7 +55,8 @@ def process_result_file(result_file_path: str, header=False) -> str:
     with open(f"{config['data_dir']}/test_plain_addition.txt", "r") as f:
         test_lines = f.readlines()
 
-    test_counts = Counter([parse_line(line) for line in test_lines])
+    parsed_test_lines = [parse_line(line) for line in test_lines]
+    test_counts = Counter([line for line in parsed_test_lines if line is not None])
 
     for k in incorrect_counts.keys():
         assert k in test_counts
@@ -85,12 +89,12 @@ if __name__ == "__main__":
 
     results_dir = sys.argv[1]
 
-    header = None
+    header = ""
     rows = []
     for f_name in tqdm(os.listdir(results_dir), desc="processing results"):
         if f_name[-4:] == ".txt":
             h = process_result_file(f"{results_dir}/{f_name}", header=True)
-            if header is None:
+            if header == "":
                 header = h
             else:
                 assert header == h
@@ -107,7 +111,7 @@ if __name__ == "__main__":
             for row in rows:
                 if row not in results_lines:
                     f.write(row)
-    
+
     else:
         with open("results/results.csv", "a") as f:
             f.write(header)
