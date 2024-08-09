@@ -20,6 +20,9 @@ if __name__ == "__main__":
                     config["seed"] = seed
                     config["name"] = name
                     config["results_dir"] = f"results/{n_train // 1000}k"
+
+                    if n_train == 5000:
+                        config["max_loss_for_early_stopping"] = 1e9
                     
                     config_path = f"configs/{name}.json"
                     with open(config_path, "w") as f:
