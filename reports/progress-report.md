@@ -15,7 +15,7 @@ def encoder_forward(self, x: Tensor) -> Tensor:
     for t in range(x.shape[1]):
         x_t = x[:, : t + 1]
         for block in self.h:
-            x_t = block(x_t, is_causal)
+            x_t = block(x_t)
         y[:, t] = self.ln_f(x_t[:, t])
     return y
 ```
