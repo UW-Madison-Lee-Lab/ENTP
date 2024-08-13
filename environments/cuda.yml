@@ -3,6 +3,7 @@ name: encoder-addition-cuda
 channels:
   - pytorch
   - nvidia
+  - conda-forge
   
 dependencies:
   - pytorch=2.4.0
