@@ -21,7 +21,7 @@ class Environment:
             self.context = torch.autocast(self.device, dtype=torch.bfloat16)
             self.pin_memory = True
             self.pin_memory_device = "cuda"
-            self.compile_blocks = True
+            self.compile_blocks = torch.__version__ >= "2.4.0"
         elif torch.backends.mps.is_available():
             self.device = "mps"
         else:
