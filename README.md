@@ -1,5 +1,5 @@
 # AWS
-- amazon/Deep Learning Base OSS Nvidia Driver GPU AMI (Ubuntu 22.04) 
+- amazon/Deep Learning Base AMI (Amazon Linux 2) Version 57.8
 ```bash
 mkdir -p ~/miniconda3
 wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda3/miniconda.sh
