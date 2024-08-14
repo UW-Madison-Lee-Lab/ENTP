@@ -5,6 +5,8 @@ BASE_CONFIG: dict[str, bool | int | float | str] = {
     "max_iters": 8000,
     "n_test": 70000,
     "n_val": 10000,
+    "max_evals_without_improving": 5,
+    "max_loss_for_early_stopping": 1e9,
 }
 
 
