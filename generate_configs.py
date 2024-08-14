@@ -7,6 +7,7 @@ BASE_CONFIG: dict[str, bool | int | float | str] = {
     "n_val": 10000,
     "max_evals_without_improving": 5,
     "max_loss_for_early_stopping": 1e9,
+    "batch_size": 32,
 }
 
 
@@ -19,7 +20,7 @@ def n_train_str(n_train: int) -> str:
 
 if __name__ == "__main__":
     for n_train in [2500, 3750]:
-        for decoder in [True, False]:
+        for decoder in [False]:
             for task in ["plain_addition"]:
                 for seed in range(5):
                     name = f"{n_train_str(n_train)}_{task}_{'decoder' if decoder else 'encoder'}_{seed}"
