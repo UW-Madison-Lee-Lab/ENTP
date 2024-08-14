@@ -1,0 +1,10 @@
+name: encoder-addition-flex
+  
+dependencies:
+  - pytorch
+  - numpy
+  - scikit-learn
+  - pip
+  - pip:
+    - tqdm
+    - wandb

@@ -42,7 +42,7 @@ def encoder_forward(self, x: Tensor) -> Tensor:
 - We tested all combinations of the parameters listed below
     - Decoder-only or encoder-only transformer
     - Plain or reversed addition
-    - 5k, 10k, 15k, or 2k training examples
+    - 5k, 10k, 15k, or 20k training examples
 - Each combination was tested of 5 different seeds
 - We reran a small number of trials to make sure are results were consistent across runs 
 
