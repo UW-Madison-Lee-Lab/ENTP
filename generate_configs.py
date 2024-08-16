@@ -14,7 +14,7 @@ SMALL_CONFIG: dict[str, bool | int | float | str] = {
     "max_evals_without_improving": 10,
     "max_iters": 8000,
     "n_embd": 192,
-    "n_head": 6,
+    "n_head": 3,
     "n_layer": 3,
     "n_test": 70000,
     "n_val": 10000,
