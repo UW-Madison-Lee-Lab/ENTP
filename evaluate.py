@@ -1,21 +1,28 @@
 import sys
 from collections import defaultdict
 from os import path
+from typing import Literal
 
 import torch
-from nano_transformer import TransformerConfig, TransformerLMHead
 from torch import Tensor
 from tqdm import tqdm  # type: ignore
+
+from nano_transformer import TransformerConfig, TransformerLMHead
 from util import Config, Environment, decode, encode
 
 
-def evaluate(config: Config, env: Environment, log_incorrect_examples=False) -> None:
+def evaluate_split(
+    config: Config,
+    env: Environment,
+    split: Literal["train", "test"],
+) -> tuple[int, int, list[tuple[Tensor, Tensor, Tensor]], dict[int, str]]:
     """
-    Evaluates model on test dataset. Assumes model is in `config.model_dir`.
+    Evaluates model on `split` dataset. Assumes model is in `config.model_dir`.
     Assumes data is in `config.data_dir`. Saves results in `config.results_dir`.
+    Returns `(n_correct, n_total, incorrect_examples, int2char)`.
     """
 
-    test_data_path = path.join(config.data_dir, f"test_{config.task}.txt")
+    test_data_path = path.join(config.data_dir, f"{split}_{config.task}.txt")
     with open(test_data_path, "r", encoding="utf-8") as f:
         test_text = f.read()
 
@@ -69,7 +76,7 @@ def evaluate(config: Config, env: Environment, log_incorrect_examples=False) -> 
 
     progress_bar = tqdm(
         zip(batches, batch_eq_idxs),
-        desc=f"[{0:.2f}% accuracy]",
+        desc=f"[{0:.2f}% {split}ing accuracy]",
         total=len(batches),
     )
 
@@ -102,22 +109,46 @@ def evaluate(config: Config, env: Environment, log_incorrect_examples=False) -> 
         n_correct += int(torch.sum(correct.int()))
         n_total += len(output_ids)
 
-        progress_bar.set_description(f"[{100 * n_correct / n_total:.2f}% accuracy]")
+        progress_bar.set_description(
+            f"[{100 * n_correct / n_total:.2f}% {split}ing accuracy]"
+        )
 
-    print(f"{n_correct}/{n_total} correct")
+    print(f"{split} dataset: {n_correct}/{n_total} correct")
 
-    results_test = f"{n_correct}/{n_total}\n{str(config.to_dict())}\n"
+    return n_correct, n_total, incorrect_examples, int2char
+
+
+def evaluate(
+    config: Config,
+    env: Environment,
+    log_incorrect_examples=False,
+):
+    n_correct_test, n_total_test, incorrect_examples_test, int2char = evaluate_split(
+        config,
+        env,
+        split="test",
+    )
+
+    n_correct_train, n_total_train, *_ = evaluate_split(
+        config,
+        env,
+        split="train",
+    )
+
+    results_str = f"{n_correct_test}/{n_total_test} (test)\n"
+    results_str += f"{n_correct_train}/{n_total_train} (train)\n"
+    results_str += f"{str(config.to_dict())}\n"
 
     if log_incorrect_examples:
-        for input_ids, output_ids, target_ids in incorrect_examples:
+        for input_ids, output_ids, target_ids in incorrect_examples_test:
             input_str = decode(input_ids, int2char)
             output_str = decode(output_ids, int2char).removesuffix("\n")
             target_str = decode(target_ids, int2char).removesuffix("\n")
-            results_test += f"{input_str}{output_str},{input_str}{target_str}\n"
+            results_str += f"{input_str}{output_str},{input_str}{target_str}\n"
 
     f_name = f"{config.name}_results.txt"
     with open(path.join(config.results_dir, f_name), "w") as f:
-        f.write(results_test)
+        f.write(results_str)
 
 
 if __name__ == "__main__":

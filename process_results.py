@@ -31,18 +31,35 @@ def parse_line(s: str) -> tuple[int, int] | None:
 
 def process_result_file(result_file_path: str, header=False) -> str:
     with open(result_file_path, "r") as f:
-        result_line, config_line, *incorrect_examples = f.readlines()
+        (
+            test_result_line,
+            train_result_line,
+            config_line,
+            *incorrect_examples,
+        ) = f.readlines()
 
-    i = result_line.find("/")
-    n_correct = int(result_line[:i])
-    n_total = int(result_line[i + 1 : -1])
-    accuracy = n_correct / n_total
+    i = test_result_line.find("/")
+    j = test_result_line.find(" ")
+    n_correct_test = int(test_result_line[:i])
+    n_total_test = int(test_result_line[i + 1 : j])
+    accuracy_test = n_correct_test / n_total_test
+
+    i = train_result_line.find("/")
+    j = train_result_line.find(" ")
+    n_correct_train = int(train_result_line[:i])
+    n_total_train = int(train_result_line[i + 1 : j])
+    accuracy_train = n_correct_train / n_total_train
 
     config = ast.literal_eval(config_line[:-1])
 
-    assert n_total == config["n_test"]
+    assert n_total_test == config["n_test"]
 
-    row = {"n_correct_test": n_correct, "accuracy_test": accuracy} | config
+    row = {
+        "n_correct_test": n_correct_test,
+        "accuracy_test": accuracy_test,
+        "n_correct_train": n_correct_train,
+        "accuracy_train": accuracy_train,
+    } | config
 
     parsed_incorrect_lines = [parse_line(line) for line in incorrect_examples]
     incorrect_counts = Counter(
@@ -61,8 +78,8 @@ def process_result_file(result_file_path: str, header=False) -> str:
     for k in incorrect_counts.keys():
         assert k in test_counts
 
-    assert sum(test_counts.values()) == n_total
-    assert n_total - sum(incorrect_counts.values()) == n_correct
+    assert sum(test_counts.values()) == n_total_test
+    assert n_total_test - sum(incorrect_counts.values()) == n_correct_test
 
     for key in test_counts.keys():
         n_total_key = test_counts[key]
