@@ -9,4 +9,4 @@ results/*/*.txt
 models/*.pt
 testing/models/*.pt
 *.ipynb
-results_old
+results.tar.gz
