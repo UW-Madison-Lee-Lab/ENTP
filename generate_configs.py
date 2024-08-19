@@ -2,14 +2,11 @@ import copy
 import json
 
 BASE_CONFIG: dict[str, bool | int | float | str] = {
-    "batch_size": 64,
     "data_dir": "data/shakespeare",
     "max_evals_without_improving": 10,
-    "max_iters": 16000,
-    "max_loss_for_early_stopping": 1e9,
+    "max_iters": 8000,
     "n_test": 70000,
     "n_val": 10000,
-    "task": "shakespeare",
 }
 
 
@@ -21,20 +18,22 @@ def n_train_str(n_train: int) -> str:
 
 
 if __name__ == "__main__":
-    for decoder in [True, False]:
-        for small in [True, False]:
-            for seed in range(5):
-                name = f"shakespeare_{'small' if small else 'standare'}_{'decoder' if decoder else 'encoder'}_{seed}"
-                config = copy.deepcopy(BASE_CONFIG)
-                config["decoder"] = decoder
-                config["seed"] = seed
-                config["name"] = name
+    for n_train in [2500, 3750, 5000]:
+        for decoder in [True, False]:
+            for task in ["plain_addition", "reversed_addition"]:
+                for seed in range(5, 10):
+                    name = f"{n_train_str(n_train)}_{task}_{'decoder' if decoder else 'encoder'}_{seed}"
+                    config = copy.deepcopy(BASE_CONFIG)
+                    config["n_train"] = n_train
+                    config["decoder"] = decoder
+                    config["task"] = task
+                    config["seed"] = seed
+                    config["name"] = name
+                    config["results_dir"] = f"results/{n_train_str(n_train)}"
 
-                if small:
-                    config["n_embd"] = 192
-                    config["n_head"] = 3
-                    config["n_layer"] = 3
+                    if n_train <= 5000:
+                        config["max_loss_for_early_stopping"] = 1e9
 
-                config_path = f"configs/{name}.json"
-                with open(config_path, "w") as f:
-                    json.dump(config, f)
+                    config_path = f"configs/{name}.json"
+                    with open(config_path, "w") as f:
+                        json.dump(config, f)

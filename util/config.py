@@ -14,9 +14,9 @@ class Config:
     dropout: float = 0.0
     eval_interval: int = 100
     lr_decay_iters: int = 5000
-    max_evals_without_improving: int = 10
+    max_evals_without_improving: int = 1000
     max_iters: int = 5000
-    max_loss_for_early_stopping: float = 1.1
+    max_loss_for_early_stopping: float = 1e9
     max_lr: float = 5e-4
     min_lr: float = 5e-5
     model_dir: str = "models"
