@@ -20,9 +20,7 @@ class Config:
     max_lr: float = 5e-4
     min_lr: float = 5e-5
     model_dir: str = "models"
-    n_digits: int = 3  # for normal addition experiment
-    n_digits_train: int = 20  # for len gen experiment
-    n_digits_test: int = 100  # for len gen experiment
+    n_digits: int = 3
     n_embd: int = 384
     n_head: int = 6
     n_layer: int = 6
