@@ -17,8 +17,8 @@ def evaluate_split_with_model(
     env: Environment,
     split: Literal["train", "val", "test"],
 ) -> float:
-    test_data_path = path.join(config.data_dir, f"{split}_{config.task}.txt")
-    with open(test_data_path, "r", encoding="utf-8") as f:
+    data_path = path.join(config.data_dir, f"{split}_{config.task}.txt")
+    with open(data_path, "r", encoding="utf-8") as f:
         test_text = f.read()
 
     chars = sorted(list(set(test_text)))
