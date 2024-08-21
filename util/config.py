@@ -37,6 +37,7 @@ class Config:
     ] = "plain_addition"
     test_batch_size: int = 2048
     use_delimiter: bool = True
+    use_wpe: bool = True
     warmup_iters: int = 100
     weight_decay: float = 0.1
 

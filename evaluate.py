@@ -42,6 +42,7 @@ def evaluate_split(
         n_layer=config.n_layer,
         n_head=config.n_head,
         n_embd=config.n_embd,
+        use_wpe=config.use_wpe,
     )
 
     model = TransformerLMHead(model_config).to(env.device)

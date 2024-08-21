@@ -77,6 +77,7 @@ def train(config: Config, env: Environment, resume: bool = False) -> None:
         n_head=config.n_head,
         n_embd=config.n_embd,
         dropout=config.dropout,
+        use_wpe=config.use_wpe,
     )
 
     model = TransformerLMHead(model_config, env.compile_blocks).to(env.device)
