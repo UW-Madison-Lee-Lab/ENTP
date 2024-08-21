@@ -11,6 +11,70 @@ from nano_transformer import TransformerConfig, TransformerLMHead
 from util import Config, Environment, decode, encode
 
 
+def evaluate_split_with_model(
+    model: TransformerLMHead,
+    env: Environment,
+    split: Literal["train", "val", "test"],
+) -> float:
+    test_data_path = path.join(config.data_dir, f"{split}_{config.task}.txt")
+    with open(test_data_path, "r", encoding="utf-8") as f:
+        test_text = f.read()
+
+    chars = sorted(list(set(test_text)))
+    vocab_size = len(chars)
+    if config.use_delimiter:
+        assert vocab_size == 14
+    else:
+        assert vocab_size == 13
+
+    char2int = {c: i for i, c in enumerate(chars)}
+
+    model.eval()
+
+    lines = test_text.split("\n")[:-1]
+    line_lens = [len(line) for line in lines]
+    line_eq_idxs = [line.find("=") for line in lines]
+    lines_data = [t for t in zip(line_lens, line_eq_idxs)]
+
+    line_groups = defaultdict(list)
+
+    for line, line_data in zip(lines, lines_data):
+        line_groups[line_data].append(line)
+
+    batches: list[Tensor] = []
+    batch_eq_idxs: list[int] = []
+
+    for (_, eq_idx), grouped_lines in line_groups.items():
+        for i in range(0, len(grouped_lines), config.test_batch_size):
+            unencoded_batch = grouped_lines[i : i + config.test_batch_size]
+            batches.append(encode(unencoded_batch, char2int))
+            batch_eq_idxs.append(eq_idx)
+            assert torch.all(batches[-1][:, batch_eq_idxs[-1]] == char2int["="])
+
+    n_correct = 0
+    n_total = 0
+
+    for batch, eq_idx in zip(batches, batch_eq_idxs):
+        input_ids = batch[:, : eq_idx + 1].to(env.device)
+
+        with env.context:
+            output_ids = model.generate(
+                input_ids,
+                max_new_tokens=5,
+                decoder=config.decoder,
+            )
+
+        output_ids = output_ids[:, eq_idx + 1 : batch.shape[1]].cpu()
+        target_ids = batch[:, eq_idx + 1 :]
+
+        correct = torch.all(output_ids == target_ids, dim=1)
+
+        n_correct += int(torch.sum(correct.int()))
+
+    print(f"{split} dataset: {n_correct}/{n_total} correct")
+    return n_correct / n_total
+
+
 def evaluate_split(
     config: Config,
     env: Environment,

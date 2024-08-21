@@ -36,6 +36,7 @@ class Config:
         "plain_addition", "reversed_addition", "shakespeare"
     ] = "plain_addition"
     test_batch_size: int = 2048
+    test_accuracy_during_training: bool = False
     use_delimiter: bool = True
     use_wpe: bool = True
     warmup_iters: int = 100

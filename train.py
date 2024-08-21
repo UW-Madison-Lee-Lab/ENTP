@@ -6,6 +6,7 @@ import torch
 import wandb
 from torch.utils import data
 
+from evaluate import evaluate_split_with_model
 from nano_transformer import TransformerConfig, TransformerLMHead, flat_cross_entropy
 from util import Config, Environment, LRSchedule, load_data
 
@@ -151,6 +152,21 @@ def train(config: Config, env: Environment, resume: bool = False) -> None:
                     torch.save(checkpoint, save_path)
                 else:
                     n_evals_without_improving += 1
+
+                if config.test_accuracy_during_training:
+                    train_acc = evaluate_split_with_model(
+                        model,
+                        env,
+                        split="train",
+                    )
+
+                    val_acc = evaluate_split_with_model(
+                        model,
+                        env,
+                        split="val",
+                    )
+
+                    wandb.log({"train_acc": train_acc, "val_acc": val_acc}, step=i)
 
             if i >= config.max_iters or (
                 n_evals_without_improving >= config.max_evals_without_improving
