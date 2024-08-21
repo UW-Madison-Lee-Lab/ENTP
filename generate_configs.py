@@ -1,4 +1,5 @@
 import copy
+import json
 
 SMALL: dict[str, int] = {
     "n_layer": 3,
@@ -19,11 +20,13 @@ LARGE: dict[str, int] = {
 }
 
 BASE_CONFIG: dict[str, bool | int | float | str] = {
-    "task": "shakespeare",
-    "data_dir": "data/shakespeare",
-    "max_evals_without_improving": 10,
-    "max_iters": 16000,
-    "use_wpe": False,
+    "data_dir": "data/addition",
+    "max_evals_without_improving": 25,
+    "max_iters": 10000,
+    "n_train": 2500,
+    "n_val": 10000,
+    "n_test": 70000,
+    "test_accuracy_during_training": True,
 }
 
 
@@ -35,31 +38,35 @@ def n_train_str(n_train: int) -> str:
 
 
 if __name__ == "__main__":
-    # for n_train in [2500, 3750, 5000]:
-    #     for decoder in [True, False]:
-    #         for task in ["plain_addition", "reversed_addition"]:
-    #             for seed in range(5, 10):
-    #                 name = f"{n_train_str(n_train)}_{task}_{'decoder' if decoder else 'encoder'}_{seed}"
-    #                 config = copy.deepcopy(BASE_CONFIG)
-    #                 config["n_train"] = n_train
-    #                 config["decoder"] = decoder
-    #                 config["task"] = task
-    #                 config["seed"] = seed
-    #                 config["name"] = name
-    #                 config["results_dir"] = f"results/{n_train_str(n_train)}"
-
-    #                 if n_train <= 5000:
-    #                     config["max_loss_for_early_stopping"] = 1e9
-
-    #                 config_path = f"configs/{name}.json"
-    #                 with open(config_path, "w") as f:
-    #                     json.dump(config, f)
-
-    for size in [SMALL, LARGE]:
+    for size in [SMALL, MEDIUM]:
         for decoder in [True, False]:
-            for seed in range(1):
-                name = f"{'small' if size == SMALL else 'large'}_{'decoder' if decoder else 'encoder'}_no_wpe_shakespeare_{seed}"
-                config = copy.deepcopy(BASE_CONFIG | size)
-                config["decoder"] = decoder
-                config["seed"] = seed
-                config["name"] = name
+            for task in ["plain_addition", "reversed_addition"]:
+                for seed in range(1):
+                    name = f"{task}_{'small' if size == SMALL else 'medium'}_{'decoder' if decoder else 'encoder'}_{seed}"
+                    config = copy.deepcopy(BASE_CONFIG | size)
+                    config["decoder"] = decoder
+                    config["task"] = task
+                    config["seed"] = seed
+                    config["name"] = name
+                    config["results_dir"] = f"results/{n_train_str(config["n_train"])}"
+
+                    if config["n_train"] <= 5000:
+                        config["max_loss_for_early_stopping"] = 1e9
+
+                    config_path = f"configs/{name}.json"
+                    with open(config_path, "w") as f:
+                        json.dump(config, f)
+
+    # for size in [SMALL, MEDIUM]:
+    #     for decoder in [True, False]:
+    #         for seed in range(1):
+    #             name = f"shakespeare_{'small' if size == SMALL else 'medium'}_{'decoder' if decoder else 'encoder'}_no_wpe_{seed}"
+    #             config = copy.deepcopy(BASE_CONFIG | size)
+    #             config["decoder"] = decoder
+    #             config["seed"] = seed
+    #             config["name"] = name
+
+    #             config_path = f"configs/{name}.json"
+    #             with open(config_path, "w") as f:
+    #                 json.dump(config, f)
+

@@ -156,12 +156,14 @@ def train(config: Config, env: Environment, resume: bool = False) -> None:
                 if config.test_accuracy_during_training:
                     train_acc = evaluate_split_with_model(
                         model,
+                        config,
                         env,
                         split="train",
                     )
 
                     val_acc = evaluate_split_with_model(
                         model,
+                        config,
                         env,
                         split="val",
                     )

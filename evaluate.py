@@ -13,6 +13,7 @@ from util import Config, Environment, decode, encode
 
 def evaluate_split_with_model(
     model: TransformerLMHead,
+    config: Config,
     env: Environment,
     split: Literal["train", "val", "test"],
 ) -> float:
@@ -70,8 +71,8 @@ def evaluate_split_with_model(
         correct = torch.all(output_ids == target_ids, dim=1)
 
         n_correct += int(torch.sum(correct.int()))
+        n_total += len(correct)
 
-    print(f"{split} dataset: {n_correct}/{n_total} correct")
     return n_correct / n_total
 
 
