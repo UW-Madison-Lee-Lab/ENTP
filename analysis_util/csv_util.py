@@ -20,7 +20,16 @@ def merge_wandb_csvs(dir: str) -> pd.DataFrame:
 
         assert " - " in main_k
         csv_df = csv_df[["Step", main_k]]
-        csv_df = csv_df[csv_df["Step"] % 100 == 0]
+
+        csv_df_copy = csv_df.copy()
+
+        csv_df["Step"] //= 100
+        csv_df = csv_df.groupby("Step", as_index=False).mean().reset_index(drop=True)
+        csv_df["Step"] *= 100
+
+        if "train_loss" not in main_k:
+            assert (csv_df["Step"] == csv_df_copy["Step"]).all()
+            assert (csv_df[main_k] == csv_df_copy[main_k]).all()
 
         df = df.merge(csv_df, on="Step", how="outer")
 

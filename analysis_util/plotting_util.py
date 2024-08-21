@@ -252,7 +252,7 @@ def plot_two_sets_of_multiple_keys(
     y_labels2: Optional[list[Optional[str]]] = None,
     title2: Optional[str] = None,
 ) -> None:
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 4), dpi=128)
+    _, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 3), dpi=128)
 
     if y_labels1 is None:
         y_labels1 = [None] * len(ys1)
