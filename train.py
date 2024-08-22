@@ -48,7 +48,7 @@ def evaluate_loss(
     return loss_sum / cnt
 
 
-def train(config: Config, env: Environment, resume: bool = False) -> None:
+def train(config: Config, env: Environment) -> None:
     """
     Trains model using config parameters. Assumes data is in `config.data_dir`.
     Saves model in `config.model_dir`.
@@ -63,7 +63,7 @@ def train(config: Config, env: Environment, resume: bool = False) -> None:
         project="encoder-addition",
         config=config.to_dict(),
         name=config.name,
-        resume=resume,
+        resume=config.resume,
     )
 
     env.seed_everything(config.seed)
@@ -95,7 +95,7 @@ def train(config: Config, env: Environment, resume: bool = False) -> None:
     best_val_loss = float("inf")
     n_evals_without_improving = 0
 
-    if resume:
+    if config.resume:
         load_path = os.path.join(config.model_dir, config.checkpoint_name)
         checkpoint = torch.load(load_path, weights_only=False)
         model.load_state_dict(checkpoint["model"])
