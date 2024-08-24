@@ -5,6 +5,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd  # type: ignore
 
+plt.rcParams["text.usetex"] = True
+plt.rcParams["font.family"] = "serif"  # Use serif font
+plt.rcParams[
+    "text.latex.preamble"
+] = r"\usepackage{amsmath}"  # Use additional packages if needed
+
 
 def reduce_results(
     df: pd.DataFrame,
@@ -63,7 +69,9 @@ def plot_results_errorbar(
     df: pd.DataFrame,
     task: str,
     title_prefix="",
+    title=True,
     n_trains=[1250, 2500, 3750, 5000, 10000, 15000, 20000],
+    save_path: Optional[str] = None,
 ) -> None:
     plt.figure(figsize=(8, 4), dpi=128)
 
@@ -78,15 +86,20 @@ def plot_results_errorbar(
             fmt="-o",
             ms=4,
             capsize=4,
-            label=k[-7:],
+            label=k[-7:].capitalize() + "-only",
         )
 
-    plt.ylabel("test accuracy", fontsize=8)
-    plt.xlabel("training examples", fontsize=8)
+    plt.ylabel("\\textbf{Test Accuracy}", fontsize=8)
+    plt.xlabel("\\textbf{Number of Training Examples}", fontsize=8)
     plt.xticks(fontsize=8)
     plt.yticks(fontsize=8)
-    plt.title(title_prefix + task.replace("_", " "), fontsize=8)
+    if title:
+        plt.title(title_prefix + task.replace("_", " "), fontsize=8)
     plt.legend(fontsize=8)
+
+    if save_path is not None:
+        plt.savefig(save_path, bbox_inches="tight")
+
     plt.show()
 
 
@@ -207,6 +220,7 @@ def plot_multiple_keys(
     x_label: Optional[str] = None,
     y_labels: Optional[list[Optional[str]]] = None,
     title: Optional[str] = None,
+    save_path: Optional[str] = None,
 ) -> None:
     plt.figure(figsize=(8, 4), dpi=128)
 
@@ -216,6 +230,9 @@ def plot_multiple_keys(
         assert len(ys) == len(y_labels)
 
     for y, label in zip(ys, y_labels):
+        if label is not None:
+            label = label.capitalize()
+
         plt.plot(
             df[x],
             df[y],
@@ -225,16 +242,19 @@ def plot_multiple_keys(
         )
 
     if x_label is not None:
-        plt.xlabel(x_label, fontsize=8)
+        plt.xlabel("\\textbf{" + x_label.capitalize() + "}", fontsize=8)
 
     if title is not None:
-        plt.title(title, fontsize=8)
+        plt.title("\\textbf{" + title.capitalize() + "}", fontsize=8)
 
     if y_labels[0] is not None:
         plt.legend(fontsize=8)
 
     plt.xticks(fontsize=8)
     plt.yticks(fontsize=8)
+
+    if save_path is not None:
+        plt.savefig(save_path, bbox_inches="tight")
 
     plt.show()
 
@@ -251,6 +271,7 @@ def plot_two_sets_of_multiple_keys(
     x_label2: Optional[str] = None,
     y_labels2: Optional[list[Optional[str]]] = None,
     title2: Optional[str] = None,
+    save_path: Optional[str] = None,
 ) -> None:
     _, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 3), dpi=128)
 
@@ -260,6 +281,9 @@ def plot_two_sets_of_multiple_keys(
         assert len(ys1) == len(y_labels1)
 
     for y, label in zip(ys1, y_labels1):
+        if label is not None:
+            label = label.capitalize()
+
         ax1.plot(
             df[x1],
             df[y],
@@ -269,10 +293,10 @@ def plot_two_sets_of_multiple_keys(
         )
 
     if x_label1 is not None:
-        ax1.set_xlabel(x_label1, fontsize=8)
+        ax1.set_xlabel("\\textbf{" + x_label1.capitalize() + "}", fontsize=8)
 
     if title1 is not None:
-        ax1.set_title(title1, fontsize=8)
+        ax1.set_title("\\textbf{" + title1.capitalize() + "}", fontsize=8)
 
     if y_labels1[0] is not None:
         ax1.legend(fontsize=8)
@@ -295,10 +319,10 @@ def plot_two_sets_of_multiple_keys(
         )
 
     if x_label2 is not None:
-        ax2.set_xlabel(x_label2, fontsize=8)
+        ax2.set_xlabel("\\textbf{" + x_label2.capitalize() + "}", fontsize=8)
 
     if title2 is not None:
-        ax2.set_title(title2, fontsize=8)
+        ax2.set_title("\\textbf{" + title2.capitalize() + "}", fontsize=8)
 
     if y_labels2[0] is not None:
         ax2.legend(fontsize=8)
@@ -307,4 +331,8 @@ def plot_two_sets_of_multiple_keys(
     ax2.tick_params(axis="y", labelsize=8)
 
     plt.tight_layout()
+
+    if save_path is not None:
+        plt.savefig(save_path, bbox_inches="tight")
+
     plt.show()

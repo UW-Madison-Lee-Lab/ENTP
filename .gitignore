@@ -11,3 +11,4 @@ models/*.pt
 testing/models/*.pt
 *.ipynb
 results.tar.gz
+figures/*.pdf
