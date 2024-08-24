@@ -8,6 +8,8 @@ class Config:
     batch_size: int = 64
     beta1: float = 0.9
     beta2: float = 0.99
+    counting_seed_max: int = 16
+    counting_seed_size: int = 16
     block_size: int = 64
     data_dir: str = "data/addition"
     decoder: bool = True
@@ -33,7 +35,10 @@ class Config:
     resume: bool = False
     seed: int = 42
     task: Literal[
-        "plain_addition", "reversed_addition", "shakespeare"
+        "plain_addition",
+        "reversed_addition",
+        "shakespeare",
+        "counting",
     ] = "plain_addition"
     test_batch_size: int = 2048
     test_accuracy_during_training: bool = False

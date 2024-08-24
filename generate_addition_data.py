@@ -231,7 +231,7 @@ def generate_addition_data(config: Config) -> None:
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("usage: python generate_data.py <config-path>")
+        print("usage: python generate_addition_data.py <config-path>")
         exit(1)
 
     config = Config.from_json(sys.argv[1])

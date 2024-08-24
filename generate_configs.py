@@ -21,12 +21,12 @@ LARGE: dict[str, int] = {
 
 BASE_CONFIG: dict[str, bool | int | float | str] = {
     "data_dir": "data/addition",
-    "max_evals_without_improving": 25,
+    "max_evals_without_improving": 10,
     "max_iters": 10000,
-    "n_train": 2500,
-    "n_val": 10000,
-    "n_test": 70000,
     "test_accuracy_during_training": True,
+    "task": "counting",
+    "counting_seed_max": 16,
+    "counting_seed_size": 16,
 }
 
 
@@ -38,37 +38,16 @@ def n_train_str(n_train: int) -> str:
 
 
 if __name__ == "__main__":
-    for size in [SMALL, MEDIUM]:
-        for n_train in [2500]:
-            for decoder in [True, False]:
-                for task in ["plain_addition", "reversed_addition"]:
-                    for seed in range(1):
-                        name = f"{task}_{'small' if size == SMALL else 'medium'}_{'decoder' if decoder else 'encoder'}_{seed}"
-                        config = copy.deepcopy(BASE_CONFIG | size)
-                        config["n_train"] = n_train
-                        config["decoder"] = decoder
-                        config["task"] = task
-                        config["seed"] = seed
-                        config["name"] = name
+    for size in [MEDIUM]:
+        for decoder in [True, False]:
+            for use_wpe in [True, False]:
+                for seed in range(1):
+                    name = f"counting_{'small' if size == SMALL else 'medium'}_{'decoder' if decoder else 'encoder'}_{'' if use_wpe else 'nope_'}{seed}"
+                    config = copy.deepcopy(BASE_CONFIG | size)
+                    config["name"] = name
+                    config["decoder"] = decoder
+                    config["seed"] = seed
 
-                        config["results_dir"] = f"results/{n_train_str(n_train)}"
-
-                        if n_train <= 5000:
-                            config["max_loss_for_early_stopping"] = 1e9
-
-                        config_path = f"configs/{name}.json"
-                        with open(config_path, "w") as f:
-                            json.dump(config, f)
-
-    # for size in [SMALL, MEDIUM]:
-    #     for decoder in [True, False]:
-    #         for seed in range(1):
-    #             name = f"shakespeare_{'small' if size == SMALL else 'medium'}_{'decoder' if decoder else 'encoder'}_no_wpe_{seed}"
-    #             config = copy.deepcopy(BASE_CONFIG | size)
-    #             config["decoder"] = decoder
-    #             config["seed"] = seed
-    #             config["name"] = name
-
-    #             config_path = f"configs/{name}.json"
-    #             with open(config_path, "w") as f:
-    #                 json.dump(config, f)
+                    config_path = f"configs/{name}.json"
+                    with open(config_path, "w") as f:
+                        json.dump(config, f)
