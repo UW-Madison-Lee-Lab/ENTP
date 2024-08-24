@@ -27,8 +27,7 @@ LARGE: dict[str, int] = {
 
 BASE_CONFIG: dict[str, bool | int | float | str] = {
     "data_dir": "data/addition",
-    "max_evals_without_improving": 10,
-    "max_iters": 7500,
+    "max_iters": 10000,
     "test_accuracy_during_training": True,
     "task": "counting",
     "counting_seed_max": 16,
@@ -51,7 +50,9 @@ if __name__ == "__main__":
                     name = "counting_extra_small"
                     name += "_decoder" if decoder else "_encoder"
                     name += "" if use_wpe else "_nope"
-                    name += "_perm_invariant" if permutation_invariant else "_perm_variant"
+                    name += (
+                        "_perm_invariant" if permutation_invariant else "_perm_variant"
+                    )
                     name += f"_{seed}"
 
                     config = copy.deepcopy(BASE_CONFIG | EXTRA_SMALL)
