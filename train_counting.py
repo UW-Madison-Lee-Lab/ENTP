@@ -19,13 +19,13 @@ class CountingDataGenerator:
     def __init__(self, config: Config):
         self.seed_size = config.counting_seed_size
         self.seed_max = config.counting_seed_max
+        self.permutation_invariant = config.counting_permutation_invariant
         self.block_size = config.block_size
         self.batch_size = config.batch_size
 
-    @staticmethod
-    def f(x: list[int]) -> int:
-        y = x[:-1]
-        z = x[-1]
+    def f(self, x: list[int]) -> int:
+        y = x[:-1] if self.permutation_invariant else x[:-2]
+        z = x[-1] if self.permutation_invariant else x[-2]
         return Counter(y)[z]
 
     def generate_example(self) -> list[int]:
@@ -43,15 +43,6 @@ class CountingDataGenerator:
         y = data[:, 1:]
         forward_idxs = [i for i in range(self.seed_size, self.batch_size)]
         return x, y, forward_idxs
-
-    @property
-    def vocab_size(self) -> int:
-        seq = [0] * self.seed_size
-
-        while len(seq) <= self.block_size:
-            seq.append(self.f(seq))
-
-        return max(seq) + 1
 
 
 @torch.no_grad()
@@ -101,11 +92,12 @@ def train(config: Config, env: Environment) -> None:
 
     model_config = TransformerConfig(
         n_positions=config.block_size,
-        vocab_size=data_generator.vocab_size,
+        vocab_size=config.block_size,
         n_layer=config.n_layer,
         n_head=config.n_head,
         n_embd=config.n_embd,
         dropout=config.dropout,
+        use_wpe=config.use_wpe,
     )
 
     model = TransformerLMHead(model_config, env.compile_blocks).to(env.device)
