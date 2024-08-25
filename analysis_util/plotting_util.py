@@ -218,6 +218,7 @@ def plot_multiple_keys(
     x: str,
     ys: list[str],
     x_label: Optional[str] = None,
+    y_label: Optional[str] = None,
     y_labels: Optional[list[Optional[str]]] = None,
     title: Optional[str] = None,
     save_path: Optional[str] = None,
@@ -243,6 +244,9 @@ def plot_multiple_keys(
 
     if x_label is not None:
         plt.xlabel("\\textbf{" + x_label.capitalize() + "}", fontsize=8)
+
+    if y_label is not None:
+        plt.ylabel("\\textbf{" + y_label.capitalize() + "}", fontsize=8)
 
     if title is not None:
         plt.title("\\textbf{" + title.capitalize() + "}", fontsize=8)
