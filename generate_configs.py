@@ -47,7 +47,7 @@ if __name__ == "__main__":
         for use_wpe in [True, False]:
             for permutation_invariant in [True, False]:
                 for seed in range(1):
-                    name = "counting_extra_small"
+                    name = "counting_medium"
                     name += "_decoder" if decoder else "_encoder"
                     name += "" if use_wpe else "_nope"
                     name += (
@@ -55,7 +55,7 @@ if __name__ == "__main__":
                     )
                     name += f"_{seed}"
 
-                    config = copy.deepcopy(BASE_CONFIG | EXTRA_SMALL)
+                    config = copy.deepcopy(BASE_CONFIG | MEDIUM)
                     config["name"] = name
                     config["decoder"] = decoder
                     config["use_wpe"] = use_wpe
