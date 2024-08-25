@@ -33,11 +33,12 @@ EXTRA_LARGE: dict[str, int] = {
 
 BASE_CONFIG: dict[str, bool | int | float | str] = {
     "data_dir": "data/addition",
-    "max_iters": 5000,
+    "max_iters": 10000,
     "test_accuracy_during_training": True,
     "task": "counting",
     "counting_seed_max": 16,
     "counting_seed_size": 16,
+    "log_wpe_norm": True,
 }
 
 
@@ -49,11 +50,11 @@ def n_train_str(n_train: int) -> str:
 
 
 if __name__ == "__main__":
-    for decoder in [False]:
-        for use_wpe in [False]:
-            for permutation_invariant in [False]:
+    for decoder in [True]:
+        for use_wpe in [True]:
+            for permutation_invariant in [True, False]:
                 for seed in range(1):
-                    name = "counting_large"
+                    name = "counting_extra_small"
                     name += "_decoder" if decoder else "_encoder"
                     name += "" if use_wpe else "_nope"
                     name += (
@@ -61,7 +62,7 @@ if __name__ == "__main__":
                     )
                     name += f"_{seed}"
 
-                    config = copy.deepcopy(BASE_CONFIG | LARGE)
+                    config = copy.deepcopy(BASE_CONFIG | EXTRA_SMALL)
                     config["name"] = name
                     config["decoder"] = decoder
                     config["use_wpe"] = use_wpe
@@ -71,3 +72,26 @@ if __name__ == "__main__":
                     config_path = f"configs/{name}.json"
                     with open(config_path, "w") as f:
                         json.dump(config, f)
+
+    # for decoder in [False]:
+    #     for use_wpe in [False]:
+    #         for permutation_invariant in [False]:
+    #             for seed in range(1):
+    #                 name = "counting_large"
+    #                 name += "_decoder" if decoder else "_encoder"
+    #                 name += "" if use_wpe else "_nope"
+    #                 name += (
+    #                     "_perm_invariant" if permutation_invariant else "_perm_variant"
+    #                 )
+    #                 name += f"_{seed}"
+
+    #                 config = copy.deepcopy(BASE_CONFIG | LARGE)
+    #                 config["name"] = name
+    #                 config["decoder"] = decoder
+    #                 config["use_wpe"] = use_wpe
+    #                 config["counting_permutation_invariant"] = permutation_invariant
+    #                 config["seed"] = seed
+
+    #                 config_path = f"configs/{name}.json"
+    #                 with open(config_path, "w") as f:
+    #                     json.dump(config, f)

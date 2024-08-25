@@ -155,6 +155,10 @@ def train(config: Config, env: Environment) -> None:
                 eval_accuracy = test_accuracy(model, data_generator, config, env)
                 wandb.log({"accuracy": eval_accuracy}, step=i)
 
+            if config.log_wpe_norm:
+                wpe_fro_norm = torch.norm(model.transformer.wpe.weight).item()
+                wandb.log({"wpe_fro_norm": wpe_fro_norm}, step=i)
+
             if eval_loss < best_loss:
                 n_evals_without_improving = 0
                 print(f"saved checkpoint    {f'{i=}':8}  {eval_loss=:.3f}")
