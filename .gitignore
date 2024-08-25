@@ -12,3 +12,4 @@ testing/models/*.pt
 *.ipynb
 results.tar.gz
 figures/*.pdf
+*.DS_Store
