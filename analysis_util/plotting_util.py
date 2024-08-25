@@ -237,7 +237,7 @@ def plot_multiple_keys(
             df[x],
             df[y],
             marker="o",
-            ms=4,
+            ms=2,
             label=label,
         )
 
@@ -288,7 +288,7 @@ def plot_two_sets_of_multiple_keys(
             df[x1],
             df[y],
             marker="o",
-            ms=4,
+            ms=2,
             label=label,
         )
 
@@ -314,7 +314,7 @@ def plot_two_sets_of_multiple_keys(
             df[x2],
             df[y],
             marker="o",
-            ms=4,
+            ms=2,
             label=label,
         )
 
