@@ -314,6 +314,9 @@ def plot_two_sets_of_multiple_keys(
         assert len(ys2) == len(y_labels2)
 
     for y, label in zip(ys2, y_labels2):
+        if label is not None:
+            label = label.capitalize()
+
         ax2.plot(
             df[x2],
             df[y],
