@@ -25,6 +25,12 @@ LARGE: dict[str, int] = {
     "n_embd": 768,
 }
 
+EXTRA_LARGE: dict[str, int] = {
+    "n_layer": 16,
+    "n_head": 16,
+    "n_embd": 1024,
+}
+
 BASE_CONFIG: dict[str, bool | int | float | str] = {
     "data_dir": "data/addition",
     "max_iters": 10000,
@@ -43,11 +49,11 @@ def n_train_str(n_train: int) -> str:
 
 
 if __name__ == "__main__":
-    for decoder in [True, False]:
-        for use_wpe in [True, False]:
-            for permutation_invariant in [True, False]:
+    for decoder in [False]:
+        for use_wpe in [False]:
+            for permutation_invariant in [False]:
                 for seed in range(1):
-                    name = "counting_medium"
+                    name = "counting_large"
                     name += "_decoder" if decoder else "_encoder"
                     name += "" if use_wpe else "_nope"
                     name += (
@@ -55,7 +61,7 @@ if __name__ == "__main__":
                     )
                     name += f"_{seed}"
 
-                    config = copy.deepcopy(BASE_CONFIG | MEDIUM)
+                    config = copy.deepcopy(BASE_CONFIG | LARGE)
                     config["name"] = name
                     config["decoder"] = decoder
                     config["use_wpe"] = use_wpe
