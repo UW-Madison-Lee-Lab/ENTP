@@ -33,7 +33,7 @@ EXTRA_LARGE: dict[str, int] = {
 
 BASE_CONFIG: dict[str, bool | int | float | str] = {
     "data_dir": "data/addition",
-    "max_iters": 10000,
+    "max_iters": 5000,
     "test_accuracy_during_training": True,
     "task": "counting",
     "counting_seed_max": 16,
