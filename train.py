@@ -83,10 +83,11 @@ def train(config: Config, env: Environment) -> None:
 
     model = TransformerLMHead(model_config, env.compile_blocks).to(env.device)
 
-    optimizer = model.configure_optimizers(
+    optimizer = model.configure_optimizer(
         lr=config.min_lr,
         betas=(config.beta1, config.beta2),
         weight_decay=config.weight_decay,
+        custom_optim_groups=config.custom_optim_groups,
         device=env.device,
     )
 

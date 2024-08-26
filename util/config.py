@@ -1,5 +1,5 @@
 import json
-from typing import Literal
+from typing import Any, Literal
 
 
 class Config:
@@ -11,6 +11,7 @@ class Config:
     counting_seed_max: int = 16
     counting_seed_size: int = 16
     counting_permutation_invariant: bool = True
+    custom_optim_groups: list[dict[str, Any]] = []
     block_size: int = 64
     data_dir: str = "data/addition"
     decoder: bool = True
