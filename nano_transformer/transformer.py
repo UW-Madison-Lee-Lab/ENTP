@@ -58,17 +58,23 @@ class Transformer(nn.Module):
 
     def forward(
         self,
-        input_ids: Tensor,
+        input_ids: Optional[Tensor] = None,
+        input_embds: Optional[Tensor] = None,
         decoder: bool = True,
         forward_idxs: Optional[Sequence[int]] = None,
     ) -> Tensor:
-        T = input_ids.shape[1]
+        assert (input_ids is not None) ^ (input_embds is not None)
+
+        if input_ids is not None:
+            x = self.wte(input_ids)
+        else:
+            x = input_embds
+
+        T = x.shape[1]
         assert T <= self.config.n_positions
 
-        x = self.wte(input_ids)
-
         if self.config.use_wpe:
-            position_ids = torch.arange(T, device=input_ids.device)
+            position_ids = torch.arange(T, device=x.device)
             x += self.wpe(position_ids)
 
         if decoder:
@@ -89,11 +95,12 @@ class TransformerLMHead(nn.Module):
 
     def forward(
         self,
-        input_ids: Tensor,
+        input_ids: Optional[Tensor] = None,
+        input_embds: Optional[Tensor] = None,
         decoder: bool = True,
         forward_idxs: Optional[Sequence[int]] = None,
     ) -> Tensor:
-        x = self.transformer(input_ids, decoder, forward_idxs)
+        x = self.transformer(input_ids, input_embds, decoder, forward_idxs)
         return self.lm_head(x)
 
     @torch.no_grad()

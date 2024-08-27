@@ -34,13 +34,10 @@ EXTRA_LARGE: dict[str, int] = {
 }
 
 BASE_CONFIG: dict[str, bool | int | float | str] = {
-    "data_dir": "data/addition",
     "max_iters": 5000,
     "test_accuracy_during_training": True,
-    "task": "counting",
-    "counting_seed_max": 16,
-    "counting_seed_size": 16,
-    "log_wpe_norm": True,
+    "task": "ortho_vec",
+    "block_size": 32,
 }
 
 
@@ -53,24 +50,16 @@ def n_train_str(n_train: int) -> str:
 
 if __name__ == "__main__":
     for decoder in [True]:
-        for use_wpe in [True]:
-            for permutation_invariant in [True, False]:
-                for seed in range(1):
-                    name = "counting_extra_small"
-                    name += "_decoder" if decoder else "_encoder"
-                    name += "" if use_wpe else "_nope"
-                    name += (
-                        "_perm_invariant" if permutation_invariant else "_perm_variant"
-                    )
-                    name += f"_{seed}"
+        for seed in range(1):
+            name = "ortho_vec_extra_small"
+            name += "_decoder" if decoder else "_encoder"
+            name += f"_{seed}"
 
-                    config = copy.deepcopy(BASE_CONFIG | EXTRA_SMALL)
-                    config["name"] = name
-                    config["decoder"] = decoder
-                    config["use_wpe"] = use_wpe
-                    config["counting_permutation_invariant"] = permutation_invariant
-                    config["seed"] = seed
+            config = copy.deepcopy(BASE_CONFIG | EXTRA_SMALL)
+            config["name"] = name
+            config["decoder"] = decoder
+            config["seed"] = seed
 
-                    config_path = f"configs/{name}.json"
-                    with open(config_path, "w") as f:
-                        json.dump(config, f)
+            config_path = f"configs/{name}.json"
+            with open(config_path, "w") as f:
+                json.dump(config, f)

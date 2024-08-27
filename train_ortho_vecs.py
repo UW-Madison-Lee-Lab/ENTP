@@ -1,7 +1,5 @@
 import os
-import random
 import sys
-from collections import Counter
 from pprint import pprint
 
 import numpy as np
@@ -13,40 +11,38 @@ from nano_transformer import TransformerConfig, TransformerLMHead, flat_cross_en
 from util import Config, Environment, LRSchedule
 
 
-class CountingDataGenerator:
-    def __init__(self, config: Config):
-        self.seed_size = config.counting_seed_size
-        self.seed_max = config.counting_seed_max
-        self.permutation_invariant = config.counting_permutation_invariant
+class OrthoVecGenerator:
+    def __init__(self, config: Config, true_rate_low=0.025, true_rate_high=0.05):
+        self.true_rate_low = true_rate_low
+        self.true_rate_high = true_rate_high
+        self.n_embd = config.n_embd
         self.block_size = config.block_size
         self.batch_size = config.batch_size
 
-    def f(self, x: list[int]) -> int:
-        y = x[:-1] if self.permutation_invariant else x[:-2]
-        z = x[-1] if self.permutation_invariant else x[-2]
-        return Counter(y)[z]
+    def generate_batch(self) -> tuple[Tensor, Tensor]:
+        true_rate = (
+            torch.rand(()) * (self.true_rate_high - self.true_rate_low)
+            + self.true_rate_low
+        )
+        x = (
+            torch.rand(self.batch_size, self.n_embd, self.block_size) < true_rate
+        ).float()
+        y = torch.zeros(self.batch_size, self.block_size, dtype=torch.bool)
+        for m in range(2, self.block_size):
+            mask = x[:, :, m]
+            for i in range(m - 1):
+                for j in range(i + 1, m):
+                    y[:, m] |= (
+                        torch.diag((x[:, :, i] * mask) @ (x[:, :, j] * mask).T) > 0
+                    )
 
-    def generate_example(self) -> list[int]:
-        seq = [random.randint(0, self.seed_max) for _ in range(self.seed_size)]
-
-        while len(seq) <= self.block_size:
-            seq.append(self.f(seq))
-
-        assert len(seq) == self.block_size + 1
-        return seq
-
-    def generate_batch(self) -> tuple[Tensor, Tensor, list[int]]:
-        data = torch.tensor([self.generate_example() for _ in range(self.batch_size)])
-        x = data[:, :-1]
-        y = data[:, 1:]
-        forward_idxs = [i for i in range(self.seed_size, self.batch_size)]
-        return x, y, forward_idxs
+        return x, y.long()
 
 
 @torch.no_grad()
 def test_accuracy(
     model: TransformerLMHead,
-    data_generator: CountingDataGenerator,
+    data_generator: OrthoVecGenerator,
     config: Config,
     env: Environment,
     n_iters=100,
@@ -54,18 +50,16 @@ def test_accuracy(
     accuracies = []
 
     for _ in range(n_iters):
-        x, y, forward_idxs = data_generator.generate_batch()
+        x, y = data_generator.generate_batch()
 
         x = x.to(env.device)
         y = y.to(env.device)
 
         with env.context:
-            logits = model(x, decoder=config.decoder, forward_idxs=forward_idxs)
+            logits = model(input_embds=x, decoder=config.decoder)
 
         y_pred = torch.argmax(logits, dim=2)
 
-        y = y[:, forward_idxs]
-        y_pred = y_pred[:, forward_idxs]
         accuracies.append(torch.mean((y == y_pred).float()).item())
 
     return float(np.mean(accuracies))
@@ -86,7 +80,7 @@ def train(config: Config, env: Environment) -> None:
 
     env.seed_everything(config.seed)
 
-    data_generator = CountingDataGenerator(config)
+    data_generator = OrthoVecGenerator(config)
 
     model_config = TransformerConfig(
         n_positions=config.block_size,
@@ -131,14 +125,14 @@ def train(config: Config, env: Environment) -> None:
         for param_group in optimizer.param_groups:
             param_group["lr"] = lr
 
-        x, y, forward_idxs = data_generator.generate_batch()
+        x, y = data_generator.generate_batch()
 
         x = x.to(env.device)
         y = y.to(env.device)
 
         with env.context:
-            logits = model(x, decoder=config.decoder, forward_idxs=forward_idxs)
-            loss = flat_cross_entropy(logits[:, forward_idxs], y[:, forward_idxs])
+            logits = model(input_embds=x, decoder=config.decoder)
+            loss = flat_cross_entropy(logits, y)
 
         loss.backward()
         optimizer.step()
