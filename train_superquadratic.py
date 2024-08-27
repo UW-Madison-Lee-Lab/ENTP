@@ -1,7 +1,6 @@
 import os
 import random
 import sys
-from collections import Counter
 from pprint import pprint
 
 import numpy as np
@@ -13,18 +12,21 @@ from nano_transformer import TransformerConfig, TransformerLMHead, flat_cross_en
 from util import Config, Environment, LRSchedule
 
 
-class CountingDataGenerator:
+class SuperquadraticDataGenerator:
     def __init__(self, config: Config):
         self.seed_size = config.data_gen_seed_size
         self.seed_max = config.data_gen_seed_max
-        self.permutation_invariant = config.counting_permutation_invariant
         self.block_size = config.block_size
         self.batch_size = config.batch_size
 
     def f(self, x: list[int]) -> int:
-        y = x[:-1] if self.permutation_invariant else x[:-2]
-        z = x[-1] if self.permutation_invariant else x[-2]
-        return Counter(y)[z]
+        n = len(x)
+        count = 0
+        for i in range(n - 1):
+            for j in range(i + 1, n):
+                if (x[i] + x[j]) % n == 0:
+                    count += 1
+        return count
 
     def generate_example(self) -> list[int]:
         seq = [random.randint(0, self.seed_max) for _ in range(self.seed_size)]
@@ -46,7 +48,7 @@ class CountingDataGenerator:
 @torch.no_grad()
 def test_accuracy(
     model: TransformerLMHead,
-    data_generator: CountingDataGenerator,
+    data_generator: SuperquadraticDataGenerator,
     config: Config,
     env: Environment,
     n_iters=100,
@@ -86,7 +88,7 @@ def train(config: Config, env: Environment) -> None:
 
     env.seed_everything(config.seed)
 
-    data_generator = CountingDataGenerator(config)
+    data_generator = SuperquadraticDataGenerator(config)
 
     model_config = TransformerConfig(
         n_positions=config.block_size,

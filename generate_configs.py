@@ -36,8 +36,10 @@ EXTRA_LARGE: dict[str, int] = {
 BASE_CONFIG: dict[str, bool | int | float | str] = {
     "max_iters": 5000,
     "test_accuracy_during_training": True,
-    "task": "ortho_vec",
-    "block_size": 32,
+    "task": "superquadratic",
+    "data_gen_seed_size": 16,
+    "data_gen_seed_max": 64,
+    "block_size": 64,
 }
 
 
@@ -51,7 +53,7 @@ def n_train_str(n_train: int) -> str:
 if __name__ == "__main__":
     for decoder in [True, False]:
         for seed in range(1):
-            name = "ortho_vec_extra_small"
+            name = "superquadratic_extra_small"
             name += "_decoder" if decoder else "_encoder"
             name += f"_{seed}"
 

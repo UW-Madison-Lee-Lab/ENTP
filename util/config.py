@@ -8,12 +8,12 @@ class Config:
     batch_size: int = 64
     beta1: float = 0.9
     beta2: float = 0.99
-    counting_seed_max: int = 16
-    counting_seed_size: int = 16
+    block_size: int = 64
     counting_permutation_invariant: bool = True
     custom_optim_groups: list[dict[str, Any]] = []
-    block_size: int = 64
     data_dir: str = "data/addition"
+    data_gen_seed_max: int = 16
+    data_gen_seed_size: int = 16
     decoder: bool = True
     dropout: float = 0.0
     eval_interval: int = 100
