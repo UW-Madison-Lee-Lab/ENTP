@@ -36,7 +36,7 @@ class OrthoVecGenerator:
                         torch.diag((x[:, :, i] * mask) @ (x[:, :, j] * mask).T) > 0
                     )
 
-        return x, y.long()
+        return x.transpose(1, 2), y.long()
 
 
 @torch.no_grad()
