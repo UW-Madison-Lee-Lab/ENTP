@@ -66,7 +66,7 @@ def test_accuracy(
 
         y = y[:, forward_idxs]
         y_pred = y_pred[:, forward_idxs]
-        accuracies.append(torch.mean((y == y_pred).float()).item())
+        accuracies.append(torch.mean(torch.all(y == y_pred, dim=1).float()).item())
 
     return float(np.mean(accuracies))
 
