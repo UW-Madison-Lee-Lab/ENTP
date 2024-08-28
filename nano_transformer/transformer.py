@@ -114,7 +114,7 @@ class TransformerLMHead(nn.Module):
             if input_ids.shape[1] > self.n_positions:
                 input_ids = input_ids[:, -self.n_positions :]
 
-            logits = self(input_ids, decoder, forward_idxs=(input_ids.shape[1] - 1,))
+            logits = self(input_ids, decoder=decoder, forward_idxs=(input_ids.shape[1] - 1,))
             next_id = torch.argmax(logits[:, -1:], dim=2)
             input_ids = torch.cat((input_ids, next_id), dim=1)
 

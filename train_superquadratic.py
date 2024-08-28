@@ -92,7 +92,7 @@ def train(config: Config, env: Environment) -> None:
 
     model_config = TransformerConfig(
         n_positions=config.block_size,
-        vocab_size=config.block_size,
+        vocab_size=4096,
         n_layer=config.n_layer,
         n_head=config.n_head,
         n_embd=config.n_embd,

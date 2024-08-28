@@ -3,6 +3,7 @@ import random
 import sys
 from collections import Counter
 from pprint import pprint
+from typing import Optional
 
 import numpy as np
 import torch
@@ -35,11 +36,14 @@ class CountingDataGenerator:
         assert len(seq) == self.block_size + 1
         return seq
 
-    def generate_batch(self) -> tuple[Tensor, Tensor, list[int]]:
-        data = torch.tensor([self.generate_example() for _ in range(self.batch_size)])
+    def generate_batch(self, batch_size: Optional[int] = None) -> tuple[Tensor, Tensor, list[int]]:
+        if batch_size is None:
+            batch_size = self.batch_size
+
+        data = torch.tensor([self.generate_example() for _ in range(batch_size)])
         x = data[:, :-1]
         y = data[:, 1:]
-        forward_idxs = [i for i in range(self.seed_size, self.batch_size)]
+        forward_idxs = [i for i in range(self.seed_size, batch_size)]
         return x, y, forward_idxs
 
 
@@ -49,24 +53,23 @@ def test_accuracy(
     data_generator: CountingDataGenerator,
     config: Config,
     env: Environment,
-    n_iters=100,
+    n_iters=50,
 ) -> float:
+    model.eval()
     accuracies = []
 
     for _ in range(n_iters):
-        x, y, forward_idxs = data_generator.generate_batch()
-
-        x = x.to(env.device)
-        y = y.to(env.device)
+        x = data_generator.generate_batch(config.test_batch_size)[0].to(env.device)
+        x_seed = x[:, :config.data_gen_seed_size]
 
         with env.context:
-            logits = model(x, decoder=config.decoder, forward_idxs=forward_idxs)
+            x_pred = model.generate(
+                x_seed, 
+                max_new_tokens=config.block_size - config.data_gen_seed_size, 
+                decoder=config.decoder,
+            )
 
-        y_pred = torch.argmax(logits, dim=2)
-
-        y = y[:, forward_idxs]
-        y_pred = y_pred[:, forward_idxs]
-        accuracies.append(torch.mean(torch.all(y == y_pred, dim=1).float()).item())
+        accuracies.append(torch.mean((x == x_pred).float()).item())
 
     return float(np.mean(accuracies))
 
