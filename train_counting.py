@@ -36,7 +36,10 @@ class CountingDataGenerator:
         assert len(seq) == self.block_size + 1
         return seq
 
-    def generate_batch(self, batch_size: Optional[int] = None) -> tuple[Tensor, Tensor, list[int]]:
+    def generate_batch(
+        self,
+        batch_size: Optional[int] = None,
+    ) -> tuple[Tensor, Tensor, list[int]]:
         if batch_size is None:
             batch_size = self.batch_size
 
@@ -60,12 +63,12 @@ def test_accuracy(
 
     for _ in range(n_iters):
         x = data_generator.generate_batch(config.test_batch_size)[0].to(env.device)
-        x_seed = x[:, :config.data_gen_seed_size]
+        x_seed = x[:, : config.data_gen_seed_size]
 
         with env.context:
             x_pred = model.generate(
-                x_seed, 
-                max_new_tokens=config.block_size - config.data_gen_seed_size, 
+                x_seed,
+                max_new_tokens=config.block_size - config.data_gen_seed_size,
                 decoder=config.decoder,
             )
 
