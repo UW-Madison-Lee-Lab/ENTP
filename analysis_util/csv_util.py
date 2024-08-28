@@ -3,7 +3,7 @@ import os
 import pandas as pd  # type: ignore
 
 
-def merge_wandb_csvs(dir: str) -> pd.DataFrame:
+def merge_wandb_csvs(dir: str, step_size=100) -> pd.DataFrame:
     csvs = []
     for f in os.listdir(dir):
         if f[-4:] == ".csv":
@@ -23,11 +23,11 @@ def merge_wandb_csvs(dir: str) -> pd.DataFrame:
 
         csv_df_copy = csv_df.copy()
 
-        csv_df["Step"] //= 100
+        csv_df["Step"] //= step_size
         csv_df = csv_df.groupby("Step", as_index=False).mean().reset_index(drop=True)
-        csv_df["Step"] *= 100
+        csv_df["Step"] *= step_size
 
-        if "train_loss" not in main_k:
+        if "train_loss" not in main_k and step_size == 100:
             assert (csv_df["Step"] == csv_df_copy["Step"]).all()
             assert (csv_df[main_k] == csv_df_copy[main_k]).all()
 
