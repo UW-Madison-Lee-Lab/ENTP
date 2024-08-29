@@ -54,7 +54,7 @@ def n_train_str(n_train: int) -> str:
 
 
 if __name__ == "__main__":
-    for decoder in [True]:
+    for decoder in [True, False]:
         for seed in range(1):
             name = "superquadratic_medium"
             name += "_decoder" if decoder else "_encoder"
