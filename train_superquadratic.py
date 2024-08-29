@@ -1,8 +1,8 @@
 import os
 import random
 import sys
-from pprint import pprint
 from collections import defaultdict
+from pprint import pprint
 from typing import Optional
 
 import numpy as np
@@ -23,13 +23,13 @@ class SuperquadraticDataGenerator:
 
     def f(self, x: list[int]) -> int:
         n = len(x)
-        mod_counts = defaultdict(int)
+        mod_counts: dict[int, int] = defaultdict(int)
         count = 0
         for i in range(n):
             mod = x[i] % n
             count += mod_counts[(n - mod) % n]
             mod_counts[mod] += 1
- 
+
         return count
 
     def generate_example(self) -> list[int]:
@@ -41,7 +41,9 @@ class SuperquadraticDataGenerator:
         assert len(seq) == self.block_size + 1
         return seq
 
-    def generate_batch(self, batch_size: Optional[int] = None) -> tuple[Tensor, Tensor, list[int]]:
+    def generate_batch(
+        self, batch_size: Optional[int] = None
+    ) -> tuple[Tensor, Tensor, list[int]]:
         if batch_size is None:
             batch_size = self.batch_size
 
