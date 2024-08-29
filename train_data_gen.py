@@ -1,65 +1,32 @@
 import os
-import random
 import sys
-from collections import Counter
 from pprint import pprint
-from typing import Optional
 
 import numpy as np
 import torch
 import wandb
-from torch import Tensor
 
+from data_generator import (
+    CountingDataGenerator,
+    DataGenerator,
+    SuperquadraticDataGenerator,
+)
 from nano_transformer import TransformerConfig, TransformerLMHead, flat_cross_entropy
 from util import Config, Environment, LRSchedule
 
 
-class CountingDataGenerator:
-    def __init__(self, config: Config):
-        self.seed_size = config.data_gen_seed_size
-        self.seed_max = config.data_gen_seed_max
-        self.permutation_invariant = config.counting_permutation_invariant
-        self.block_size = config.block_size
-        self.batch_size = config.batch_size
-
-    def f(self, x: list[int]) -> int:
-        y = x[:-1] if self.permutation_invariant else x[:-2]
-        z = x[-1] if self.permutation_invariant else x[-2]
-        return Counter(y)[z]
-
-    def generate_example(self) -> list[int]:
-        seq = [random.randint(0, self.seed_max) for _ in range(self.seed_size)]
-
-        while len(seq) <= self.block_size:
-            seq.append(self.f(seq))
-
-        assert len(seq) == self.block_size + 1
-        return seq
-
-    def generate_batch(
-        self,
-        batch_size: Optional[int] = None,
-    ) -> tuple[Tensor, Tensor, list[int]]:
-        if batch_size is None:
-            batch_size = self.batch_size
-
-        data = torch.tensor([self.generate_example() for _ in range(batch_size)])
-        x = data[:, :-1]
-        y = data[:, 1:]
-        forward_idxs = [i for i in range(self.seed_size, self.block_size)]
-        return x, y, forward_idxs
-
-
 @torch.no_grad()
-def test_accuracy(
+def log_accuracy(
     model: TransformerLMHead,
-    data_generator: CountingDataGenerator,
+    data_generator: DataGenerator,
+    step: int,
     config: Config,
     env: Environment,
     n_iters=25,
-) -> float:
+) -> None:
     model.eval()
-    accuracies = []
+    token_acc = []
+    sequence_acc = []
 
     for _ in range(n_iters):
         x, y, forward_idxs = data_generator.generate_batch(config.test_batch_size)
@@ -74,9 +41,16 @@ def test_accuracy(
 
         y = y[:, forward_idxs]
         y_pred = y_pred[:, forward_idxs]
-        accuracies.append(torch.mean(torch.all(y == y_pred, dim=1).float()).item())
+        token_acc.append(torch.mean((y == y_pred).float()).item())
+        sequence_acc.append(torch.mean(torch.all(y == y_pred, dim=1).float()).item())
 
-    return float(np.mean(accuracies))
+    wandb.log(
+        {
+            "token_accuracy": np.mean(token_acc),
+            "sequence_accuracy": np.mean(sequence_acc),
+        },
+        step=step,
+    )
 
 
 def train(config: Config, env: Environment) -> None:
@@ -94,7 +68,10 @@ def train(config: Config, env: Environment) -> None:
 
     env.seed_everything(config.seed)
 
-    data_generator = CountingDataGenerator(config)
+    data_generator = {
+        "counting": CountingDataGenerator,
+        "superquadratic": SuperquadraticDataGenerator,
+    }[config.task](config)
 
     model_config = TransformerConfig(
         n_positions=config.block_size,
@@ -158,13 +135,12 @@ def train(config: Config, env: Environment) -> None:
             eval_loss = float(np.mean(losses[-config.eval_interval :]))
             wandb.log({"loss": eval_loss}, step=i)
 
-            if config.test_accuracy_during_training:
-                eval_accuracy = test_accuracy(model, data_generator, config, env)
-                wandb.log({"sequence_accuracy": eval_accuracy}, step=i)
-
             if config.log_wpe_norm:
                 wpe_fro_norm = torch.norm(model.transformer.wpe.weight).item()
                 wandb.log({"wpe_fro_norm": wpe_fro_norm}, step=i)
+
+            if config.test_accuracy_during_training:
+                log_accuracy(model, data_generator, i, config, env)
 
             if eval_loss < best_loss:
                 n_evals_without_improving = 0

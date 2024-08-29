@@ -54,13 +54,13 @@ def n_train_str(n_train: int) -> str:
 
 
 if __name__ == "__main__":
-    for decoder in [True, False]:
+    for decoder in [True]:
         for seed in range(1):
-            name = "superquadratic_large"
+            name = "superquadratic_medium"
             name += "_decoder" if decoder else "_encoder"
             name += f"_{seed}"
 
-            config = copy.deepcopy(BASE_CONFIG | LARGE)
+            config = copy.deepcopy(BASE_CONFIG | MEDIUM)
             config["name"] = name
             config["decoder"] = decoder
             config["seed"] = seed

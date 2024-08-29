@@ -9,7 +9,7 @@ for FILE in configs/*; do
             # python train.py "$FILE"
             # python evaluate.py "$FILE"
 
-            python train_superquadratic.py "$FILE"
+            python train_data_gen.py "$FILE"
         fi
     fi
 done
