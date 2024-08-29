@@ -35,9 +35,10 @@ EXTRA_LARGE: dict[str, int] = {
 
 BASE_CONFIG: dict[str, bool | int | float | str] = {
     "max_iters": 50000,
+    "lr_decay_iters": 50000,
     "max_evals_without_improving": 20,
     "test_accuracy_during_training": True,
-    "task": "counting",
+    "task": "superquadratic",
     "data_gen_seed_size": 16,
     "data_gen_seed_max": 64,
     "block_size": 64,
