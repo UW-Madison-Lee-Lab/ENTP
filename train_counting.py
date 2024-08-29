@@ -36,7 +36,10 @@ class CountingDataGenerator:
         assert len(seq) == self.block_size + 1
         return seq
 
-    def generate_batch(self, batch_size: Optional[int] = None) -> tuple[Tensor, Tensor, list[int]]:
+    def generate_batch(
+        self,
+        batch_size: Optional[int] = None,
+    ) -> tuple[Tensor, Tensor, list[int]]:
         if batch_size is None:
             batch_size = self.batch_size
 
