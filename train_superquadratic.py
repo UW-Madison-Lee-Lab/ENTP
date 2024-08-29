@@ -2,6 +2,8 @@ import os
 import random
 import sys
 from pprint import pprint
+from collections import defaultdict
+from typing import Optional
 
 import numpy as np
 import torch
@@ -21,11 +23,13 @@ class SuperquadraticDataGenerator:
 
     def f(self, x: list[int]) -> int:
         n = len(x)
+        mod_counts = defaultdict(int)
         count = 0
-        for i in range(n - 1):
-            for j in range(i + 1, n):
-                if (x[i] + x[j]) % n == 0:
-                    count += 1
+        for i in range(n):
+            mod = x[i] % n
+            count += mod_counts[(n - mod) % n]
+            mod_counts[mod] += 1
+ 
         return count
 
     def generate_example(self) -> list[int]:
@@ -37,11 +41,14 @@ class SuperquadraticDataGenerator:
         assert len(seq) == self.block_size + 1
         return seq
 
-    def generate_batch(self) -> tuple[Tensor, Tensor, list[int]]:
-        data = torch.tensor([self.generate_example() for _ in range(self.batch_size)])
+    def generate_batch(self, batch_size: Optional[int] = None) -> tuple[Tensor, Tensor, list[int]]:
+        if batch_size is None:
+            batch_size = self.batch_size
+
+        data = torch.tensor([self.generate_example() for _ in range(batch_size)])
         x = data[:, :-1]
         y = data[:, 1:]
-        forward_idxs = [i for i in range(self.seed_size, self.batch_size)]
+        forward_idxs = [i for i in range(self.seed_size, self.block_size)]
         return x, y, forward_idxs
 
 
@@ -51,12 +58,13 @@ def test_accuracy(
     data_generator: SuperquadraticDataGenerator,
     config: Config,
     env: Environment,
-    n_iters=100,
+    n_iters=25,
 ) -> float:
+    model.eval()
     accuracies = []
 
     for _ in range(n_iters):
-        x, y, forward_idxs = data_generator.generate_batch()
+        x, y, forward_idxs = data_generator.generate_batch(config.test_batch_size)
 
         x = x.to(env.device)
         y = y.to(env.device)
@@ -154,7 +162,7 @@ def train(config: Config, env: Environment) -> None:
 
             if config.test_accuracy_during_training:
                 eval_accuracy = test_accuracy(model, data_generator, config, env)
-                wandb.log({"accuracy": eval_accuracy}, step=i)
+                wandb.log({"token_accuracy": eval_accuracy}, step=i)
 
             if config.log_wpe_norm:
                 wpe_fro_norm = torch.norm(model.transformer.wpe.weight).item()

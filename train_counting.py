@@ -43,7 +43,7 @@ class CountingDataGenerator:
         data = torch.tensor([self.generate_example() for _ in range(batch_size)])
         x = data[:, :-1]
         y = data[:, 1:]
-        forward_idxs = [i for i in range(self.seed_size, batch_size)]
+        forward_idxs = [i for i in range(self.seed_size, self.block_size)]
         return x, y, forward_idxs
 
 
@@ -53,23 +53,25 @@ def test_accuracy(
     data_generator: CountingDataGenerator,
     config: Config,
     env: Environment,
-    n_iters=50,
+    n_iters=25,
 ) -> float:
     model.eval()
     accuracies = []
 
     for _ in range(n_iters):
-        x = data_generator.generate_batch(config.test_batch_size)[0].to(env.device)
-        x_seed = x[:, :config.data_gen_seed_size]
+        x, y, forward_idxs = data_generator.generate_batch(config.test_batch_size)
+
+        x = x.to(env.device)
+        y = y.to(env.device)
 
         with env.context:
-            x_pred = model.generate(
-                x_seed, 
-                max_new_tokens=config.block_size - config.data_gen_seed_size, 
-                decoder=config.decoder,
-            )
+            logits = model(x, decoder=config.decoder, forward_idxs=forward_idxs)
 
-        accuracies.append(torch.mean((x == x_pred).float()).item())
+        y_pred = torch.argmax(logits, dim=2)
+
+        y = y[:, forward_idxs]
+        y_pred = y_pred[:, forward_idxs]
+        accuracies.append(torch.mean(torch.all(y == y_pred, dim=1).float()).item())
 
     return float(np.mean(accuracies))
 
@@ -155,7 +157,7 @@ def train(config: Config, env: Environment) -> None:
 
             if config.test_accuracy_during_training:
                 eval_accuracy = test_accuracy(model, data_generator, config, env)
-                wandb.log({"accuracy": eval_accuracy}, step=i)
+                wandb.log({"sequence_accuracy": eval_accuracy}, step=i)
 
             if config.log_wpe_norm:
                 wpe_fro_norm = torch.norm(model.transformer.wpe.weight).item()
