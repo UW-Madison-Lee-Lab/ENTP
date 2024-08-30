@@ -44,6 +44,7 @@ class DataGenerator:
 
 class CountingDataGenerator(DataGenerator):
     def __init__(self, config: Config) -> None:
+        super().__init__(config)
         self.permutation_invariant = config.counting_permutation_invariant
 
     def f(self, x: list[int]) -> int:
