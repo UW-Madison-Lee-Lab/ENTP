@@ -34,15 +34,16 @@ EXTRA_LARGE: dict[str, int] = {
 }
 
 BASE_CONFIG: dict[str, bool | int | float | str] = {
-    "max_iters": 50000,
-    "lr_decay_iters": 50000,
-    "max_evals_without_improving": 20,
-    "test_accuracy_during_training": True,
-    "task": "superquadratic",
+    "task": "new_superquadratic",
+    "max_iters": 100000,
     "data_gen_seed_size": 16,
     "data_gen_seed_max": 64,
-    "block_size": 64,
-    "test_batch_size": 256,
+    "block_size": 32,
+    "batch_size": 128,
+    "test_batch_size": 512,
+    "lr_decay_iters": 50000,
+    "max_evals_without_improving": 25,
+    "test_accuracy_during_training": True,
 }
 
 
@@ -56,7 +57,7 @@ def n_train_str(n_train: int) -> str:
 if __name__ == "__main__":
     for decoder in [True, False]:
         for seed in range(1):
-            name = "superquadratic_medium"
+            name = "new_superquadratic_medium"
             name += "_decoder" if decoder else "_encoder"
             name += f"_{seed}"
 
