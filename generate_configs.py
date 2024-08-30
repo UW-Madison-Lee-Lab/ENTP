@@ -37,13 +37,14 @@ BASE_CONFIG: dict[str, bool | int | float | str] = {
     "task": "new_superquadratic",
     "max_iters": 100000,
     "data_gen_seed_size": 16,
-    "data_gen_seed_max": 64,
-    "block_size": 32,
-    "batch_size": 128,
-    "test_batch_size": 512,
+    "data_gen_seed_max": 63,
+    "block_size": 64,
+    "batch_size": 64,
+    "test_batch_size": 256,
     "lr_decay_iters": 50000,
     "max_evals_without_improving": 25,
     "test_accuracy_during_training": True,
+    "eval_interval": 1,
 }
 
 

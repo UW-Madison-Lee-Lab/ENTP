@@ -15,6 +15,11 @@ class DataGenerator:
         self.permutation_invariant = config.counting_permutation_invariant
         self.block_size = config.block_size
         self.batch_size = config.batch_size
+        assert self.seed_max < self.vocab_size
+
+    @property
+    def vocab_size(self) -> int:
+        raise NotImplementedError
 
     def f(self, x: list[int]) -> int:
         raise NotImplementedError
@@ -47,6 +52,10 @@ class CountingDataGenerator(DataGenerator):
         super().__init__(config)
         self.permutation_invariant = config.counting_permutation_invariant
 
+    @property
+    def vocab_size(self) -> int:
+        return self.block_size
+
     def f(self, x: list[int]) -> int:
         y = x[:-1] if self.permutation_invariant else x[:-2]
         z = x[-1] if self.permutation_invariant else x[-2]
@@ -54,8 +63,11 @@ class CountingDataGenerator(DataGenerator):
 
 
 class SuperquadraticDataGenerator(DataGenerator):
+    @property
+    def vocab_size(self) -> int:
+        return self.batch_size**2
+
     def f(self, x: list[int]) -> int:
-        """Number of pairs `i < j` where `x[i] + x[j] % n == 0`."""
         n = len(x)
         mod_counts: dict[int, int] = defaultdict(int)
         count = 0
@@ -68,12 +80,11 @@ class SuperquadraticDataGenerator(DataGenerator):
 
 
 class NewSuperquadraticDataGenerator(DataGenerator):
+    @property
+    def vocab_size(self) -> int:
+        return self.block_size
+
     def f(self, x: list[int]) -> int:
-        """
-        Number of triplets `i < j < k` where `x[i] + x[j] + x[k] % len(x) == 0`.
-        Only the last numbers in `x` are used.
-        """
-        x = x[-16:]
         n = len(x)
         count = 0
         for i in range(n - 2):
@@ -82,4 +93,4 @@ class NewSuperquadraticDataGenerator(DataGenerator):
                 count += mod_counts[(n - x[j]) % n]
                 mod_counts[(x[i] + x[j]) % n] += 1
 
-        return count
+        return count % self.vocab_size

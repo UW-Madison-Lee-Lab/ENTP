@@ -69,7 +69,7 @@ def train(config: Config, env: Environment) -> None:
 
     env.seed_everything(config.seed)
 
-    data_generator = {
+    data_generator: DataGenerator = {
         "counting": CountingDataGenerator,
         "superquadratic": SuperquadraticDataGenerator,
         "new_superquadratic": NewSuperquadraticDataGenerator,
@@ -77,7 +77,7 @@ def train(config: Config, env: Environment) -> None:
 
     model_config = TransformerConfig(
         n_positions=config.block_size,
-        vocab_size=config.block_size if config.task == "counting" else 4096,
+        vocab_size=data_generator.vocab_size,
         n_layer=config.n_layer,
         n_head=config.n_head,
         n_embd=config.n_embd,
