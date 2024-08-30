@@ -55,6 +55,7 @@ class CountingDataGenerator(DataGenerator):
 
 class SuperquadraticDataGenerator(DataGenerator):
     def f(self, x: list[int]) -> int:
+        """Number of pairs `i < j` where `x[i] + x[j] % n == 0`."""
         n = len(x)
         mod_counts: dict[int, int] = defaultdict(int)
         count = 0
@@ -62,5 +63,23 @@ class SuperquadraticDataGenerator(DataGenerator):
             mod = x[i] % n
             count += mod_counts[(n - mod) % n]
             mod_counts[mod] += 1
+
+        return count
+
+
+class NewSuperquadraticDataGenerator(DataGenerator):
+    def f(self, x: list[int]) -> int:
+        """
+        Number of triplets `i < j < k` where `x[i] + x[j] + x[k] % len(x) == 0`.
+        Only the last numbers in `x` are used.
+        """
+        x = x[-16:]
+        n = len(x)
+        count = 0
+        for i in range(n - 2):
+            mod_counts: dict[int, int] = defaultdict(int)
+            for j in range(i + 1, n):
+                count += mod_counts[(n - x[j]) % n]
+                mod_counts[(x[i] + x[j]) % n] += 1
 
         return count

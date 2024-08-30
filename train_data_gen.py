@@ -4,11 +4,12 @@ from pprint import pprint
 
 import numpy as np
 import torch
-import wandb
 
+import wandb
 from data_generator import (
     CountingDataGenerator,
     DataGenerator,
+    NewSuperquadraticDataGenerator,
     SuperquadraticDataGenerator,
 )
 from nano_transformer import TransformerConfig, TransformerLMHead, flat_cross_entropy
@@ -71,6 +72,7 @@ def train(config: Config, env: Environment) -> None:
     data_generator = {
         "counting": CountingDataGenerator,
         "superquadratic": SuperquadraticDataGenerator,
+        "new_superquadratic": NewSuperquadraticDataGenerator,
     }[config.task](config)
 
     model_config = TransformerConfig(
