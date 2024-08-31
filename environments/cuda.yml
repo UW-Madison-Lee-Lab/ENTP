@@ -15,3 +15,4 @@ dependencies:
   - pip:
     - tqdm==4.66.1
     - wandb==0.17.5
+    - numba==0.60.0

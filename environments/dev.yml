@@ -13,4 +13,4 @@ dependencies:
     - tqdm==4.66.1
     - wandb==0.17.5
     - transformers==4.42.3
-  
+    - numba==0.60.0

@@ -15,6 +15,8 @@ from data_generator import (
 from nano_transformer import TransformerConfig, TransformerLMHead, flat_cross_entropy
 from util import Config, Environment, LRSchedule
 
+import time
+
 
 @torch.no_grad()
 def log_accuracy(
@@ -118,7 +120,9 @@ def train(config: Config, env: Environment) -> None:
         for param_group in optimizer.param_groups:
             param_group["lr"] = lr
 
+        t0 = time.time()
         x, y, forward_idxs = data_generator.generate_batch()
+        print("data gen time:", time.time() - t0)
 
         x = x.to(env.device)
         y = y.to(env.device)

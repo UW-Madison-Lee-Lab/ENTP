@@ -44,7 +44,7 @@ BASE_CONFIG: dict[str, bool | int | float | str] = {
     "lr_decay_iters": 50000,
     "max_evals_without_improving": 25,
     "test_accuracy_during_training": True,
-    "eval_interval": 1,
+    "eval_interval": 100,
 }
 
 
