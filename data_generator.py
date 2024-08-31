@@ -1,11 +1,11 @@
 import random
 from collections import Counter, defaultdict
 from typing import Optional
-import numpy as np
 
+import numpy as np
 import torch
+from numba import njit  # type: ignore
 from torch import Tensor
-from numba import njit
 
 from util import Config
 
@@ -88,7 +88,7 @@ class NewSuperquadraticDataGenerator(DataGenerator):
 
     @staticmethod
     @njit
-    def __f_helper(x: np.ndarray, mod_counts: np.ndarray) -> int:
+    def __helper(x: np.ndarray, mod_counts: np.ndarray) -> int:
         n = len(x)
         count = 0
         for i in range(n - 2):
@@ -100,4 +100,4 @@ class NewSuperquadraticDataGenerator(DataGenerator):
         return count
 
     def f(self, x: list[int]) -> int:
-        return self.__f_helper(np.array(x), np.zeros(len(x), dtype=int)) % self.vocab_size
+        return self.__helper(np.array(x), np.zeros(len(x), dtype=int)) % self.vocab_size
