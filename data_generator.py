@@ -100,3 +100,10 @@ class NewSuperquadraticDataGenerator(DataGenerator):
 
     def f(self, x: list[int]) -> int:
         return self.__helper(np.array(x), np.zeros(len(x), dtype=int)) % self.vocab_size
+
+
+DATA_GENERATORS: dict[str, type[DataGenerator]] = {
+    "counting": CountingDataGenerator,
+    "superquadratic": SuperquadraticDataGenerator,
+    "new_superquadratic": NewSuperquadraticDataGenerator,
+}

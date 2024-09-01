@@ -6,12 +6,7 @@ import numpy as np
 import torch
 
 import wandb
-from data_generator import (
-    CountingDataGenerator,
-    DataGenerator,
-    NewSuperquadraticDataGenerator,
-    SuperquadraticDataGenerator,
-)
+from data_generator import DATA_GENERATORS, DataGenerator
 from nano_transformer import TransformerConfig, TransformerLMHead, flat_cross_entropy
 from util import Config, Environment, LRSchedule
 
@@ -69,11 +64,7 @@ def train(config: Config, env: Environment) -> None:
 
     env.seed_everything(config.seed)
 
-    data_generator: DataGenerator = {
-        "counting": CountingDataGenerator,
-        "superquadratic": SuperquadraticDataGenerator,
-        "new_superquadratic": NewSuperquadraticDataGenerator,
-    }[config.task](config)
+    data_generator = DATA_GENERATORS[config.task](config)
 
     model_config = TransformerConfig(
         n_positions=config.block_size,
