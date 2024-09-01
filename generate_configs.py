@@ -34,13 +34,12 @@ EXTRA_LARGE: dict[str, int] = {
 }
 
 BASE_CONFIG: dict[str, bool | int | float | str] = {
-    "max_iters": 100000,
-    "data_gen_seed_size": 16,
+    "max_iters": 10000,
+    "lr_decay_iters": 10000,
     "data_gen_seed_max": 1024,  # vocab_size for transformer task
     "block_size": 64,
     "batch_size": 64,
     "test_batch_size": 256,
-    "lr_decay_iters": 50000,
     "max_evals_without_improving": 25,
     "test_accuracy_during_training": True,
     "eval_interval": 100,
