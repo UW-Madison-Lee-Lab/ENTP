@@ -67,7 +67,7 @@ class CountingDataGenerator(DataGenerator):
 class SuperquadraticDataGenerator(DataGenerator):
     @property
     def vocab_size(self) -> int:
-        return self.batch_size**2
+        return self.block_size**2
 
     def f(self, x: list[int]) -> int:
         n = len(x)
@@ -211,6 +211,31 @@ class AutoregressiveTransformerGenerator(DataGenerator):
         return x, y, forward_idxs
 
 
+class ModSortedSum(DataGenerator):
+    def __init__(self, config: Config, env: Environment) -> None:
+        super().__init__(config, env)
+        assert self.seed_size == self.block_size - 1
+        self.mod_before = config.mod_sorted_sum_mod_before
+
+    @property
+    def vocab_size(self) -> int:
+        return self.seed_max * self.block_size * 2
+
+    def f(self, x: list[int]) -> int:
+        if self.mod_before:
+            mod = x[0] + 1
+            x = x[1:]
+        else:
+            mod = x[-1] + 1
+            x = x[:-1]
+
+        x = sorted([n % mod for n in x])
+        for i in range(0, len(x), 2):
+            x[i] *= 2
+
+        return sum(x)
+
+
 DATA_GENERATORS: dict[str, type[DataGenerator]] = {
     "counting": CountingDataGenerator,
     "superquadratic": SuperquadraticDataGenerator,
@@ -219,4 +244,5 @@ DATA_GENERATORS: dict[str, type[DataGenerator]] = {
     "encoder": TransformerGenerator,
     "autoregressive_decoder": AutoregressiveTransformerGenerator,
     "autoregressive_encoder": AutoregressiveTransformerGenerator,
+    "mod_sorted_sum": ModSortedSum,
 }

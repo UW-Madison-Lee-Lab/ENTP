@@ -34,9 +34,11 @@ EXTRA_LARGE: dict[str, int] = {
 }
 
 BASE_CONFIG: dict[str, bool | int | float | str] = {
+    "task": "mod_sorted_sum",
     "max_iters": 10000,
     "lr_decay_iters": 10000,
-    "data_gen_seed_max": 1024,  # vocab_size for transformer task
+    "data_gen_seed_size": 63,
+    "data_gen_seed_max": 1024,
     "block_size": 64,
     "batch_size": 64,
     "test_batch_size": 256,
@@ -54,16 +56,17 @@ def n_train_str(n_train: int) -> str:
 
 
 if __name__ == "__main__":
-    for task in ["decoder", "encoder"]:
+    for mod_before in [True, False]:
         for decoder in [True, False]:
             for seed in range(1):
-                name = f"{task}_extra_small"
+                name = "mod_sorted_sum_small"
                 name += "_decoder" if decoder else "_encoder"
+                name += "_mod_before" if mod_before else "_mod_after"
                 name += f"_{seed}"
 
-                config = copy.deepcopy(BASE_CONFIG | EXTRA_SMALL)
+                config = copy.deepcopy(BASE_CONFIG | SMALL)
                 config["name"] = name
-                config["task"] = task
+                config["mod_sorted_sum_mod_before"] = mod_before
                 config["decoder"] = decoder
                 config["seed"] = seed
 

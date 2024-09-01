@@ -25,6 +25,7 @@ class Config:
     max_loss_for_early_stopping: float = 1e9
     max_lr: float = 5e-4
     min_lr: float = 5e-5
+    mod_sorted_sum_mod_before: bool = True
     model_dir: str = "models"
     n_digits: int = 3
     n_embd: int = 384
