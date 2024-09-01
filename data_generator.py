@@ -139,6 +139,57 @@ class TransformerGenerator(DataGenerator):
         if batch_size is None:
             batch_size = self.batch_size
 
+        x = torch.randint(
+            high=self.vocab_size,  # seed_max is vocab_size
+            size=(batch_size, self.block_size),
+            device=self.env.device,
+        )
+
+        with self.env.context:
+            logits = self.model(x, decoder=self.decoder)
+
+        y = torch.argmax(logits, dim=2)
+
+        forward_idxs = [i for i in range(self.block_size)]
+        return x, y, forward_idxs
+
+
+class AutoregressiveTransformerGenerator(DataGenerator):
+    def __init__(self, config: Config, env: Environment) -> None:
+        super().__init__(config, env)
+
+        self.env = env
+
+        assert config.task in ["autoregressive_decoder", "autoregressive_encoder"]
+        self.decoder = config.task == "autoregressive_decoder"
+
+        model_config = TransformerConfig(
+            n_positions=config.block_size,
+            vocab_size=self.vocab_size,
+            n_layer=config.n_layer,
+            n_head=config.n_head,
+            n_embd=config.n_embd,
+            dropout=config.dropout,
+            use_wpe=config.use_wpe,
+        )
+
+        self.model = TransformerLMHead(model_config, env.compile_blocks).to(env.device)
+        self.temperature = config.data_gen_temperature
+
+    @property
+    def vocab_size(self) -> int:
+        return self.seed_max
+
+    def generate_example(self) -> list[int]:
+        raise NotImplementedError
+
+    def generate_batch(
+        self,
+        batch_size: Optional[int] = None,
+    ) -> tuple[Tensor, Tensor, list[int]]:
+        if batch_size is None:
+            batch_size = self.batch_size
+
         seed = torch.randint(
             high=self.vocab_size,  # seed_max is vocab_size
             size=(batch_size, self.seed_size),
@@ -166,4 +217,6 @@ DATA_GENERATORS: dict[str, type[DataGenerator]] = {
     "new_superquadratic": NewSuperquadraticDataGenerator,
     "decoder": TransformerGenerator,
     "encoder": TransformerGenerator,
+    "autoregressive_decoder": AutoregressiveTransformerGenerator,
+    "autoregressive_encoder": AutoregressiveTransformerGenerator,
 }
