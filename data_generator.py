@@ -14,7 +14,6 @@ class DataGenerator:
     def __init__(self, config: Config) -> None:
         self.seed_size = config.data_gen_seed_size
         self.seed_max = config.data_gen_seed_max
-        self.permutation_invariant = config.counting_permutation_invariant
         self.block_size = config.block_size
         self.batch_size = config.batch_size
         assert self.seed_max < self.vocab_size
