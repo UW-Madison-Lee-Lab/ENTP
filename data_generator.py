@@ -7,16 +7,17 @@ import torch
 from numba import njit  # type: ignore
 from torch import Tensor
 
-from util import Config
+from nano_transformer import TransformerConfig, TransformerLMHead
+from util import Config, Environment
 
 
 class DataGenerator:
-    def __init__(self, config: Config) -> None:
+    def __init__(self, config: Config, env: Environment) -> None:
         self.seed_size = config.data_gen_seed_size
-        self.seed_max = config.data_gen_seed_max
+        self.seed_max = config.data_gen_seed_max  # exclusive
         self.block_size = config.block_size
         self.batch_size = config.batch_size
-        assert self.seed_max < self.vocab_size
+        assert self.seed_max <= self.vocab_size
 
     @property
     def vocab_size(self) -> int:
@@ -26,7 +27,7 @@ class DataGenerator:
         raise NotImplementedError
 
     def generate_example(self) -> list[int]:
-        seq = [random.randint(0, self.seed_max) for _ in range(self.seed_size)]
+        seq = [random.randint(0, self.seed_max - 1) for _ in range(self.seed_size)]
 
         while len(seq) <= self.block_size:
             seq.append(self.f(seq))
@@ -49,8 +50,8 @@ class DataGenerator:
 
 
 class CountingDataGenerator(DataGenerator):
-    def __init__(self, config: Config) -> None:
-        super().__init__(config)
+    def __init__(self, config: Config, env: Environment) -> None:
+        super().__init__(config, env)
         self.permutation_invariant = config.counting_permutation_invariant
 
     @property
@@ -102,8 +103,64 @@ class NewSuperquadraticDataGenerator(DataGenerator):
         return self.__helper(np.array(x), np.zeros(len(x), dtype=int)) % self.vocab_size
 
 
+class TransformerGenerator(DataGenerator):
+    def __init__(self, config: Config, env: Environment) -> None:
+        super().__init__(config, env)
+
+        self.env = env
+
+        assert config.task in ["decoder", "encoder"]
+        self.decoder = config.task == "decoder"
+
+        model_config = TransformerConfig(
+            n_positions=config.block_size,
+            vocab_size=self.vocab_size,
+            n_layer=config.n_layer,
+            n_head=config.n_head,
+            n_embd=config.n_embd,
+            dropout=config.dropout,
+            use_wpe=config.use_wpe,
+        )
+
+        self.model = TransformerLMHead(model_config, env.compile_blocks).to(env.device)
+
+    @property
+    def vocab_size(self) -> int:
+        return self.seed_max
+
+    def generate_example(self) -> list[int]:
+        raise NotImplementedError
+
+    def generate_batch(
+        self,
+        batch_size: Optional[int] = None,
+    ) -> tuple[Tensor, Tensor, list[int]]:
+        if batch_size is None:
+            batch_size = self.batch_size
+
+        seed = torch.randint(
+            high=self.vocab_size,  # seed_max is vocab_size
+            size=(batch_size, self.seed_size),
+            device=self.env.device,
+        )
+
+        with self.env.context:
+            data = self.model.generate(
+                seed,
+                max_new_tokens=self.block_size - self.seed_size + 1,
+                decoder=self.decoder,
+            )
+
+        x = data[:, :-1]
+        y = data[:, 1:]
+        forward_idxs = [i for i in range(self.seed_size, self.block_size)]
+        return x, y, forward_idxs
+
+
 DATA_GENERATORS: dict[str, type[DataGenerator]] = {
     "counting": CountingDataGenerator,
     "superquadratic": SuperquadraticDataGenerator,
     "new_superquadratic": NewSuperquadraticDataGenerator,
+    "decoder": TransformerGenerator,
+    "encoder": TransformerGenerator,
 }

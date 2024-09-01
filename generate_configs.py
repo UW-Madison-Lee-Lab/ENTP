@@ -34,10 +34,9 @@ EXTRA_LARGE: dict[str, int] = {
 }
 
 BASE_CONFIG: dict[str, bool | int | float | str] = {
-    "task": "new_superquadratic",
     "max_iters": 100000,
     "data_gen_seed_size": 16,
-    "data_gen_seed_max": 63,
+    "data_gen_seed_max": 1024,  # vocab_size for transformer task
     "block_size": 64,
     "batch_size": 64,
     "test_batch_size": 256,
@@ -56,20 +55,22 @@ def n_train_str(n_train: int) -> str:
 
 
 if __name__ == "__main__":
-    for decoder in [True, False]:
-        for seed in range(1):
-            name = "new_superquadratic_medium"
-            name += "_decoder" if decoder else "_encoder"
-            name += f"_{seed}"
+    for task in ["decoder", "encoder"]:
+        for decoder in [True, False]:
+            for seed in range(1):
+                name = f"{task}_extra_small"
+                name += "_decoder" if decoder else "_encoder"
+                name += f"_{seed}"
 
-            config = copy.deepcopy(BASE_CONFIG | MEDIUM)
-            config["name"] = name
-            config["decoder"] = decoder
-            config["seed"] = seed
+                config = copy.deepcopy(BASE_CONFIG | EXTRA_SMALL)
+                config["name"] = name
+                config["task"] = task
+                config["decoder"] = decoder
+                config["seed"] = seed
 
-            config_path = f"configs/{name}.json"
-            with open(config_path, "w") as f:
-                json.dump(config, f)
+                config_path = f"configs/{name}.json"
+                with open(config_path, "w") as f:
+                    json.dump(config, f)
 
     # for decoder in [True, False]:
     #     for use_wpe in [True, False]:

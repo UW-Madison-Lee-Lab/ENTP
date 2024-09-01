@@ -12,7 +12,7 @@ class Config:
     counting_permutation_invariant: bool = True
     custom_optim_groups: list[dict[str, Any]] = []
     data_dir: str = "data/addition"
-    data_gen_seed_max: int = 16
+    data_gen_seed_max: int = 16  # exclusive
     data_gen_seed_size: int = 16
     decoder: bool = True
     dropout: float = 0.0
