@@ -2,6 +2,7 @@ import math
 from typing import Any, Optional, Sequence
 
 import torch
+import torch.nn.functional as F
 from torch import Tensor, nn, optim
 
 from .base import Block, Linear, TransformerConfig
@@ -109,6 +110,8 @@ class TransformerLMHead(nn.Module):
         input_ids: Tensor,
         max_new_tokens: int,
         decoder: bool = True,
+        deterministic: bool = True,
+        temperature: float = 1.0,
     ) -> Tensor:
         for _ in range(max_new_tokens):
             if input_ids.shape[1] > self.n_positions:
@@ -120,7 +123,12 @@ class TransformerLMHead(nn.Module):
                 forward_idxs=(input_ids.shape[1] - 1,),
             )
 
-            next_id = torch.argmax(logits[:, -1:], dim=2)
+            if deterministic:
+                next_id = torch.argmax(logits[:, -1:], dim=2)
+            else:
+                distribution = F.softmax(logits[:, -1] / temperature, dim=1)
+                next_id = torch.multinomial(distribution, num_samples=1)
+
             input_ids = torch.cat((input_ids, next_id), dim=1)
 
         return input_ids

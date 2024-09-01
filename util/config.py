@@ -14,6 +14,7 @@ class Config:
     data_dir: str = "data/addition"
     data_gen_seed_max: int = 16  # exclusive
     data_gen_seed_size: int = 16
+    data_gen_temperature: float = 1.0
     decoder: bool = True
     dropout: float = 0.0
     eval_interval: int = 100

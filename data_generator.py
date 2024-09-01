@@ -123,6 +123,7 @@ class TransformerGenerator(DataGenerator):
         )
 
         self.model = TransformerLMHead(model_config, env.compile_blocks).to(env.device)
+        self.temperature = config.data_gen_temperature
 
     @property
     def vocab_size(self) -> int:
@@ -149,6 +150,8 @@ class TransformerGenerator(DataGenerator):
                 seed,
                 max_new_tokens=self.block_size - self.seed_size + 1,
                 decoder=self.decoder,
+                deterministic=False,
+                temperature=self.temperature,
             )
 
         x = data[:, :-1]
