@@ -13,7 +13,9 @@ from util import Config, Environment, LRSchedule
 
 
 def get_batch(
-    config: Config, env: Environment, split: Literal["train", "val"]
+    config: Config, 
+    env: Environment, 
+    split: Literal["train", "val"],
 ) -> tuple[Tensor, Tensor]:
     if split == "train":
         data = np.memmap(
@@ -33,7 +35,7 @@ def get_batch(
 
     idxs = torch.randint(
         len(data) - config.block_size,
-        (config.batch_size if split == "train" else config.test_batch_size,),
+        (config.batch_size,),
     )
 
     x = torch.stack([make_block(i) for i in idxs])
