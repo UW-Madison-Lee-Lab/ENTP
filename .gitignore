@@ -5,6 +5,7 @@ configs/*.json
 data/addition/*.txt
 data/shakespeare/train*.txt
 data/shakespeare/val*.txt
+data/openwebtext/*.bin
 results/*/*.txt
 *wandb
 models/*.pt
