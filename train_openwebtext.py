@@ -12,17 +12,29 @@ from nano_transformer import TransformerConfig, TransformerLMHead, flat_cross_en
 from util import Config, Environment, LRSchedule
 
 
-def get_batch(config: Config, env: Environment, split: Literal["train", "val"]) -> tuple[Tensor, Tensor]:
+def get_batch(
+    config: Config, env: Environment, split: Literal["train", "val"]
+) -> tuple[Tensor, Tensor]:
     if split == "train":
-        data = np.memmap(os.path.join(config.data_dir, "train.bin"), dtype=np.uint16, mode="r")
+        data = np.memmap(
+            os.path.join(config.data_dir, "train.bin"),
+            dtype=np.uint16,
+            mode="r",
+        )
     else:
-        data = np.memmap(os.path.join(config.data_dir, "val.bin"), dtype=np.uint16, mode="r")
+        data = np.memmap(
+            os.path.join(config.data_dir, "val.bin"),
+            dtype=np.uint16,
+            mode="r",
+        )
 
-    def make_block(i: int) -> np.ndarray:
-        return torch.from_numpy(data[i:i + config.block_size].astype(np.int64))
-    
-    batch_size = config.batch_size if split == "train" else config.test_batch_size
-    idxs = torch.randint(len(data) - config.block_size, (batch_size,),)
+    def make_block(i: int) -> Tensor:
+        return torch.from_numpy(data[i : i + config.block_size].astype(np.int64))
+
+    idxs = torch.randint(
+        len(data) - config.block_size,
+        (config.batch_size if split == "train" else config.test_batch_size,),
+    )
 
     x = torch.stack([make_block(i) for i in idxs])
     y = torch.stack([make_block(i + 1) for i in idxs])
@@ -68,7 +80,7 @@ def train(config: Config, env: Environment) -> None:
     print(f"{env.pin_memory=}, {env.pin_memory_device=}, {env.compile_blocks=}")
     pprint(config.to_dict())
 
-    run = wandb.init(
+    wandb.init(
         dir=config.results_dir,
         project="encoder-addition",
         config=config.to_dict(),
@@ -118,20 +130,24 @@ def train(config: Config, env: Environment) -> None:
     encoder_losses = []
 
     if config.resume:
-        decoder_load_path = os.path.join(config.model_dir, "decoder_" + config.checkpoint_name)
+        decoder_load_path = os.path.join(
+            config.model_dir, "decoder_" + config.checkpoint_name
+        )
         decoder_checkpoint = torch.load(decoder_load_path, weights_only=False)
         decoder_model.load_state_dict(decoder_checkpoint["model"])
         decoder_optimizer.load_state_dict(decoder_checkpoint["optimizer"])
         decoder_i = decoder_checkpoint["i"]
         decoder_best_loss = decoder_checkpoint["best_loss"]
 
-        encoder_load_path = os.path.join(config.model_dir, "encoder_" + config.checkpoint_name)
+        encoder_load_path = os.path.join(
+            config.model_dir, "encoder_" + config.checkpoint_name
+        )
         encoder_checkpoint = torch.load(encoder_load_path, weights_only=False)
         encoder_model.load_state_dict(encoder_checkpoint["model"])
         encoder_optimizer.load_state_dict(encoder_checkpoint["optimizer"])
         encoder_i = encoder_checkpoint["i"]
         encoder_best_loss = encoder_checkpoint["best_loss"]
-        
+
         i = min(encoder_i, decoder_i)
 
     while True:
@@ -148,7 +164,7 @@ def train(config: Config, env: Environment) -> None:
         for param_group in encoder_optimizer.param_groups:
             param_group["lr"] = lr
 
-        x, y = get_batch()
+        x, y = get_batch(config, env, split="train")
 
         # train step for decoder
         with env.context:
@@ -176,10 +192,18 @@ def train(config: Config, env: Environment) -> None:
             # evaluate and save checkpoint for decoder
             decoder_train_loss = float(np.mean(decoder_losses[-config.eval_interval :]))
             decoder_val_loss = evaluate_loss(config, env, decoder_model, decoder=False)
-            wandb.log({f"decoder_train_loss": decoder_train_loss, f"decoder_val_loss": decoder_val_loss}, step=i)
+            wandb.log(
+                {
+                    "decoder_train_loss": decoder_train_loss,
+                    "decoder_val_loss": decoder_val_loss,
+                },
+                step=i,
+            )
 
             if decoder_val_loss < decoder_best_loss:
-                print(f"saved decoder checkpoint    {f'{i=}':8}  {decoder_val_loss=:.3f}")
+                print(
+                    f"saved decoder checkpoint    {f'{i=}':8}  {decoder_val_loss=:.3f}"
+                )
                 decoder_best_loss = decoder_val_loss
                 checkpoint = {
                     "model": decoder_model.state_dict(),
@@ -187,16 +211,26 @@ def train(config: Config, env: Environment) -> None:
                     "i": i,
                     "best_loss": decoder_best_loss,
                 }
-                save_path = os.path.join(config.model_dir, "decoder_" + config.checkpoint_name)
+                save_path = os.path.join(
+                    config.model_dir, "decoder_" + config.checkpoint_name
+                )
                 torch.save(checkpoint, save_path)
 
             # evaluate and save checkpoint for encoder
             encoder_train_loss = float(np.mean(encoder_losses[-config.eval_interval :]))
             encoder_val_loss = evaluate_loss(config, env, encoder_model, decoder=False)
-            wandb.log({f"encoder_train_loss": encoder_train_loss, f"encoder_val_loss": encoder_val_loss}, step=i)
+            wandb.log(
+                {
+                    "encoder_train_loss": encoder_train_loss,
+                    "encoder_val_loss": encoder_val_loss,
+                },
+                step=i,
+            )
 
             if encoder_val_loss < encoder_best_loss:
-                print(f"saved encoder checkpoint    {f'{i=}':8}  {encoder_val_loss=:.3f}")
+                print(
+                    f"saved encoder checkpoint    {f'{i=}':8}  {encoder_val_loss=:.3f}"
+                )
                 encoder_best_loss = encoder_val_loss
                 checkpoint = {
                     "model": encoder_model.state_dict(),
@@ -204,7 +238,9 @@ def train(config: Config, env: Environment) -> None:
                     "i": i,
                     "best_loss": encoder_best_loss,
                 }
-                save_path = os.path.join(config.model_dir, "encoder_" + config.checkpoint_name)
+                save_path = os.path.join(
+                    config.model_dir, "encoder_" + config.checkpoint_name
+                )
                 torch.save(checkpoint, save_path)
 
 
