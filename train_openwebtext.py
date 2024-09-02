@@ -13,8 +13,8 @@ from util import Config, Environment, LRSchedule
 
 
 def get_batch(
-    config: Config, 
-    env: Environment, 
+    config: Config,
+    env: Environment,
     split: Literal["train", "val"],
 ) -> tuple[Tensor, Tensor]:
     if split == "train":
@@ -181,7 +181,7 @@ def train(config: Config, env: Environment) -> None:
 
         # train step for encoder
         with env.context:
-            logits = encoder_model(x, decoder=config.decoder)
+            logits = encoder_model(x, decoder=False)
             loss = flat_cross_entropy(logits, y)
 
         loss.backward()
@@ -193,7 +193,7 @@ def train(config: Config, env: Environment) -> None:
         if i % config.eval_interval == 0:
             # evaluate and save checkpoint for decoder
             decoder_train_loss = float(np.mean(decoder_losses[-config.eval_interval :]))
-            decoder_val_loss = evaluate_loss(config, env, decoder_model, decoder=False)
+            decoder_val_loss = evaluate_loss(config, env, decoder_model, decoder=True)
             wandb.log(
                 {
                     "decoder_train_loss": decoder_train_loss,
