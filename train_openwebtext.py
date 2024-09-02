@@ -84,7 +84,7 @@ def train(config: Config, env: Environment) -> None:
 
     wandb.init(
         dir=config.results_dir,
-        project="encoder-addition",
+        project="encoder-openwebtext",
         config=config.to_dict(),
         name=config.name,
         resume=config.resume,
