@@ -57,7 +57,7 @@ def evaluate_loss(
     env: Environment,
     model: TransformerLMHead,
     decoder: bool,
-    max_iters=100,
+    max_iters=50,
 ) -> float:
     """Evaluates `model` loss on `dataset`."""
     model.eval()
