@@ -45,7 +45,7 @@ BASE_CONFIG: dict[str, Any] = {
     "block_size": 128,
     "batch_size": 32,
     "test_batch_size": 128,
-    "max_evals_without_improving": 50,
+    "max_evals_without_improving": 25,
     "eval_interval": 100,
 }
 
