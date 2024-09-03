@@ -58,7 +58,7 @@ def n_train_str(n_train: int) -> str:
 
 
 if __name__ == "__main__":
-    for size in [EXTRA_SMALL, SMALL, MEDIUM, LARGE]:
+    for size in [EXTRA_SMALL, SMALL, MEDIUM]:
         for decoder in [True, False]:
             for seed in range(1):
                 name = "shakespeare"
@@ -70,6 +70,10 @@ if __name__ == "__main__":
                 config["name"] = name
                 config["decoder"] = decoder
                 config["seed"] = seed
+
+                if size is MEDIUM:
+                    config["batch_size"] = 16
+                    config["test_batch_size"] = 64
 
                 config_path = f"configs/{name}.json"
                 with open(config_path, "w") as f:
