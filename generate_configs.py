@@ -72,8 +72,8 @@ if __name__ == "__main__":
                 config["seed"] = seed
 
                 if size is MEDIUM:
-                    config["batch_size"] = 16
-                    config["test_batch_size"] = 64
+                    config["batch_size"] = 8
+                    config["test_batch_size"] = 32
 
                 config_path = f"configs/{name}.json"
                 with open(config_path, "w") as f:
