@@ -62,7 +62,7 @@ if __name__ == "__main__":
                 name = "memory_bound"
                 name += f"_{size['size_name']}"
                 name += "_decoder" if decoder else "_encoder"
-                name += f"_{seed}_continued"
+                name += f"_{seed}"
 
                 config = copy.deepcopy(BASE_CONFIG | size)
                 config["name"] = name
