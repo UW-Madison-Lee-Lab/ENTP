@@ -105,6 +105,14 @@ def train(config: Config, env: Environment) -> None:
     decoder_model = TransformerLMHead(model_config, env.compile_blocks).to(env.device)
     encoder_model = TransformerLMHead(model_config, env.compile_blocks).to(env.device)
 
+    with torch.no_grad():
+        for (n1, p1), (n2, p2) in zip(
+            decoder_model.named_parameters(), 
+            encoder_model.named_parameters(),
+        ):
+            assert n1 == n2
+            p1.copy_(p2)
+
     decoder_optimizer = decoder_model.configure_optimizer(
         lr=config.min_lr,
         betas=(config.beta1, config.beta2),
