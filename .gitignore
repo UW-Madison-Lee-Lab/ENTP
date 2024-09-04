@@ -9,6 +9,7 @@ data/openwebtext/*.bin
 results/*/*.txt
 *wandb
 models/*.pt
+models/seperate/*.pt
 testing/models/*.pt
 *.ipynb
 results.tar.gz

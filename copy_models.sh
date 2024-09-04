@@ -6,7 +6,7 @@ for FILE in models/*; do
     if [ -f "$FILE" ]; then
         if [[ "$FILE" == models/*medium_openwebtext.pt ]]; then
             FILE="${FILE##models/}"
-            cp "models/$FILE" "models/upload/$FILE"
+            cp "models/$FILE" "models/seperate/$FILE"
             echo "copied $FILE"
         fi
     fi
