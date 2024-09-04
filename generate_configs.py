@@ -43,7 +43,7 @@ BASE_CONFIG: dict[str, Any] = {
     "lr_decay_iters": 50000,
     "block_size": 64,
     "batch_size": 64,
-    "max_evals_without_improving": 25,
+    "max_evals_without_improving": 50,
     "eval_interval": 100,
 }
 
