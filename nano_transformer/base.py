@@ -1,8 +1,9 @@
 from dataclasses import dataclass
 from math import pi, sqrt
+from typing import Any
 
 import torch
-from torch import Tensor, nn
+from torch import Tensor, nn, optim
 from torch.nn import functional as F
 
 
@@ -93,3 +94,36 @@ class Block(nn.Module):
 
 def flat_cross_entropy(logits: Tensor, target: Tensor) -> Tensor:
     return F.cross_entropy(logits.view(-1, logits.shape[-1]), target.view(-1))
+
+
+def configure_optimizer(
+    model: nn.Module,
+    lr: float = 0.001,
+    betas: tuple[float, float] = (0.9, 0.999),
+    weight_decay: float = 0.01,
+    custom_optim_groups: list[dict[str, Any]] = [],
+    device: str = "cpu",
+) -> optim.AdamW:
+    """Configures AdamW optimizer."""
+    custom_params = set(sum([d["params"] for d in custom_optim_groups], []))
+    filtered_params = [
+        p
+        for n, p in model.named_parameters()
+        if p.requires_grad and n not in custom_params
+    ]
+
+    decay_params = [p for p in filtered_params if p.dim() >= 2]
+    nodecay_params = [p for p in filtered_params if p.dim() < 2]
+    optim_groups = [
+        {"params": decay_params, "weight_decay": weight_decay},
+        {"params": nodecay_params, "weight_decay": 0.0},
+    ]
+
+    name2param = dict(model.named_parameters())
+    for d in custom_optim_groups:
+        for i in range(len(d["params"])):
+            d["params"][i] = name2param[d["params"][i]]
+
+    optim_groups += custom_optim_groups
+
+    return optim.AdamW(optim_groups, lr=lr, betas=betas, fused=device == "cuda")

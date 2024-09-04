@@ -1,9 +1,9 @@
 import math
-from typing import Any, Optional, Sequence
+from typing import Optional, Sequence
 
 import torch
 import torch.nn.functional as F
-from torch import Tensor, nn, optim
+from torch import Tensor, nn
 
 from .base import Block, Linear, TransformerConfig
 
@@ -132,35 +132,3 @@ class TransformerLMHead(nn.Module):
             input_ids = torch.cat((input_ids, next_id), dim=1)
 
         return input_ids
-
-    def configure_optimizer(
-        self,
-        lr: float = 0.001,
-        betas: tuple[float, float] = (0.9, 0.999),
-        weight_decay: float = 0.01,
-        custom_optim_groups: list[dict[str, Any]] = [],
-        device: str = "cpu",
-    ) -> optim.Optimizer:
-        """Configures AdamW optimizer."""
-        custom_params = set(sum([d["params"] for d in custom_optim_groups], []))
-        filtered_params = [
-            p
-            for n, p in self.named_parameters()
-            if p.requires_grad and n not in custom_params
-        ]
-
-        decay_params = [p for p in filtered_params if p.dim() >= 2]
-        nodecay_params = [p for p in filtered_params if p.dim() < 2]
-        optim_groups = [
-            {"params": decay_params, "weight_decay": weight_decay},
-            {"params": nodecay_params, "weight_decay": 0.0},
-        ]
-
-        name2param = dict(self.named_parameters())
-        for d in custom_optim_groups:
-            for i in range(len(d["params"])):
-                d["params"][i] = name2param[d["params"][i]]
-
-        optim_groups += custom_optim_groups
-
-        return optim.AdamW(optim_groups, lr=lr, betas=betas, fused=device == "cuda")

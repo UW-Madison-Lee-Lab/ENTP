@@ -7,7 +7,12 @@ from torch.utils import data
 
 import wandb
 from evaluate import evaluate_split_with_model
-from nano_transformer import TransformerConfig, TransformerLMHead, flat_cross_entropy
+from nano_transformer import (
+    TransformerConfig,
+    TransformerLMHead,
+    configure_optimizer,
+    flat_cross_entropy,
+)
 from util import Config, Environment, LRSchedule, load_data
 
 
@@ -83,7 +88,8 @@ def train(config: Config, env: Environment) -> None:
 
     model = TransformerLMHead(model_config, env.compile_blocks).to(env.device)
 
-    optimizer = model.configure_optimizer(
+    optimizer = configure_optimizer(
+        model,
         lr=config.min_lr,
         betas=(config.beta1, config.beta2),
         weight_decay=config.weight_decay,

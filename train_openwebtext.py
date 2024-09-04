@@ -8,7 +8,12 @@ import torch
 from torch import Tensor
 
 import wandb
-from nano_transformer import TransformerConfig, TransformerLMHead, flat_cross_entropy
+from nano_transformer import (
+    TransformerConfig,
+    TransformerLMHead,
+    configure_optimizer,
+    flat_cross_entropy,
+)
 from util import Config, Environment, LRSchedule
 
 
@@ -105,7 +110,8 @@ def train(config: Config, env: Environment) -> None:
     decoder_model = TransformerLMHead(model_config, env.compile_blocks).to(env.device)
     encoder_model = TransformerLMHead(model_config, env.compile_blocks).to(env.device)
 
-    decoder_optimizer = decoder_model.configure_optimizer(
+    decoder_optimizer = configure_optimizer(
+        decoder_model,
         lr=config.min_lr,
         betas=(config.beta1, config.beta2),
         weight_decay=config.weight_decay,
@@ -113,7 +119,8 @@ def train(config: Config, env: Environment) -> None:
         device=env.device,
     )
 
-    encoder_optimizer = encoder_model.configure_optimizer(
+    encoder_optimizer = configure_optimizer(
+        encoder_model,
         lr=config.min_lr,
         betas=(config.beta1, config.beta2),
         weight_decay=config.weight_decay,

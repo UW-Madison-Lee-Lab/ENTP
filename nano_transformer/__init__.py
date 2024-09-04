@@ -4,6 +4,7 @@ from .base import (
     Linear,
     SelfAttention,
     TransformerConfig,
+    configure_optimizer,
     flat_cross_entropy,
 )
 from .transformer import Transformer, TransformerLMHead
@@ -14,6 +15,7 @@ __all__ = [
     "SelfAttention",
     "MLP",
     "Block",
+    "configure_optimizer",
     "flat_cross_entropy",
     "Transformer",
     "TransformerLMHead",
