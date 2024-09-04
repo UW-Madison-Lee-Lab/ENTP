@@ -1,4 +1,4 @@
-from .csv_util import merge_wandb_csvs
+from .csv_util import combine_columns, merge_wandb_csvs
 from .plotting_util import (
     plot_multiple_keys,
     plot_results,
@@ -17,5 +17,6 @@ __all__ = [
     "plot_results_scatter",
     "plot_two_sets_of_multiple_keys",
     "reduce_results",
+    "combine_columns",
     "merge_wandb_csvs",
 ]
