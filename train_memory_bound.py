@@ -34,7 +34,7 @@ class MemoryBoundSeqDataGenerator:
 
         y = torch.zeros_like(x)
         for i in range(1, self.block_size):
-            a = x[:, i]
+            a = x[:, i] / self.dim**0.5
             b = x[:, :i]
             y[:, i, 0] = torch.einsum("ik,ijk->i", a, b)
 
