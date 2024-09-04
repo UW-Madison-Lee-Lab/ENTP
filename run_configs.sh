@@ -2,7 +2,7 @@
 
 trap "exit" INT
 
-for FILE in $(ls -r configs/*.json); do
+for FILE in $(ls configs/*.json); do
     # python generate_addition_data.py "$FILE"
     # python train.py "$FILE"
     # python evaluate.py "$FILE"
