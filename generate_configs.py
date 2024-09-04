@@ -69,6 +69,9 @@ if __name__ == "__main__":
                 config["decoder"] = decoder
                 config["seed"] = seed
 
+                if size is MEDIUM:
+                    config["batch_size"] = 32
+
                 config_path = f"configs/{name}.json"
                 with open(config_path, "w") as f:
                     json.dump(config, f)
