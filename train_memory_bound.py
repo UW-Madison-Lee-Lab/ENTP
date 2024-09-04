@@ -50,8 +50,8 @@ def train(config: Config, env: Environment) -> None:
         dir=config.results_dir,
         project="memory-bound-sequence",
         config=config.to_dict(),
-        name=config.name,
-        resume=config.resume,
+        name=config.name + ("_resumed" if config.resume else ""),
+        resume=False,
     )
 
     env.seed_everything(config.seed)
