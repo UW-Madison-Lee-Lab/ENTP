@@ -1,49 +1,49 @@
 import copy
 import json
+from typing import Any
 
-EXTRA_SMALL: dict[str, int] = {
+EXTRA_SMALL: dict[str, Any] = {
     "n_layer": 2,
     "n_head": 2,
     "n_embd": 128,
+    "size_name": "extra_small",
 }
 
-SMALL: dict[str, int] = {
+SMALL: dict[str, Any] = {
     "n_layer": 3,
     "n_head": 3,
     "n_embd": 192,
+    "size_name": "small",
 }
 
-MEDIUM: dict[str, int] = {
+MEDIUM: dict[str, Any] = {
     "n_layer": 6,
     "n_head": 6,
     "n_embd": 384,
+    "size_name": "medium",
 }
 
-LARGE: dict[str, int] = {
+LARGE: dict[str, Any] = {
     "n_layer": 12,
     "n_head": 12,
     "n_embd": 768,
-    "batch_size": 32,
+    "size_name": "large",
 }
 
-EXTRA_LARGE: dict[str, int] = {
+EXTRA_LARGE: dict[str, Any] = {
     "n_layer": 16,
     "n_head": 16,
     "n_embd": 1024,
-    "batch_size": 32,
+    "size_name": "extra_large",
 }
 
-BASE_CONFIG: dict[str, bool | int | float | str] = {
-    "task": "mod_sorted_sum",
-    "max_iters": 10000,
-    "lr_decay_iters": 10000,
-    "data_gen_seed_size": 63,
-    "data_gen_seed_max": 1024,
+BASE_CONFIG: dict[str, Any] = {
+    "task": "memory_bound",
+    "max_iters": 50000,
+    "lr_decay_iters": 50000,
     "block_size": 64,
     "batch_size": 64,
-    "test_batch_size": 256,
-    "max_evals_without_improving": 25,
-    "test_accuracy_during_training": True,
+    "max_evals_without_improving": 50,
     "eval_interval": 100,
 }
 
@@ -56,19 +56,24 @@ def n_train_str(n_train: int) -> str:
 
 
 if __name__ == "__main__":
-    for mod_before in [True, False]:
+    for size in [EXTRA_SMALL]:
         for decoder in [True, False]:
             for seed in range(1):
-                name = "mod_sorted_sum_small"
+                name = "memory_bound"
+                name += f"_{size['size_name']}"
                 name += "_decoder" if decoder else "_encoder"
-                name += "_mod_before" if mod_before else "_mod_after"
                 name += f"_{seed}"
 
-                config = copy.deepcopy(BASE_CONFIG | SMALL)
+                config = copy.deepcopy(BASE_CONFIG | size)
                 config["name"] = name
-                config["mod_sorted_sum_mod_before"] = mod_before
                 config["decoder"] = decoder
                 config["seed"] = seed
+
+                config["resume"] = True
+                config["max_iters"] = 100000
+
+                if size is MEDIUM:
+                    config["batch_size"] = 32
 
                 config_path = f"configs/{name}.json"
                 with open(config_path, "w") as f:

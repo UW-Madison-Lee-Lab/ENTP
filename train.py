@@ -3,11 +3,16 @@ import sys
 from pprint import pprint
 
 import torch
-import wandb
 from torch.utils import data
 
+import wandb
 from evaluate import evaluate_split_with_model
-from nano_transformer import TransformerConfig, TransformerLMHead, flat_cross_entropy
+from nano_transformer import (
+    TransformerConfig,
+    TransformerLMHead,
+    configure_optimizer,
+    flat_cross_entropy,
+)
 from util import Config, Environment, LRSchedule, load_data
 
 
@@ -17,13 +22,13 @@ def evaluate_loss(
     env: Environment,
     model: TransformerLMHead,
     dataset: data.Dataset,
-    max_iters=100,
+    max_iters=25,
 ) -> float:
     """Evaluates `model` loss on `dataset`."""
     model.eval()
     data_loader = data.DataLoader(
         dataset,
-        batch_size=config.batch_size,
+        batch_size=config.test_batch_size,
         shuffle=True,
         pin_memory=env.pin_memory,
         pin_memory_device=env.pin_memory_device,
@@ -83,7 +88,8 @@ def train(config: Config, env: Environment) -> None:
 
     model = TransformerLMHead(model_config, env.compile_blocks).to(env.device)
 
-    optimizer = model.configure_optimizer(
+    optimizer = configure_optimizer(
+        model,
         lr=config.min_lr,
         betas=(config.beta1, config.beta2),
         weight_decay=config.weight_decay,

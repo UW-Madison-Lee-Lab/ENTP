@@ -1,57 +1,44 @@
 import os
 import sys
 from pprint import pprint
+from typing import Optional
 
 import numpy as np
 import torch
+import torch.nn.functional as F
+from torch import Tensor
 
 import wandb
-from data_generator import DATA_GENERATORS, DataGenerator
 from nano_transformer import (
+    Transformer,
     TransformerConfig,
-    TransformerLMHead,
     configure_optimizer,
-    flat_cross_entropy,
 )
 from util import Config, Environment, LRSchedule
 
 
-@torch.no_grad()
-def log_accuracy(
-    model: TransformerLMHead,
-    data_generator: DataGenerator,
-    step: int,
-    config: Config,
-    env: Environment,
-    n_iters=25,
-) -> None:
-    model.eval()
-    token_acc = []
-    sequence_acc = []
+class MemoryBoundSeqDataGenerator:
+    def __init__(self, config: Config) -> None:
+        self.dim = config.n_embd
+        self.block_size = config.block_size
+        self.batch_size = config.batch_size
 
-    for _ in range(n_iters):
-        x, y, forward_idxs = data_generator.generate_batch(config.test_batch_size)
+    def generate_batch(
+        self,
+        batch_size: Optional[int] = None,
+    ) -> tuple[Tensor, Tensor]:
+        if batch_size is None:
+            batch_size = self.batch_size
 
-        x = x.to(env.device)
-        y = y.to(env.device)
+        x = torch.randn(batch_size, self.block_size, self.dim)
 
-        with env.context:
-            logits = model(x, decoder=config.decoder, forward_idxs=forward_idxs)
+        y = torch.zeros_like(x)
+        for i in range(1, self.block_size):
+            a = x[:, i] / self.dim**0.5
+            b = x[:, :i]
+            y[:, i, 0] = torch.einsum("ik,ijk->i", a, b)
 
-        y_pred = torch.argmax(logits, dim=2)
-
-        y = y[:, forward_idxs]
-        y_pred = y_pred[:, forward_idxs]
-        token_acc.append(torch.mean((y == y_pred).float()).item())
-        sequence_acc.append(torch.mean(torch.all(y == y_pred, dim=1).float()).item())
-
-    wandb.log(
-        {
-            "token_accuracy": np.mean(token_acc),
-            "sequence_accuracy": np.mean(sequence_acc),
-        },
-        step=step,
-    )
+        return x, y
 
 
 def train(config: Config, env: Environment) -> None:
@@ -61,19 +48,18 @@ def train(config: Config, env: Environment) -> None:
 
     run = wandb.init(
         dir=config.results_dir,
-        project="encoder-addition",
+        project="memory-bound-sequence",
         config=config.to_dict(),
-        name=config.name,
-        resume=config.resume,
+        name=config.name + ("_resumed" if config.resume else ""),
+        resume=False,
     )
 
     env.seed_everything(config.seed)
 
-    data_generator = DATA_GENERATORS[config.task](config, env)
+    data_generator = MemoryBoundSeqDataGenerator(config)
 
     model_config = TransformerConfig(
         n_positions=config.block_size,
-        vocab_size=data_generator.vocab_size,
         n_layer=config.n_layer,
         n_head=config.n_head,
         n_embd=config.n_embd,
@@ -81,7 +67,7 @@ def train(config: Config, env: Environment) -> None:
         use_wpe=config.use_wpe,
     )
 
-    model = TransformerLMHead(model_config, env.compile_blocks).to(env.device)
+    model = Transformer(model_config, env.compile_blocks).to(env.device)
 
     optimizer = configure_optimizer(
         model,
@@ -115,14 +101,14 @@ def train(config: Config, env: Environment) -> None:
         for param_group in optimizer.param_groups:
             param_group["lr"] = lr
 
-        x, y, forward_idxs = data_generator.generate_batch()
+        x, y = data_generator.generate_batch()
 
         x = x.to(env.device)
         y = y.to(env.device)
 
         with env.context:
-            logits = model(x, decoder=config.decoder, forward_idxs=forward_idxs)
-            loss = flat_cross_entropy(logits[:, forward_idxs], y[:, forward_idxs])
+            y_pred = model(input_embds=x, decoder=config.decoder)
+            loss = F.mse_loss(y_pred[:, :, 0], y[:, :, 0])
 
         loss.backward()
         optimizer.step()
@@ -133,13 +119,6 @@ def train(config: Config, env: Environment) -> None:
         if i % config.eval_interval == 0:
             eval_loss = float(np.mean(losses[-config.eval_interval :]))
             wandb.log({"loss": eval_loss}, step=i)
-
-            if config.log_wpe_norm:
-                wpe_fro_norm = torch.norm(model.transformer.wpe.weight).item()
-                wandb.log({"wpe_fro_norm": wpe_fro_norm}, step=i)
-
-            if config.test_accuracy_during_training:
-                log_accuracy(model, data_generator, i, config, env)
 
             if eval_loss < best_loss:
                 n_evals_without_improving = 0
