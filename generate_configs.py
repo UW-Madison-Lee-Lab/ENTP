@@ -56,18 +56,21 @@ def n_train_str(n_train: int) -> str:
 
 
 if __name__ == "__main__":
-    for size in [EXTRA_SMALL, SMALL, MEDIUM]:
+    for size in [EXTRA_SMALL]:
         for decoder in [True, False]:
             for seed in range(1):
                 name = "memory_bound"
                 name += f"_{size['size_name']}"
                 name += "_decoder" if decoder else "_encoder"
-                name += f"_{seed}"
+                name += f"_{seed}_continued"
 
                 config = copy.deepcopy(BASE_CONFIG | size)
                 config["name"] = name
                 config["decoder"] = decoder
                 config["seed"] = seed
+
+                config["resume"] = True
+                config["max_iters"] = 100000
 
                 if size is MEDIUM:
                     config["batch_size"] = 32
