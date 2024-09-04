@@ -39,8 +39,8 @@ EXTRA_LARGE: dict[str, Any] = {
 
 BASE_CONFIG: dict[str, Any] = {
     "task": "memory_bound",
-    "max_iters": 50000,
-    "lr_decay_iters": 50000,
+    "max_iters": 100000,
+    "lr_decay_iters": 100000,
     "block_size": 64,
     "batch_size": 64,
     "max_evals_without_improving": 50,
@@ -56,7 +56,7 @@ def n_train_str(n_train: int) -> str:
 
 
 if __name__ == "__main__":
-    for size in [EXTRA_SMALL]:
+    for size in [SMALL, MEDIUM]:
         for decoder in [True, False]:
             for seed in range(1):
                 name = "memory_bound"
@@ -68,12 +68,6 @@ if __name__ == "__main__":
                 config["name"] = name
                 config["decoder"] = decoder
                 config["seed"] = seed
-
-                config["resume"] = True
-                config["max_iters"] = 100000
-
-                if size is MEDIUM:
-                    config["batch_size"] = 32
 
                 config_path = f"configs/{name}.json"
                 with open(config_path, "w") as f:
