@@ -91,8 +91,8 @@ def train(config: Config, env: Environment) -> None:
         dir=config.results_dir,
         project="encoder-openwebtext",
         config=config.to_dict(),
-        name=config.name,
-        resume=config.resume,
+        name=config.name + ("_resumed" if config.resume else ""),
+        resume=False,
     )
 
     env.seed_everything(config.seed)
@@ -165,7 +165,7 @@ def train(config: Config, env: Environment) -> None:
         encoder_i = encoder_checkpoint["i"]
         encoder_best_loss = encoder_checkpoint["best_loss"]
 
-        i = min(encoder_i, decoder_i)
+        i = max(encoder_i, decoder_i)
 
     while True:
         i += 1
