@@ -45,8 +45,8 @@ BASE_CONFIG: dict[str, Any] = {
     "min_lr": 1e-4,
     "max_lr": 1e-3,
     "weight_decay": 0.01,
-    "block_size": 64,
-    "batch_size": 64,
+    "block_size": 256,
+    "batch_size": 32,
     "max_evals_without_improving": 100,
     "eval_interval": 100,
 }
@@ -60,7 +60,7 @@ def n_train_str(n_train: int) -> str:
 
 
 if __name__ == "__main__":
-    for size in [EXTRA_SMALL, SMALL, MEDIUM]:
+    for size in [EXTRA_SMALL]:
         for decoder in [True, False]:
             for seed in range(1):
                 name = "memory_bound"

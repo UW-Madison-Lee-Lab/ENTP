@@ -15,5 +15,6 @@
     "n_head": 6, 
     "n_embd": 384, 
     "name": "medium_openwebtext", 
-    "seed": 0
+    "seed": 0,
+    "resume": true
 }
