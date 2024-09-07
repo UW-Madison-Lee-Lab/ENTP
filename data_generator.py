@@ -211,6 +211,51 @@ class AutoregressiveTransformerGenerator(DataGenerator):
         return x, y, forward_idxs
 
 
+class Match3Generator(DataGenerator):
+    def __init__(self, config: Config, env: Environment, mod: int = 100) -> None:
+        super().__init__(config, env)
+        self.mod = mod
+        self.false_id = self.mod
+        self.true_id = self.mod + 1
+
+    @property
+    def vocab_size(self) -> int:
+        return self.mod + 2
+
+    def f(self, x: list[int] | Tensor) -> int:
+        n = len(x)
+        i = n - 1
+        for j in range(n - 2):
+            for k in range(j + 1, n - 1):
+                if (x[i] + x[j] + x[k]) % self.mod == 0:
+                    return self.true_id
+
+        return self.false_id
+
+    def generate_batch(
+        self,
+        batch_size: Optional[int] = None,
+    ) -> tuple[Tensor, Tensor, list[int]]:
+        if batch_size is None:
+            batch_size = self.batch_size
+
+        x = torch.tensor(
+            [
+                [random.randint(0, self.mod - 1) for _ in range(self.block_size)]
+                for _ in range(batch_size)
+            ]
+        )
+
+        y = torch.empty_like(x)
+
+        for i in range(batch_size):
+            for j in range(self.block_size):
+                y[i, j] = self.f(x[i, : j + 1])
+
+        forward_idxs = [i for i in range(self.block_size)]
+        return x, y, forward_idxs
+
+
 DATA_GENERATORS: dict[str, type[DataGenerator]] = {
     "counting": CountingDataGenerator,
     "superquadratic": SuperquadraticDataGenerator,
@@ -219,4 +264,5 @@ DATA_GENERATORS: dict[str, type[DataGenerator]] = {
     "encoder": TransformerGenerator,
     "autoregressive_decoder": AutoregressiveTransformerGenerator,
     "autoregressive_encoder": AutoregressiveTransformerGenerator,
+    "match3": Match3Generator,
 }

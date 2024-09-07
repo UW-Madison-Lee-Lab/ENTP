@@ -38,16 +38,13 @@ EXTRA_LARGE: dict[str, Any] = {
 }
 
 BASE_CONFIG: dict[str, Any] = {
-    "task": "memory_bound",
+    "task": "match3",
     "max_iters": 100000,
     "lr_decay_iters": 100000,
     "warmup_iters": 500,
-    "min_lr": 1e-4,
-    "max_lr": 1e-3,
-    "weight_decay": 0.01,
-    "block_size": 64,
+    "block_size": 1024,
     "batch_size": 64,
-    "max_evals_without_improving": 100,
+    "max_evals_without_improving": 50,
     "eval_interval": 100,
 }
 
@@ -60,10 +57,10 @@ def n_train_str(n_train: int) -> str:
 
 
 if __name__ == "__main__":
-    for size in [EXTRA_SMALL, SMALL, MEDIUM]:
-        for decoder in [True, False]:
+    for size in [EXTRA_SMALL]:
+        for decoder in [False]:
             for seed in range(1):
-                name = "memory_bound"
+                name = "match3"
                 name += f"_{size['size_name']}"
                 name += "_decoder" if decoder else "_encoder"
                 name += f"_{seed}"
