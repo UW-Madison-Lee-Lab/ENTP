@@ -38,14 +38,18 @@ EXTRA_LARGE: dict[str, Any] = {
 }
 
 BASE_CONFIG: dict[str, Any] = {
-    "task": "match3",
+    "task": "count3",
+    "data_gen_seed_size": 16,
+    "data_gen_seed_max": 64,  # same as block size for count3
     "max_iters": 100000,
     "lr_decay_iters": 100000,
     "warmup_iters": 500,
-    "block_size": 1024,
+    "block_size": 64,
     "batch_size": 64,
+    "test_batch_size": 256,
     "max_evals_without_improving": 50,
     "eval_interval": 100,
+    "test_accuracy_during_training": True,
 }
 
 
@@ -57,10 +61,10 @@ def n_train_str(n_train: int) -> str:
 
 
 if __name__ == "__main__":
-    for size in [EXTRA_SMALL]:
-        for decoder in [False]:
+    for size in [EXTRA_SMALL, MEDIUM]:
+        for decoder in [True, False]:
             for seed in range(1):
-                name = "match3"
+                name = "count3"
                 name += f"_{size['size_name']}"
                 name += "_decoder" if decoder else "_encoder"
                 name += f"_{seed}"
@@ -73,26 +77,3 @@ if __name__ == "__main__":
                 config_path = f"configs/{name}.json"
                 with open(config_path, "w") as f:
                     json.dump(config, f)
-
-    # for decoder in [True, False]:
-    #     for use_wpe in [True, False]:
-    #         for permutation_invariant in [True, False]:
-    #             for seed in range(1):
-    #                 name = "counting_extra_small_rt"
-    #                 name += "_decoder" if decoder else "_encoder"
-    #                 name += "" if use_wpe else "_nope"
-    #                 name += (
-    #                     "_perm_invariant" if permutation_invariant else "_perm_variant"
-    #                 )
-    #                 name += f"_{seed}"
-
-    #                 config = copy.deepcopy(BASE_CONFIG | EXTRA_SMALL)
-    #                 config["name"] = name
-    #                 config["decoder"] = decoder
-    #                 config["use_wpe"] = use_wpe
-    #                 config["counting_permutation_invariant"] = permutation_invariant
-    #                 config["seed"] = seed
-
-    #                 config_path = f"configs/{name}.json"
-    #                 with open(config_path, "w") as f:
-    #                     json.dump(config, f)
