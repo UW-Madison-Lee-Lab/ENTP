@@ -63,7 +63,7 @@ def train(config: Config, env: Environment) -> None:
         dir=config.results_dir,
         project="encoder-addition",
         config=config.to_dict(),
-        name=config.name,
+        name=config.name + ("_resumed" if config.resume else ""),
         resume=config.resume,
     )
 
