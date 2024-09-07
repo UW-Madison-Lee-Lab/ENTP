@@ -41,8 +41,8 @@ BASE_CONFIG: dict[str, Any] = {
     "task": "count3",
     "data_gen_seed_size": 16,
     "data_gen_seed_max": 96,  # same as block size for count3
-    "max_iters": 150000,
-    "lr_decay_iters": 150000,
+    "max_iters": 200000,
+    "lr_decay_iters": 200000,
     "warmup_iters": 500,
     "block_size": 64,
     "batch_size": 64,
