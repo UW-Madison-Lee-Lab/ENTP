@@ -213,10 +213,10 @@ class AutoregressiveTransformerGenerator(DataGenerator):
 
 class Match3Generator(DataGenerator):
     def __init__(self, config: Config, env: Environment, mod: int = 100) -> None:
-        super().__init__(config, env)
         self.mod = mod
         self.false_id = self.mod
         self.true_id = self.mod + 1
+        super().__init__(config, env)
 
     @property
     def vocab_size(self) -> int:

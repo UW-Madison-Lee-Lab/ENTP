@@ -7,7 +7,7 @@ for FILE in $(ls configs/*.json); do
     # python train.py "$FILE"
     # python evaluate.py "$FILE"
 
-    # python train_data_gen.py "$FILE"
+    python train_data_gen.py "$FILE"
 
-    python train_memory_bound.py "$FILE"
+    # python train_memory_bound.py "$FILE"
 done
