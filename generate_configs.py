@@ -61,7 +61,7 @@ def n_train_str(n_train: int) -> str:
 
 
 if __name__ == "__main__":
-    for size in [SMALL]:
+    for size in [MEDIUM]:
         for decoder in [False]:
             for seed in range(1):
                 name = "updated_count3"
@@ -78,7 +78,7 @@ if __name__ == "__main__":
                 with open(config_path, "w") as f:
                     json.dump(config, f)
 
-    for size in [SMALL, LARGE]:
+    for size in [MEDIUM, LARGE]:
         for decoder in [True]:
             for seed in range(1):
                 name = "updated_count3"
