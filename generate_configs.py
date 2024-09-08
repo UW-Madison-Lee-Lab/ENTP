@@ -40,8 +40,8 @@ EXTRA_LARGE: dict[str, Any] = {
 BASE_CONFIG: dict[str, Any] = {
     "task": "count3",
     "data_gen_seed_size": 16,
-    "data_gen_seed_max": 64,  # same as block size for count3
-    "max_iters": 200000,
+    "data_gen_seed_max": 65,  # block_size + 1
+    "max_iters": 150000,
     "lr_decay_iters": 100000,
     "warmup_iters": 500,
     "block_size": 64,
@@ -50,7 +50,6 @@ BASE_CONFIG: dict[str, Any] = {
     "max_evals_without_improving": 50,
     "eval_interval": 100,
     "test_accuracy_during_training": True,
-    "resume": True,
 }
 
 
@@ -62,10 +61,27 @@ def n_train_str(n_train: int) -> str:
 
 
 if __name__ == "__main__":
-    for size in [MEDIUM]:
+    for size in [SMALL]:
         for decoder in [False]:
             for seed in range(1):
-                name = "count3"
+                name = "updated_count3"
+                name += f"_{size['size_name']}"
+                name += "_decoder" if decoder else "_encoder"
+                name += f"_{seed}"
+
+                config = copy.deepcopy(BASE_CONFIG | size)
+                config["name"] = name
+                config["decoder"] = decoder
+                config["seed"] = seed
+
+                config_path = f"configs/{name}.json"
+                with open(config_path, "w") as f:
+                    json.dump(config, f)
+
+    for size in [SMALL, LARGE]:
+        for decoder in [True]:
+            for seed in range(1):
+                name = "updated_count3"
                 name += f"_{size['size_name']}"
                 name += "_decoder" if decoder else "_encoder"
                 name += f"_{seed}"

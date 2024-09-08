@@ -259,19 +259,20 @@ class Match3Generator(DataGenerator):
 class Count3Generator(DataGenerator):
     @property
     def vocab_size(self) -> int:
-        return self.block_size
+        return self.block_size + 1
 
     def f(self, x: list[int]) -> int:
         n = len(x)
+        m = n + 1
         count = 0
-        mod_counts = [0] * n
+        mod_counts = [0] * m
         for i in range(n):
-            mod_counts[(x[i] + x[-1]) % n] += 1
+            mod_counts[(x[i] + x[-1]) % m] += 1
 
         for i in range(n):
-            count += mod_counts[(n - x[i]) % n]
+            count += mod_counts[(m - x[i]) % m]
 
-        return count % n
+        return count % m
 
 
 DATA_GENERATORS: dict[str, type[DataGenerator]] = {
