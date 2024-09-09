@@ -61,25 +61,8 @@ def n_train_str(n_train: int) -> str:
 
 
 if __name__ == "__main__":
-    for size in [MEDIUM]:
+    for size in [SMALL]:
         for decoder in [False]:
-            for seed in range(1):
-                name = "updated_count3"
-                name += f"_{size['size_name']}"
-                name += "_decoder" if decoder else "_encoder"
-                name += f"_{seed}"
-
-                config = copy.deepcopy(BASE_CONFIG | size)
-                config["name"] = name
-                config["decoder"] = decoder
-                config["seed"] = seed
-
-                config_path = f"configs/{name}.json"
-                with open(config_path, "w") as f:
-                    json.dump(config, f)
-
-    for size in [MEDIUM, LARGE]:
-        for decoder in [True]:
             for seed in range(1):
                 name = "updated_count3"
                 name += f"_{size['size_name']}"
