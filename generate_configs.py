@@ -2,45 +2,66 @@ import copy
 import json
 from typing import Any
 
-EXTRA_SMALL: dict[str, Any] = {
+LAYER_2: dict[str, Any] = {
     "n_layer": 2,
     "n_head": 2,
     "n_embd": 128,
-    "size_name": "extra_small",
+    "size_name": "2_layer",
 }
 
-SMALL: dict[str, Any] = {
+LAYER_3: dict[str, Any] = {
     "n_layer": 3,
     "n_head": 3,
     "n_embd": 192,
     "size_name": "small",
 }
 
-MEDIUM: dict[str, Any] = {
+LAYER_4: dict[str, Any] = {
+    "n_layer": 4,
+    "n_head": 4,
+    "n_embd": 256,
+    "size_name": "4_layer",
+}
+
+LAYER_6: dict[str, Any] = {
     "n_layer": 6,
     "n_head": 6,
     "n_embd": 384,
-    "size_name": "medium",
+    "size_name": "6_layer",
 }
 
-LARGE: dict[str, Any] = {
+LAYER_8: dict[str, Any] = {
+    "n_layer": 8,
+    "n_head": 8,
+    "n_embd": 512,
+    "size_name": "8_layer",
+}
+
+LAYER_12: dict[str, Any] = {
     "n_layer": 12,
     "n_head": 12,
     "n_embd": 768,
-    "size_name": "large",
+    "size_name": "12_layer",
 }
 
-EXTRA_LARGE: dict[str, Any] = {
+LAYER_16: dict[str, Any] = {
     "n_layer": 16,
     "n_head": 16,
     "n_embd": 1024,
-    "size_name": "extra_large",
+    "size_name": "16_layer",
+}
+
+LAYER_24: dict[str, Any] = {
+    "n_layer": 24,
+    "n_head": 16,
+    "n_embd": 1024,
+    "size_name": "24_layer",
 }
 
 BASE_CONFIG: dict[str, Any] = {
     "task": "count3",
     "data_gen_seed_size": 16,
-    "data_gen_seed_max": 65,  # block_size + 1
+    "data_gen_seed_max": 64,  # block_size
     "max_iters": 150000,
     "lr_decay_iters": 100000,
     "warmup_iters": 500,
@@ -61,10 +82,10 @@ def n_train_str(n_train: int) -> str:
 
 
 if __name__ == "__main__":
-    for size in [SMALL]:
+    for size in [LAYER_3, LAYER_4]:
         for decoder in [False]:
             for seed in range(1):
-                name = "updated_count3"
+                name = "count3"
                 name += f"_{size['size_name']}"
                 name += "_decoder" if decoder else "_encoder"
                 name += f"_{seed}"
