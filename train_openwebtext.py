@@ -216,22 +216,17 @@ def train(config: Config, env: Environment) -> None:
                 },
                 step=i,
             )
-
-            if decoder_val_loss < decoder_best_loss:
-                print(
-                    f"saved decoder checkpoint    {f'{i=}':8}  {decoder_val_loss=:.3f}"
-                )
-                decoder_best_loss = decoder_val_loss
-                checkpoint = {
-                    "model": decoder_model.state_dict(),
-                    "optimizer": decoder_optimizer.state_dict(),
-                    "i": i,
-                    "best_loss": decoder_best_loss,
-                }
-                save_path = os.path.join(
-                    config.model_dir, "decoder_" + config.checkpoint_name
-                )
-                torch.save(checkpoint, save_path)
+            decoder_best_loss = min(decoder_best_loss, decoder_val_loss)
+            decoder_checkpoint = {
+                "model": decoder_model.state_dict(),
+                "optimizer": decoder_optimizer.state_dict(),
+                "i": i,
+                "best_loss": decoder_best_loss,
+            }
+            save_path = os.path.join(
+                config.model_dir, "decoder_" + config.checkpoint_name
+            )
+            torch.save(decoder_checkpoint, save_path)
 
             # evaluate and save checkpoint for encoder
             encoder_train_loss = float(np.mean(encoder_losses[-config.eval_interval :]))
@@ -243,23 +238,21 @@ def train(config: Config, env: Environment) -> None:
                 },
                 step=i,
             )
+            encoder_best_loss = min(encoder_best_loss, encoder_val_loss)
+            encoder_checkpoint = {
+                "model": encoder_model.state_dict(),
+                "optimizer": encoder_optimizer.state_dict(),
+                "i": i,
+                "best_loss": encoder_best_loss,
+            }
+            save_path = os.path.join(
+                config.model_dir, "encoder_" + config.checkpoint_name
+            )
+            torch.save(encoder_checkpoint, save_path)
 
-            if encoder_val_loss < encoder_best_loss:
-                print(
-                    f"saved encoder checkpoint    {f'{i=}':8}  {encoder_val_loss=:.3f}"
-                )
-                encoder_best_loss = encoder_val_loss
-                checkpoint = {
-                    "model": encoder_model.state_dict(),
-                    "optimizer": encoder_optimizer.state_dict(),
-                    "i": i,
-                    "best_loss": encoder_best_loss,
-                }
-                save_path = os.path.join(
-                    config.model_dir, "encoder_" + config.checkpoint_name
-                )
-                torch.save(checkpoint, save_path)
-
+            print(
+                f"saved checkpoint    {f'{i=}':8}  {decoder_val_loss=:.3f}    {encoder_val_loss=:.3f}"
+            )
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
