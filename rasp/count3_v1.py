@@ -19,10 +19,10 @@ def count3_linear(x):
     count = 0
     mod_counts = [0] * n
     for i in range(n):
-        mod_counts[(x[i] + x[-1]) % n] += 1
+        mod_counts[(n - x[i]) % n] += 1
 
     for i in range(n):
-        count += mod_counts[(n - x[i]) % n]
+        count += mod_counts[(x[i] + x[-1]) % n]
 
     return [count % n] * n
 
