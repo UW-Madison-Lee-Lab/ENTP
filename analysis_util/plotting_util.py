@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Callable, Optional
+from typing import Any, Callable, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -10,6 +10,8 @@ plt.rcParams["font.family"] = "serif"  # Use serif font
 plt.rcParams[
     "text.latex.preamble"
 ] = r"\usepackage{amsmath}"  # Use additional packages if needed
+
+FONTSIZE: int = 12
 
 
 def reduce_results(
@@ -55,13 +57,13 @@ def plot_results(
             label=k[-7:],
         )
 
-    plt.ylabel(f"{reduction.__name__} test accuracy", fontsize=8)
-    plt.ylabel("test accuracy", fontsize=8)
-    plt.xlabel("training examples", fontsize=8)
-    plt.xticks(fontsize=8)
-    plt.yticks(fontsize=8)
-    plt.title(title_prefix + task.replace("_", " "), fontsize=8)
-    plt.legend(fontsize=8)
+    plt.ylabel(f"{reduction.__name__} test accuracy", fontsize=FONTSIZE)
+    plt.ylabel("test accuracy", fontsize=FONTSIZE)
+    plt.xlabel("training examples", fontsize=FONTSIZE)
+    plt.xticks(fontsize=FONTSIZE)
+    plt.yticks(fontsize=FONTSIZE)
+    plt.title(title_prefix + task.replace("_", " "), fontsize=FONTSIZE)
+    plt.legend(fontsize=FONTSIZE)
     plt.show()
 
 
@@ -89,13 +91,13 @@ def plot_results_errorbar(
             label=k[-7:].capitalize() + "-only",
         )
 
-    plt.ylabel("\\textbf{Test Accuracy}", fontsize=8)
-    plt.xlabel("\\textbf{Number of Training Examples}", fontsize=8)
-    plt.xticks(fontsize=8)
-    plt.yticks(fontsize=8)
+    plt.ylabel("\\textbf{Test Accuracy}", fontsize=FONTSIZE)
+    plt.xlabel("\\textbf{Number of Training Examples}", fontsize=FONTSIZE)
+    plt.xticks(fontsize=FONTSIZE)
+    plt.yticks(fontsize=FONTSIZE)
     if title:
-        plt.title(title_prefix + task.replace("_", " "), fontsize=8)
-    plt.legend(fontsize=8)
+        plt.title(title_prefix + task.replace("_", " "), fontsize=FONTSIZE)
+    plt.legend(fontsize=FONTSIZE)
 
     if save_path is not None:
         plt.savefig(save_path, bbox_inches="tight")
@@ -161,11 +163,11 @@ def plot_results_bar(
         ax.bar(x + bar_width / 2, y_encoder, width=bar_width, label="encoder")
 
         ax.set_title(
-            task.replace("_", " ") + f" {n_train} training examples", fontsize=8
+            task.replace("_", " ") + f" {n_train} training examples", fontsize=FONTSIZE
         )
         ax.set_xticks(x, x_labels)
         ax.tick_params(axis="both", which="major", labelsize=8)
-        ax.legend(fontsize=8, loc="lower right")
+        ax.legend(fontsize=FONTSIZE, loc="lower right")
 
     plt.tight_layout()
     plt.show()
@@ -202,14 +204,15 @@ def plot_results_from_two_df(
         label=label2,
     )
 
-    plt.ylabel(f"{reduction.__name__} test accuracy", fontsize=8)
-    plt.xlabel("training examples", fontsize=8)
-    plt.xticks(fontsize=8)
-    plt.yticks(fontsize=8)
+    plt.ylabel(f"{reduction.__name__} test accuracy", fontsize=FONTSIZE)
+    plt.xlabel("training examples", fontsize=FONTSIZE)
+    plt.xticks(fontsize=FONTSIZE)
+    plt.yticks(fontsize=FONTSIZE)
     plt.title(
-        task.replace("_", " ") + (" decoder" if decoder else " encoder"), fontsize=8
+        task.replace("_", " ") + (" decoder" if decoder else " encoder"),
+        fontsize=FONTSIZE,
     )
-    plt.legend(fontsize=8)
+    plt.legend(fontsize=FONTSIZE)
     plt.show()
 
 
@@ -220,6 +223,7 @@ def plot_multiple_keys(
     x_label: Optional[str] = None,
     y_label: Optional[str] = None,
     y_labels: Optional[list[Optional[str]]] = None,
+    transform: Optional[Callable[[Any], Any]] = None,
     title: Optional[str] = None,
     save_path: Optional[str] = None,
 ) -> None:
@@ -233,26 +237,26 @@ def plot_multiple_keys(
     for y, label in zip(ys, y_labels):
         plt.plot(
             df[x],
-            df[y],
+            df[y] if transform is None else [transform(a) for a in df[y]],
             marker="o",
             ms=2,
             label=label,
         )
 
     if x_label is not None:
-        plt.xlabel("\\textbf{" + x_label.capitalize() + "}", fontsize=8)
+        plt.xlabel("\\textbf{" + x_label.capitalize() + "}", fontsize=FONTSIZE)
 
     if y_label is not None:
-        plt.ylabel("\\textbf{" + y_label.capitalize() + "}", fontsize=8)
+        plt.ylabel("\\textbf{" + y_label.capitalize() + "}", fontsize=FONTSIZE)
 
     if title is not None:
-        plt.title("\\textbf{" + title.capitalize() + "}", fontsize=8)
+        plt.title("\\textbf{" + title.capitalize() + "}", fontsize=FONTSIZE)
 
     if y_labels[0] is not None:
-        plt.legend(fontsize=8)
+        plt.legend(fontsize=FONTSIZE)
 
-    plt.xticks(fontsize=8)
-    plt.yticks(fontsize=8)
+    plt.xticks(fontsize=FONTSIZE)
+    plt.yticks(fontsize=FONTSIZE)
 
     if save_path is not None:
         plt.savefig(save_path, bbox_inches="tight")
@@ -291,13 +295,13 @@ def plot_two_sets_of_multiple_keys(
         )
 
     if x_label1 is not None:
-        ax1.set_xlabel("\\textbf{" + x_label1.capitalize() + "}", fontsize=8)
+        ax1.set_xlabel("\\textbf{" + x_label1.capitalize() + "}", fontsize=FONTSIZE)
 
     if title1 is not None:
-        ax1.set_title("\\textbf{" + title1.capitalize() + "}", fontsize=8)
+        ax1.set_title("\\textbf{" + title1.capitalize() + "}", fontsize=FONTSIZE)
 
     if y_labels1[0] is not None:
-        ax1.legend(fontsize=8)
+        ax1.legend(fontsize=FONTSIZE)
 
     ax1.tick_params(axis="x", labelsize=8)
     ax1.tick_params(axis="y", labelsize=8)
@@ -317,13 +321,13 @@ def plot_two_sets_of_multiple_keys(
         )
 
     if x_label2 is not None:
-        ax2.set_xlabel("\\textbf{" + x_label2.capitalize() + "}", fontsize=8)
+        ax2.set_xlabel("\\textbf{" + x_label2.capitalize() + "}", fontsize=FONTSIZE)
 
     if title2 is not None:
-        ax2.set_title("\\textbf{" + title2.capitalize() + "}", fontsize=8)
+        ax2.set_title("\\textbf{" + title2.capitalize() + "}", fontsize=FONTSIZE)
 
     if y_labels2[0] is not None:
-        ax2.legend(fontsize=8)
+        ax2.legend(fontsize=FONTSIZE)
 
     ax2.tick_params(axis="x", labelsize=8)
     ax2.tick_params(axis="y", labelsize=8)

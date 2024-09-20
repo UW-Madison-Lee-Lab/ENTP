@@ -112,7 +112,7 @@ def train(config: Config, env: Environment) -> None:
 
     with torch.no_grad():
         for (n1, p1), (n2, p2) in zip(
-            decoder_model.named_parameters(), 
+            decoder_model.named_parameters(),
             encoder_model.named_parameters(),
         ):
             assert n1 == n2
@@ -253,6 +253,7 @@ def train(config: Config, env: Environment) -> None:
             print(
                 f"saved checkpoint    {f'{i=}':8}  {decoder_val_loss=:.3f}    {encoder_val_loss=:.3f}"
             )
+
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
