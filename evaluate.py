@@ -16,6 +16,7 @@ def evaluate_split_with_model(
     config: Config,
     env: Environment,
     split: Literal["train", "val", "test"],
+    log_incorrect_examples=False,
 ) -> float:
     data_path = path.join(config.data_dir, f"{split}_{config.task}.txt")
     with open(data_path, "r", encoding="utf-8") as f:
@@ -29,6 +30,7 @@ def evaluate_split_with_model(
         assert vocab_size == 13
 
     char2int = {c: i for i, c in enumerate(chars)}
+    int2char = {i: c for i, c in enumerate(chars)}
 
     model.eval()
 
@@ -59,12 +61,22 @@ def evaluate_split_with_model(
         batch = batch.to(env.device)
 
         with env.context:
-            output_ids = model(batch)
+            logits = model(batch)
 
-        output_ids = batch[:, eq_idx:-1]
+        output_ids = torch.argmax(logits, dim=2)
+
+        output_ids = output_ids[:, eq_idx:-1]
         target_ids = batch[:, eq_idx + 1 :]
 
         correct = torch.all(output_ids == target_ids, dim=1)
+
+        if log_incorrect_examples:
+            for i, c in enumerate(correct):
+                if not c:
+                    batch_str = decode(batch[i], int2char)
+                    output_str = decode(output_ids[i], int2char).removesuffix("\n")
+                    target_str = decode(target_ids[i], int2char).removesuffix("\n")
+                    print(f"{batch_str}, {output_str}, {target_str}\n")
 
         n_correct += int(torch.sum(correct.int()))
         n_total += len(correct)
@@ -149,10 +161,12 @@ def evaluate_split(
         batch = batch.to(env.device)
 
         with env.context:
-            output_ids = model(batch)
+            logits = model(batch)
 
-        output_ids = batch[:, eq_idx:-1].cpu()
-        target_ids = batch[:, eq_idx + 1 :].cpu()
+        output_ids = torch.argmax(logits, dim=2)
+
+        output_ids = output_ids[:, eq_idx:-1]
+        target_ids = batch[:, eq_idx + 1 :]
 
         correct = torch.all(output_ids == target_ids, dim=1)
 
@@ -160,14 +174,11 @@ def evaluate_split(
             for i, c in enumerate(correct):
                 if not c:
                     example = (
-                        batch[i, : eq_idx + 1],
-                        output_ids[i],
-                        target_ids[i],
+                        batch[i, : eq_idx + 1].cpu(),
+                        output_ids[i].cpu(),
+                        target_ids[i].cpu(),
                     )
                     incorrect_examples.append(example)
-
-        n_correct += int(torch.sum(correct.int()))
-        n_total += len(output_ids)
 
         progress_bar.set_description(
             f"[{100 * n_correct / n_total:.2f}% {split}ing accuracy]"
@@ -193,7 +204,7 @@ def evaluate(
     n_correct_train, n_total_train, *_ = evaluate_split(
         config,
         env,
-        split="train",
+        split="val",  # just for len gen experiment (train is similar but too large)
         log_incorrect_examples=log_incorrect_examples,
     )
 
@@ -220,4 +231,4 @@ if __name__ == "__main__":
 
     config = Config.from_json(sys.argv[1])
     env = Environment()
-    evaluate(config, env, log_incorrect_examples=False)
+    evaluate(config, env, log_incorrect_examples=True)
