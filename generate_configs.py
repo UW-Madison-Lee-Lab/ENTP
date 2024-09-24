@@ -64,7 +64,7 @@ if __name__ == "__main__":
     for size in [MEDIUM]:
         for decoder in [True, False]:
             for seed in range(1):
-                name = "count3"
+                name = "count3_easy"
                 name += f"_{size['size_name']}"
                 name += "_decoder" if decoder else "_encoder"
                 name += f"_{seed}"

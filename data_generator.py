@@ -302,5 +302,5 @@ DATA_GENERATORS: dict[str, type[DataGenerator]] = {
     "autoregressive_encoder": AutoregressiveTransformerGenerator,
     "match3": Match3Generator,
     "count3": Count3Generator,
-    "count_easy3": Count3EasyGenerator,
+    "count3_easy": Count3EasyGenerator,
 }
