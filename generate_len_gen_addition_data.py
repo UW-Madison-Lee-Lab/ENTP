@@ -19,9 +19,12 @@ class AdditionGenerator:
         return random.randint(10 ** (n_digits - 1), 10**n_digits - 1)
 
     def generate_example(self, train=True) -> tuple[int, int, int]:
-        n_digits = self.n_digits_max if train else 2 * self.n_digits_max
-        x = self.generate_number(random.randint(1, n_digits))
-        y = self.generate_number(random.randint(1, n_digits))
+        if train:
+            x = self.generate_number(random.randint(1, self.n_digits_max))
+            y = self.generate_number(random.randint(1, self.n_digits_max))
+        else:
+            x = self.generate_number(random.randint(1, 2 * self.n_digits_max))
+            y = self.generate_number(random.randint(self.n_digits_max + 1, 2 * self.n_digits_max))
 
         if random.choice((True, False)):
             x, y = y, x

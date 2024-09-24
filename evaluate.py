@@ -61,7 +61,7 @@ def evaluate_split_with_model(
         batch = batch.to(env.device)
 
         with env.context:
-            logits = model(batch)
+            logits = model(batch, decoder=config.decoder)
 
         output_ids = torch.argmax(logits, dim=2)
 
@@ -161,7 +161,7 @@ def evaluate_split(
         batch = batch.to(env.device)
 
         with env.context:
-            logits = model(batch)
+            logits = model(batch, decoder=config.decoder)
 
         output_ids = torch.argmax(logits, dim=2)
 
@@ -169,6 +169,9 @@ def evaluate_split(
         target_ids = batch[:, eq_idx + 1 :]
 
         correct = torch.all(output_ids == target_ids, dim=1)
+
+        n_correct += int(torch.sum(correct.int()))
+        n_total += len(correct)
 
         if log_incorrect_examples:
             for i, c in enumerate(correct):
