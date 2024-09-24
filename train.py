@@ -161,13 +161,6 @@ def train(config: Config, env: Environment) -> None:
                     n_evals_without_improving += 1
 
                 if config.test_accuracy_during_training:
-                    train_acc = evaluate_split_with_model(
-                        model,
-                        config,
-                        env,
-                        split="train",
-                    )
-
                     val_acc = evaluate_split_with_model(
                         model,
                         config,
@@ -175,7 +168,14 @@ def train(config: Config, env: Environment) -> None:
                         split="val",
                     )
 
-                    wandb.log({"train_acc": train_acc, "val_acc": val_acc}, step=i)
+                    test_acc = evaluate_split_with_model(
+                        model,
+                        config,
+                        env,
+                        split="test",
+                    )
+
+                    wandb.log({"val_acc": val_acc, "test_acc": test_acc}, step=i)
 
             if i >= config.max_iters or (
                 n_evals_without_improving >= config.max_evals_without_improving

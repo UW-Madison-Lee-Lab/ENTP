@@ -56,16 +56,12 @@ def evaluate_split_with_model(
     n_total = 0
 
     for batch, eq_idx in zip(batches, batch_eq_idxs):
-        input_ids = batch[:, : eq_idx + 1].to(env.device)
+        batch = batch.to(env.device)
 
         with env.context:
-            output_ids = model.generate(
-                input_ids,
-                max_new_tokens=5,
-                decoder=config.decoder,
-            )
+            output_ids = model(batch)
 
-        output_ids = output_ids[:, eq_idx + 1 : batch.shape[1]].cpu()
+        output_ids = batch[:, eq_idx:-1]
         target_ids = batch[:, eq_idx + 1 :]
 
         correct = torch.all(output_ids == target_ids, dim=1)
@@ -80,6 +76,7 @@ def evaluate_split(
     config: Config,
     env: Environment,
     split: Literal["train", "test"],
+    log_incorrect_examples: bool,
 ) -> tuple[int, int, list[tuple[Tensor, Tensor, Tensor]], dict[int, str]]:
     """
     Evaluates model on `split` dataset. Assumes model is in `config.model_dir`.
@@ -149,28 +146,25 @@ def evaluate_split(
     incorrect_examples = []
 
     for batch, eq_idx in progress_bar:
-        input_ids = batch[:, : eq_idx + 1].to(env.device)
+        batch = batch.to(env.device)
 
         with env.context:
-            output_ids = model.generate(
-                input_ids,
-                max_new_tokens=5,
-                decoder=config.decoder,
-            )
+            output_ids = model(batch)
 
-        output_ids = output_ids[:, eq_idx + 1 : batch.shape[1]].cpu()
-        target_ids = batch[:, eq_idx + 1 :]
+        output_ids = batch[:, eq_idx:-1].cpu()
+        target_ids = batch[:, eq_idx + 1 :].cpu()
 
         correct = torch.all(output_ids == target_ids, dim=1)
 
-        for i, c in enumerate(correct):
-            if not c:
-                example = (
-                    batch[i, : eq_idx + 1],
-                    output_ids[i],
-                    target_ids[i],
-                )
-                incorrect_examples.append(example)
+        if log_incorrect_examples:
+            for i, c in enumerate(correct):
+                if not c:
+                    example = (
+                        batch[i, : eq_idx + 1],
+                        output_ids[i],
+                        target_ids[i],
+                    )
+                    incorrect_examples.append(example)
 
         n_correct += int(torch.sum(correct.int()))
         n_total += len(output_ids)
@@ -193,12 +187,14 @@ def evaluate(
         config,
         env,
         split="test",
+        log_incorrect_examples=log_incorrect_examples,
     )
 
     n_correct_train, n_total_train, *_ = evaluate_split(
         config,
         env,
         split="train",
+        log_incorrect_examples=log_incorrect_examples,
     )
 
     results_str = f"{n_correct_test}/{n_total_test} (test)\n"
@@ -224,4 +220,4 @@ if __name__ == "__main__":
 
     config = Config.from_json(sys.argv[1])
     env = Environment()
-    evaluate(config, env, log_incorrect_examples=True)
+    evaluate(config, env, log_incorrect_examples=False)

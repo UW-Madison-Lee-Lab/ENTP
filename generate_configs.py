@@ -38,17 +38,28 @@ EXTRA_LARGE: dict[str, Any] = {
 }
 
 BASE_CONFIG: dict[str, Any] = {
-    "task": "count3_easy",
-    "data_gen_seed_size": 16,
-    "data_gen_seed_max": 64,  # block_size
-    "max_iters": 150000,
+    "task": "reversed_addition_len_gen",
+    "data_dir": "data/addition",
+    "results_dir": "results/len_gen",
+    "n_train": 100000,
+    # "n_val": 1000,
+    "n_val": 10,
+    "n_test": 10,
+    # "n_test": 1000,
+    # "n_digits": 10,
+    "n_digits": 3,
+    "max_iters": 2,
+    # "max_iters": 100000,
     "lr_decay_iters": 100000,
     "warmup_iters": 500,
-    "block_size": 64,
-    "batch_size": 64,
-    "test_batch_size": 256,
+    "block_size": 32,
+    # "block_size": 128,
+    "batch_size": 2,
+    # "batch_size": 16,
+    "test_batch_size": 64,
     "max_evals_without_improving": 50,
-    "eval_interval": 100,
+    # "eval_interval": 100,
+    "eval_interval": 1,
     "test_accuracy_during_training": True,
 }
 
@@ -64,7 +75,7 @@ if __name__ == "__main__":
     for size in [MEDIUM]:
         for decoder in [True, False]:
             for seed in range(1):
-                name = "count3_easy"
+                name = "reversed_addition_len_gen"
                 name += f"_{size['size_name']}"
                 name += "_decoder" if decoder else "_encoder"
                 name += f"_{seed}"
