@@ -38,7 +38,7 @@ EXTRA_LARGE: dict[str, Any] = {
 }
 
 BASE_CONFIG: dict[str, Any] = {
-    "task": "count3",
+    "task": "count3_easy",
     "data_gen_seed_size": 16,
     "data_gen_seed_max": 64,  # block_size
     "max_iters": 150000,
@@ -62,7 +62,7 @@ def n_train_str(n_train: int) -> str:
 
 if __name__ == "__main__":
     for size in [MEDIUM]:
-        for decoder in [False]:
+        for decoder in [True, False]:
             for seed in range(1):
                 name = "count3"
                 name += f"_{size['size_name']}"

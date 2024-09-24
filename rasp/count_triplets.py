@@ -1,9 +1,9 @@
-import random
+import random  # type: ignore
 
 from rasp import full, indices, kqv, sel_width, select, seq_map, tok_map
 
 
-def count3_true(x):
+def count_triplets_true(x):
     n = len(x)
     count = 0
     for i in range(n):
@@ -14,7 +14,7 @@ def count3_true(x):
     return [count % n] * n
 
 
-def count3_linear(x):
+def count_triplets_linear(x):
     n = len(x)
     count = 0
     mod_counts = [0] * n
@@ -35,7 +35,7 @@ def true(a, b):
     return True
 
 
-def count3_rasp(x):
+def count_triplets_rasp(x):
     idxs = indices(x)
     last_idx = kqv(k=x, q=x, v=idxs, pred=true, reduction="max")
     last_x = kqv(k=idxs, q=last_idx, v=x, pred=equals, reduction="mean")
@@ -58,5 +58,5 @@ def count3_rasp(x):
 if __name__ == "__main__":
     for _ in range(1000):
         x = [random.randint(0, 1000) for _ in range(random.randint(3, 100))]
-        assert count3_rasp(x) == count3_true(x)
-        assert count3_linear(x) == count3_true(x)
+        assert count_triplets_rasp(x) == count_triplets_true(x)
+        assert count_triplets_linear(x) == count_triplets_true(x)

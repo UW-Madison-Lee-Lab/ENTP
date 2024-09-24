@@ -59,5 +59,5 @@ def aggr(A, v, default=0, reduction="mean"):
         return -aggr_max(A, -v, -default)
 
 
-def kqv(k, q, v, pred, default=0, reduction="mean"):
-    return aggr(select(k, q, pred), v, default=default, reduction=reduction)
+def kqv(k, q, v, pred, default=0, reduction="mean", causal=False):
+    return aggr(select(k, q, pred, causal), v, default=default, reduction=reduction)

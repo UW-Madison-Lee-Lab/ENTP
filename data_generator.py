@@ -274,6 +274,24 @@ class Count3Generator(DataGenerator):
         return count % n
 
 
+class Count3EasyGenerator(DataGenerator):
+    @property
+    def vocab_size(self) -> int:
+        return self.block_size
+
+    def f(self, x: list[int]) -> int:
+        n = len(x)
+        count = 0
+        mod_counts = [0] * n
+        for i in range(n):
+            mod_counts[(x[i] + x[0]) % n] += 1
+
+        for i in range(n):
+            count += mod_counts[(n - x[i]) % n]
+
+        return count % n
+
+
 DATA_GENERATORS: dict[str, type[DataGenerator]] = {
     "counting": CountingDataGenerator,
     "superquadratic": SuperquadraticDataGenerator,
@@ -284,4 +302,5 @@ DATA_GENERATORS: dict[str, type[DataGenerator]] = {
     "autoregressive_encoder": AutoregressiveTransformerGenerator,
     "match3": Match3Generator,
     "count3": Count3Generator,
+    "count_easy3": Count3EasyGenerator,
 }

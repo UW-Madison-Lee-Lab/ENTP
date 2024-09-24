@@ -11,7 +11,7 @@ plt.rcParams[
     "text.latex.preamble"
 ] = r"\usepackage{amsmath}"  # Use additional packages if needed
 
-FONTSIZE: int = 12
+FONTSIZE: int = 8
 
 
 def reduce_results(
@@ -60,8 +60,8 @@ def plot_results(
     plt.ylabel(f"{reduction.__name__} test accuracy", fontsize=FONTSIZE)
     plt.ylabel("test accuracy", fontsize=FONTSIZE)
     plt.xlabel("training examples", fontsize=FONTSIZE)
-    plt.xticks(fontsize=FONTSIZE)
-    plt.yticks(fontsize=FONTSIZE)
+    plt.xticks(fontsize=int(0.6667 * FONTSIZE))
+    plt.yticks(fontsize=int(0.6667 * FONTSIZE))
     plt.title(title_prefix + task.replace("_", " "), fontsize=FONTSIZE)
     plt.legend(fontsize=FONTSIZE)
     plt.show()
@@ -74,8 +74,10 @@ def plot_results_errorbar(
     title=True,
     n_trains=[1250, 2500, 3750, 5000, 10000, 15000, 20000],
     save_path: Optional[str] = None,
+    figsize=(8, 4),
+    dpi=128,
 ) -> None:
-    plt.figure(figsize=(8, 4), dpi=128)
+    plt.figure(figsize=figsize, dpi=dpi)
 
     means = reduce_results(df, "accuracy_test", np.mean)
     stds = reduce_results(df, "accuracy_test", np.std)
@@ -93,8 +95,8 @@ def plot_results_errorbar(
 
     plt.ylabel("\\textbf{Test Accuracy}", fontsize=FONTSIZE)
     plt.xlabel("\\textbf{Number of Training Examples}", fontsize=FONTSIZE)
-    plt.xticks(fontsize=FONTSIZE)
-    plt.yticks(fontsize=FONTSIZE)
+    plt.xticks(fontsize=int(0.6667 * FONTSIZE))
+    plt.yticks(fontsize=int(0.6667 * FONTSIZE))
     if title:
         plt.title(title_prefix + task.replace("_", " "), fontsize=FONTSIZE)
     plt.legend(fontsize=FONTSIZE)
@@ -206,8 +208,8 @@ def plot_results_from_two_df(
 
     plt.ylabel(f"{reduction.__name__} test accuracy", fontsize=FONTSIZE)
     plt.xlabel("training examples", fontsize=FONTSIZE)
-    plt.xticks(fontsize=FONTSIZE)
-    plt.yticks(fontsize=FONTSIZE)
+    plt.xticks(fontsize=int(0.6667 * FONTSIZE))
+    plt.yticks(fontsize=int(0.6667 * FONTSIZE))
     plt.title(
         task.replace("_", " ") + (" decoder" if decoder else " encoder"),
         fontsize=FONTSIZE,
@@ -226,8 +228,10 @@ def plot_multiple_keys(
     transform: Optional[Callable[[Any], Any]] = None,
     title: Optional[str] = None,
     save_path: Optional[str] = None,
+    figsize=(8, 4),
+    dpi=128,
 ) -> None:
-    plt.figure(figsize=(8, 4), dpi=128)
+    plt.figure(figsize=figsize, dpi=dpi)
 
     if y_labels is None:
         y_labels = [None] * len(ys)
@@ -255,8 +259,8 @@ def plot_multiple_keys(
     if y_labels[0] is not None:
         plt.legend(fontsize=FONTSIZE)
 
-    plt.xticks(fontsize=FONTSIZE)
-    plt.yticks(fontsize=FONTSIZE)
+    plt.xticks(fontsize=int(0.6667 * FONTSIZE))
+    plt.yticks(fontsize=int(0.6667 * FONTSIZE))
 
     if save_path is not None:
         plt.savefig(save_path, bbox_inches="tight")
@@ -277,8 +281,10 @@ def plot_two_sets_of_multiple_keys(
     y_labels2: Optional[list[Optional[str]]] = None,
     title2: Optional[str] = None,
     save_path: Optional[str] = None,
+    figsize=(12, 3),
+    dpi=128,
 ) -> None:
-    _, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 3), dpi=128)
+    _, (ax1, ax2) = plt.subplots(1, 2, figsize=figsize, dpi=dpi)
 
     if y_labels1 is None:
         y_labels1 = [None] * len(ys1)
