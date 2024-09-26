@@ -11,9 +11,6 @@ T = TypeVar("T")
 class AdditionGenerator:
     def __init__(self, config: Config, extra_test_digits=2) -> None:
         self.n_digits_max = config.n_digits
-        self.reversed = reversed
-        self.char2int = {c: i for i, c in enumerate(sorted("0123456789+=\n"))}
-        self.int2char = {i: c for c, i in self.char2int.items()}
         self.extra_test_digits = extra_test_digits
 
     def generate_number(self, n_digits: int) -> int:

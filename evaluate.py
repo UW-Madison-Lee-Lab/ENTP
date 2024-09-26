@@ -186,7 +186,7 @@ def evaluate_split(
                     incorrect_examples.append(example)
 
         progress_bar.set_description(
-            f"[{100 * n_correct / n_total:.2f}% {split}ing accuracy]"
+            f"[{100 * n_correct / n_total:.2f}% {split} accuracy]"
         )
 
     print(f"{split} dataset: {n_correct}/{n_total} correct")
