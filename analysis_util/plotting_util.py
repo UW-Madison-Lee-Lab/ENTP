@@ -43,8 +43,11 @@ def plot_results(
     reduction: Callable,
     title_prefix="",
     n_trains=[1250, 2500, 3750, 5000, 10000, 15000, 20000],
+    save_path: Optional[str] = None,
+    figsize=(8, 4),
+    dpi=128,
 ) -> None:
-    plt.figure(figsize=(8, 4), dpi=128)
+    plt.figure(figsize=figsize, dpi=dpi)
 
     reduced = reduce_results(df, "accuracy_test", reduction)
 
@@ -64,6 +67,10 @@ def plot_results(
     plt.yticks(fontsize=int(0.6667 * FONTSIZE))
     plt.title(title_prefix + task.replace("_", " "), fontsize=FONTSIZE)
     plt.legend(fontsize=FONTSIZE)
+
+    if save_path is not None:
+        plt.savefig(save_path, bbox_inches="tight")
+
     plt.show()
 
 
@@ -107,74 +114,6 @@ def plot_results_errorbar(
     plt.show()
 
 
-def plot_results_scatter(
-    df: pd.DataFrame,
-    task: str,
-    title_prefix="",
-    n_trains=[1250, 2500, 3750, 5000, 10000, 15000, 20000],
-) -> None:
-    x_decoder: list[int] = []
-    x_encoder: list[int] = []
-    y_decoder: list[float] = []
-    y_encoder: list[float] = []
-
-    for decoder, x, y in [(True, x_decoder, y_decoder), (False, x_encoder, y_encoder)]:
-        for n_train in n_trains:
-            df_subset = df[(df["decoder"] == decoder) & (df["n_train"] == n_train)]
-            for acc in df_subset["accuracy_test"]:
-                x.append(n_train)
-                y.append(acc)
-
-    plt.scatter(x_decoder, y_decoder, s=5, alpha=0.5, label="decoder")
-    plt.scatter(x_encoder, y_encoder, s=5, alpha=0.5, label="encoder")
-    plt.ylabel("test accuracy")
-    plt.xlabel("training examples")
-    plt.title(title_prefix + task.replace("_", " "))
-    plt.legend()
-    plt.show()
-
-
-def plot_results_bar(
-    df: pd.DataFrame,
-    task: str,
-    n_trains=[1250, 2500, 3750, 5000, 10000, 15000, 20000],
-) -> None:
-    _, axes = plt.subplots(1, 4, figsize=(12, 3))
-    for i, (ax, n_train) in enumerate(zip(axes.reshape(-1), n_trains)):
-        keys = [
-            "accuracy_2d_0c",
-            "accuracy_2d_1c",
-            "accuracy_2d_2c",
-            "accuracy_3d_0c",
-            "accuracy_3d_1c",
-            "accuracy_3d_2c",
-            "accuracy_3d_3c",
-        ]
-
-        data = [reduce_results(df, k, np.median) for k in keys]
-        x_labels = [k[-5:].replace("_", "-") for k in keys]
-
-        y_decoder = [d[f"{task}_decoder"][i] for d in data]
-        y_encoder = [d[f"{task}_encoder"][i] for d in data]
-
-        x = np.arange(len(x_labels))
-
-        bar_width = 0.35
-
-        ax.bar(x - bar_width / 2, y_decoder, width=bar_width, label="decoder")
-        ax.bar(x + bar_width / 2, y_encoder, width=bar_width, label="encoder")
-
-        ax.set_title(
-            task.replace("_", " ") + f" {n_train} training examples", fontsize=FONTSIZE
-        )
-        ax.set_xticks(x, x_labels)
-        ax.tick_params(axis="both", which="major", labelsize=8)
-        ax.legend(fontsize=FONTSIZE, loc="lower right")
-
-    plt.tight_layout()
-    plt.show()
-
-
 def plot_results_from_two_df(
     df1: pd.DataFrame,
     df2: pd.DataFrame,
@@ -184,8 +123,11 @@ def plot_results_from_two_df(
     label1="",
     label2="",
     n_trains=[1250, 2500, 3750, 5000, 10000, 15000, 20000],
+    save_path: Optional[str] = None,
+    figsize=(8, 4),
+    dpi=128,
 ) -> None:
-    plt.figure(figsize=(8, 4), dpi=128)
+    plt.figure(figsize=figsize, dpi=dpi)
 
     reduced1 = reduce_results(df1, "accuracy_test", reduction)
     reduced2 = reduce_results(df2, "accuracy_test", reduction)
@@ -215,6 +157,10 @@ def plot_results_from_two_df(
         fontsize=FONTSIZE,
     )
     plt.legend(fontsize=FONTSIZE)
+
+    if save_path is not None:
+        plt.savefig(save_path, bbox_inches="tight")
+
     plt.show()
 
 
