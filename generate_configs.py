@@ -44,12 +44,12 @@ BASE_CONFIG: dict[str, Any] = {
     "n_train": 100000,
     "n_val": 10000,
     "n_test": 10000,
-    "n_digits": 20,
-    "max_iters": 50000,
-    "lr_decay_iters": 50000,
+    "n_digits": 10,
+    "max_iters": 100000,
+    "lr_decay_iters": 100000,
     "warmup_iters": 500,
-    "block_size": 160,
-    "batch_size": 16,
+    "block_size": 96,
+    "batch_size": 32,
     "test_batch_size": 64,
     "eval_interval": 500,
     "test_accuracy_during_training": True,
@@ -67,7 +67,7 @@ if __name__ == "__main__":
     for size in [MEDIUM]:
         for decoder in [True, False]:
             for seed in range(1):
-                name = "reversed_addition_len_gen"
+                name = "reversed_addition_len_gen_v2"
                 name += f"_{size['size_name']}"
                 name += "_decoder" if decoder else "_encoder"
                 name += f"_{seed}"

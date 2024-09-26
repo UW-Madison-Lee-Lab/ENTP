@@ -10,7 +10,7 @@ from tqdm import tqdm  # type: ignore
 from nano_transformer import TransformerConfig, TransformerLMHead
 from util import Config, Environment, decode, encode
 
-
+@torch.no_grad()
 def evaluate_split_with_model(
     model: TransformerLMHead,
     config: Config,
@@ -83,7 +83,7 @@ def evaluate_split_with_model(
 
     return n_correct / n_total
 
-
+@torch.no_grad()
 def evaluate_split(
     config: Config,
     env: Environment,

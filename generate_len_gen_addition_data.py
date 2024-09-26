@@ -9,11 +9,12 @@ T = TypeVar("T")
 
 
 class AdditionGenerator:
-    def __init__(self, config: Config) -> None:
+    def __init__(self, config: Config, extra_test_digits=2) -> None:
         self.n_digits_max = config.n_digits
         self.reversed = reversed
         self.char2int = {c: i for i, c in enumerate(sorted("0123456789+=\n"))}
         self.int2char = {i: c for c, i in self.char2int.items()}
+        self.extra_test_digits = extra_test_digits
 
     def generate_number(self, n_digits: int) -> int:
         return random.randint(10 ** (n_digits - 1), 10**n_digits - 1)
@@ -23,8 +24,8 @@ class AdditionGenerator:
             x = self.generate_number(random.randint(1, self.n_digits_max))
             y = self.generate_number(random.randint(1, self.n_digits_max))
         else:
-            x = self.generate_number(random.randint(1, 2 * self.n_digits_max))
-            y = self.generate_number(random.randint(self.n_digits_max + 1, 2 * self.n_digits_max))
+            x = self.generate_number(random.randint(1, self.n_digits_max + self.extra_test_digits))
+            y = self.generate_number(random.randint(self.n_digits_max + 1, self.n_digits_max + self.extra_test_digits))
 
         if random.choice((True, False)):
             x, y = y, x
@@ -36,15 +37,14 @@ class AdditionGenerator:
 
 def make_file(
     config: Config,
-    inputs: list[tuple[T, T]],
-    outputs: list[T],
+    data: dict[tuple[int, int], str],
     name: str,
 ) -> None:
     """Saves data file to `config.data_dir`."""
     if config.use_delimiter:
-        text = "".join(f"${i}+{j}={k}$\n" for (i, j), k in zip(inputs, outputs))
+        text = "".join(f"${i}+{j}={k}$\n" for (i, j), k in data.items())
     else:
-        text = "".join(f"{i}+{j}={k}\n" for (i, j), k in zip(inputs, outputs))
+        text = "".join(f"{i}+{j}={k}\n" for (i, j), k in data.items())
 
     file_path = os.path.join(config.data_dir, f"{name}.txt")
     with open(file_path, "w") as f:
@@ -60,37 +60,25 @@ if __name__ == "__main__":
 
     gen = AdditionGenerator(config)
 
-    train_inputs = []
-    train_outputs = []
-    for _ in range(config.n_train):
+    train_data = {}
+    while len(train_data) < config.n_train:
         x, y, z = gen.generate_example(train=True)
-        train_inputs.append((x, y))
-        train_outputs.append(z)
+        train_data[(x, y)] = str(z)[::-1]
 
-    val_inputs = []
-    val_outputs = []
-    for _ in range(config.n_val):
+    val_data = {}
+    while len(val_data) < config.n_val:
         x, y, z = gen.generate_example(train=True)
-        val_inputs.append((x, y))
-        val_outputs.append(z)
+        if (x, y) not in train_data:
+            val_data[(x, y)] = str(z)[::-1]
 
-    test_inputs = []
-    test_outputs = []
-    for _ in range(config.n_test):
+    test_data = {}
+    while len(test_data) < config.n_test:
         x, y, z = gen.generate_example(train=False)
-        test_inputs.append((x, y))
-        test_outputs.append(z)
+        test_data[(x, y)] = str(z)[::-1]
 
-    train_outputs_reversed = [str(n)[::-1] for n in train_outputs]
-    val_outputs_reversed = [str(n)[::-1] for n in val_outputs]
-    test_outputs_reversed = [str(n)[::-1] for n in test_outputs]
 
-    make_file(
-        config, train_inputs, train_outputs_reversed, "train_reversed_addition_len_gen"
-    )
+    make_file(config, train_data, "train_reversed_addition_len_gen")
 
-    make_file(config, val_inputs, val_outputs_reversed, "val_reversed_addition_len_gen")
+    make_file(config, val_data, "val_reversed_addition_len_gen")
 
-    make_file(
-        config, test_inputs, test_outputs_reversed, "test_reversed_addition_len_gen"
-    )
+    make_file(config, test_data, "test_reversed_addition_len_gen")
