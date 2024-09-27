@@ -9,6 +9,13 @@ EXTRA_SMALL: dict[str, Any] = {
     "size_name": "extra_small",
 }
 
+EXTRA_SMALL_DEEP: dict[str, Any] = {
+    "n_layer": 8,
+    "n_head": 2,
+    "n_embd": 128,
+    "size_name": "small_deep",
+}
+
 SMALL: dict[str, Any] = {
     "n_layer": 3,
     "n_head": 3,
@@ -31,7 +38,7 @@ MEDIUM: dict[str, Any] = {
 }
 
 MEDIUM_DEEP: dict[str, Any] = {
-    "n_layer": 12,
+    "n_layer": 24,
     "n_head": 6,
     "n_embd": 384,
     "size_name": "medium_deep",
@@ -74,7 +81,7 @@ def n_train_str(n_train: int) -> str:
 
 
 if __name__ == "__main__":
-    for size in [SMALL]:
+    for size in [EXTRA_SMALL]:
         for decoder in [True, False]:
             for seed in range(1):
                 name = "len_gen_counting"
