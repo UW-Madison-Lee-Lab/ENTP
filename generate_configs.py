@@ -16,6 +16,13 @@ SMALL: dict[str, Any] = {
     "size_name": "small",
 }
 
+SMALL_DEEP: dict[str, Any] = {
+    "n_layer": 12,
+    "n_head": 3,
+    "n_embd": 192,
+    "size_name": "small_deep",
+}
+
 MEDIUM: dict[str, Any] = {
     "n_layer": 6,
     "n_head": 6,
@@ -56,8 +63,8 @@ BASE_CONFIG: dict[str, Any] = {
     "lr_decay_iters": 100000,
     "warmup_iters": 500,
     "block_size": 96,
-    "batch_size": 16,
-    "test_batch_size": 32,
+    "batch_size": 32,
+    "test_batch_size": 64,
     "eval_interval": 500,
     "test_accuracy_during_training": True,
 }
@@ -71,7 +78,7 @@ def n_train_str(n_train: int) -> str:
 
 
 if __name__ == "__main__":
-    for size in [MEDIUM_DEEP]:
+    for size in [SMALL_DEEP]:
         for decoder in [True, False]:
             for seed in range(1):
                 name = "reversed_addition_len_gen_v2"
