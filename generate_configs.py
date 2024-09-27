@@ -61,7 +61,7 @@ BASE_CONFIG: dict[str, Any] = {
     "block_size": 64,
     "batch_size": 16,
     "test_batch_size": 64,
-    "eval_interval": 500,
+    "eval_interval": 250,
     "test_accuracy_during_training": True,
 }
 
@@ -74,7 +74,7 @@ def n_train_str(n_train: int) -> str:
 
 
 if __name__ == "__main__":
-    for size in [SMALL_DEEP]:
+    for size in [SMALL]:
         for decoder in [True, False]:
             for seed in range(1):
                 name = "len_gen_counting"
