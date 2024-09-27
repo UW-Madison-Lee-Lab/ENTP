@@ -66,7 +66,7 @@ class LenGenCountingGenerator:
         )
         x = data[:, :-1]
         y = data[:, 1:]
-        forward_idxs = list(range(4, x.shape[1]))
+        forward_idxs = list(range(3, x.shape[1]))
         return x, y, forward_idxs
 
 
