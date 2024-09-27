@@ -68,7 +68,7 @@ BASE_CONFIG: dict[str, Any] = {
     "block_size": 64,
     "batch_size": 16,
     "test_batch_size": 64,
-    "eval_interval": 500,
+    "eval_interval": 250,
     "test_accuracy_during_training": True,
 }
 
