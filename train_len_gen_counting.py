@@ -77,7 +77,7 @@ def log_accuracy(
     step: int,
     config: Config,
     env: Environment,
-    n_iters=10,
+    n_iters=25,
 ) -> None:
     model.eval()
     id_acc = []
