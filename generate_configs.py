@@ -81,7 +81,7 @@ def n_train_str(n_train: int) -> str:
 
 
 if __name__ == "__main__":
-    for size in [EXTRA_SMALL_DEEP]:
+    for size in [SMALL_DEEP]:
         for decoder in [True, False]:
             for seed in range(1):
                 name = "len_gen_counting"
