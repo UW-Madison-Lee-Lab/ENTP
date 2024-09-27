@@ -4,7 +4,6 @@ from .plotting_util import (
     plot_results,
     plot_results_errorbar,
     plot_results_from_two_df,
-    plot_results_scatter,
     plot_two_sets_of_multiple_keys,
     reduce_results,
 )
@@ -14,7 +13,6 @@ __all__ = [
     "plot_results",
     "plot_results_errorbar",
     "plot_results_from_two_df",
-    "plot_results_scatter",
     "plot_two_sets_of_multiple_keys",
     "reduce_results",
     "combine_columns",
