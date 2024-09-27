@@ -13,7 +13,7 @@ EXTRA_SMALL_DEEP: dict[str, Any] = {
     "n_layer": 8,
     "n_head": 2,
     "n_embd": 128,
-    "size_name": "small_deep",
+    "size_name": "extra_small_deep",
 }
 
 SMALL: dict[str, Any] = {
@@ -60,10 +60,10 @@ EXTRA_LARGE: dict[str, Any] = {
 
 BASE_CONFIG: dict[str, Any] = {
     "task": "len_gen_counting",
-    "train_len_max": 24,
+    "train_len_max": 16,
     "test_len_max": 48,
-    "max_iters": 100000,
-    "lr_decay_iters": 100000,
+    "max_iters": 5000,
+    "lr_decay_iters": 5000,
     "warmup_iters": 500,
     "block_size": 64,
     "batch_size": 16,
