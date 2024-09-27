@@ -23,6 +23,13 @@ MEDIUM: dict[str, Any] = {
     "size_name": "medium",
 }
 
+MEDIUM_DEEP: dict[str, Any] = {
+    "n_layer": 12,
+    "n_head": 6,
+    "n_embd": 384,
+    "size_name": "medium_deep",
+}
+
 LARGE: dict[str, Any] = {
     "n_layer": 12,
     "n_head": 12,
@@ -49,8 +56,8 @@ BASE_CONFIG: dict[str, Any] = {
     "lr_decay_iters": 100000,
     "warmup_iters": 500,
     "block_size": 96,
-    "batch_size": 32,
-    "test_batch_size": 64,
+    "batch_size": 16,
+    "test_batch_size": 32,
     "eval_interval": 500,
     "test_accuracy_during_training": True,
 }
@@ -64,7 +71,7 @@ def n_train_str(n_train: int) -> str:
 
 
 if __name__ == "__main__":
-    for size in [MEDIUM]:
+    for size in [MEDIUM_DEEP]:
         for decoder in [True, False]:
             for seed in range(1):
                 name = "reversed_addition_len_gen_v2"
