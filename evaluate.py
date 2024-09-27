@@ -89,7 +89,7 @@ def evaluate_split_with_model(
 def evaluate_split(
     config: Config,
     env: Environment,
-    split: Literal["train", "test"],
+    split: Literal["train", "test", "val"],
     log_incorrect_examples: bool,
 ) -> tuple[int, int, list[tuple[Tensor, Tensor, Tensor]], dict[int, str]]:
     """

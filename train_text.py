@@ -187,7 +187,7 @@ def train(config: Config, env: Environment) -> None:
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("usage: python train.py <config-path>")
+        print("usage: python train_text.py <config-path>")
         exit(1)
 
     config = Config.from_json(sys.argv[1])

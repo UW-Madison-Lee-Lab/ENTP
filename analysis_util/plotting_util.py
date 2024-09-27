@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, Sequence
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -170,7 +170,7 @@ def plot_multiple_keys(
     ys: list[str],
     x_label: Optional[str] = None,
     y_label: Optional[str] = None,
-    y_labels: Optional[list[Optional[str]]] = None,
+    y_labels: Optional[Sequence[Optional[str]]] = None,
     transform: Optional[Callable[[Any], Any]] = None,
     title: Optional[str] = None,
     save_path: Optional[str] = None,
@@ -221,10 +221,10 @@ def plot_two_sets_of_multiple_keys(
     x2: str,
     ys2: list[str],
     x_label1: Optional[str] = None,
-    y_labels1: Optional[list[Optional[str]]] = None,
+    y_labels1: Optional[Sequence[Optional[str]]] = None,
     title1: Optional[str] = None,
     x_label2: Optional[str] = None,
-    y_labels2: Optional[list[Optional[str]]] = None,
+    y_labels2: Optional[Sequence[Optional[str]]] = None,
     title2: Optional[str] = None,
     save_path: Optional[str] = None,
     figsize=(12, 3),

@@ -43,8 +43,8 @@ def get_batch(
         (config.batch_size,),
     )
 
-    x = torch.stack([make_block(i) for i in idxs])
-    y = torch.stack([make_block(i + 1) for i in idxs])
+    x = torch.stack([make_block(i) for i in idxs])  # type: ignore
+    y = torch.stack([make_block(i + 1) for i in idxs])  # type: ignore
 
     if env.pin_memory:
         x = x.pin_memory().to(env.pin_memory_device, non_blocking=True)
@@ -257,10 +257,12 @@ def train(config: Config, env: Environment) -> None:
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("usage: python train.py <config-path>")
+        print("usage: python train_openwebtext.py <config-path>")
         exit(1)
 
     config = Config.from_json(sys.argv[1])
     env = Environment()
+
+    assert config.task == "openwebtext"
 
     train(config, env)

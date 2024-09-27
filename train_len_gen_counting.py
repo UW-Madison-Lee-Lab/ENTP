@@ -1,12 +1,13 @@
 import os
+import random
 import sys
 from pprint import pprint
 
 import numpy as np
 import torch
+from torch import Tensor
 
 import wandb
-from data_generator import DATA_GENERATORS, DataGenerator
 from nano_transformer import (
     TransformerConfig,
     TransformerLMHead,
@@ -16,42 +17,101 @@ from nano_transformer import (
 from util import Config, Environment, LRSchedule
 
 
+class LenGenCountingGenerator:
+    def __init__(self, config: Config) -> None:
+        self.train_len_max = config.train_len_max
+        self.test_len_max = config.test_len_max
+        self.block_size = config.block_size
+        self.batch_size = config.batch_size
+
+        self.max_num = 2 * max(self.train_len_max, self.test_len_max) - 1
+        self.to = self.max_num + 1
+        self.bos = self.max_num + 2
+        self.eos = self.max_num + 3
+
+    @property
+    def vocab_size(self) -> int:
+        return self.eos + 1
+
+    def generate_sequence(self, seq_len) -> list[int]:
+        start = random.randint(0, self.max_num - seq_len + 1)
+        end = start + seq_len - 1
+        seq = list(range(start, end + 1))
+        return [self.bos, start, end, self.to] + seq + [self.eos]
+
+    def generate_train_block(self) -> list[int]:
+        block = []
+        while len(block) <= self.block_size:
+            block += self.generate_sequence(random.randint(1, self.train_len_max))
+
+        extra = len(block) - self.block_size - 1
+        i = random.randint(0, extra)
+        block = block[i : i + self.block_size + 1]
+        assert len(block) == self.block_size + 1
+        return block
+
+    def generate_train_batch(self) -> tuple[Tensor, Tensor]:
+        data = torch.tensor(
+            [self.generate_train_block() for _ in range(self.batch_size)]
+        )
+        x = data[:, :-1]
+        y = data[:, 1:]
+        return x, y
+
+    def generate_test_batch(
+        self, seq_len, batch_size
+    ) -> tuple[Tensor, Tensor, list[int]]:
+        data = torch.tensor(
+            [self.generate_sequence(seq_len) for _ in range(batch_size)]
+        )
+        x = data[:, :-1]
+        y = data[:, 1:]
+        forward_idxs = list(range(4, x.shape[1]))
+        return x, y, forward_idxs
+
+
 @torch.no_grad()
 def log_accuracy(
     model: TransformerLMHead,
-    data_generator: DataGenerator,
+    data_generator: LenGenCountingGenerator,
     step: int,
     config: Config,
     env: Environment,
     n_iters=25,
 ) -> None:
     model.eval()
-    token_acc = []
-    sequence_acc = []
+    id_acc = []
+    ood_acc = []
 
-    for _ in range(n_iters):
-        x, y, forward_idxs = data_generator.generate_batch(config.test_batch_size)
+    for seq_len in range(1, config.test_len_max + 1):
+        acc = []
 
-        x = x.to(env.device)
-        y = y.to(env.device)
+        for _ in range(n_iters):
+            x, y, forward_idxs = data_generator.generate_test_batch(
+                seq_len, config.test_batch_size
+            )
 
-        with env.context:
-            logits = model(x, decoder=config.decoder, forward_idxs=forward_idxs)
+            x = x.to(env.device)
+            y = y.to(env.device)
 
-        y_pred = torch.argmax(logits, dim=2)
+            with env.context:
+                logits = model(x, decoder=config.decoder, forward_idxs=forward_idxs)
 
-        y = y[:, forward_idxs]
-        y_pred = y_pred[:, forward_idxs]
-        token_acc.append(torch.mean((y == y_pred).float()).item())
-        sequence_acc.append(torch.mean(torch.all(y == y_pred, dim=1).float()).item())
+            y_pred = torch.argmax(logits, dim=2)
 
-    wandb.log(
-        {
-            "token_accuracy": np.mean(token_acc),
-            "sequence_accuracy": np.mean(sequence_acc),
-        },
-        step=step,
-    )
+            y = y[:, forward_idxs]
+            y_pred = y_pred[:, forward_idxs]
+            acc.append(torch.mean(torch.all(y == y_pred, dim=1).float()).item())
+
+        wandb.log({f"len_{seq_len}_acc": np.mean(acc)}, step=step)
+
+        if seq_len > config.train_len_max:
+            ood_acc.append(np.mean(acc))
+        else:
+            id_acc.append(np.mean(acc))
+
+    wandb.log({"id_acc": np.mean(id_acc)}, step=step)
+    wandb.log({"ood_acc": np.mean(ood_acc)}, step=step)
 
 
 def train(config: Config, env: Environment) -> None:
@@ -61,7 +121,7 @@ def train(config: Config, env: Environment) -> None:
 
     run = wandb.init(
         dir=config.results_dir,
-        project="encoder-addition",
+        project="encoder-len-gen-counting",
         config=config.to_dict(),
         name=config.name + ("_resumed" if config.resume else ""),
         resume=config.resume,
@@ -69,7 +129,7 @@ def train(config: Config, env: Environment) -> None:
 
     env.seed_everything(config.seed)
 
-    data_generator = DATA_GENERATORS[config.task](config, env)
+    data_generator = LenGenCountingGenerator(config)
 
     model_config = TransformerConfig(
         n_positions=config.block_size,
@@ -115,14 +175,14 @@ def train(config: Config, env: Environment) -> None:
         for param_group in optimizer.param_groups:
             param_group["lr"] = lr
 
-        x, y, forward_idxs = data_generator.generate_batch()
+        x, y = data_generator.generate_train_batch()
 
         x = x.to(env.device)
         y = y.to(env.device)
 
         with env.context:
-            logits = model(x, decoder=config.decoder, forward_idxs=forward_idxs)
-            loss = flat_cross_entropy(logits[:, forward_idxs], y[:, forward_idxs])
+            logits = model(x, decoder=config.decoder)
+            loss = flat_cross_entropy(logits, y)
 
         loss.backward()
         optimizer.step()
@@ -133,10 +193,6 @@ def train(config: Config, env: Environment) -> None:
         if i % config.eval_interval == 0:
             eval_loss = float(np.mean(losses[-config.eval_interval :]))
             wandb.log({"loss": eval_loss}, step=i)
-
-            if config.log_wpe_norm:
-                wpe_fro_norm = torch.norm(model.transformer.wpe.weight).item()
-                wandb.log({"wpe_fro_norm": wpe_fro_norm}, step=i)
 
             if config.test_accuracy_during_training:
                 log_accuracy(model, data_generator, i, config, env)
@@ -166,12 +222,12 @@ def train(config: Config, env: Environment) -> None:
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("usage: python train_data_gen.py <config-path>")
+        print("usage: python train_len_gen_counting.py <config-path>")
         exit(1)
 
     config = Config.from_json(sys.argv[1])
     env = Environment()
 
-    assert config.task in DATA_GENERATORS
+    assert config.task == "len_gen_counting"
 
     train(config, env)

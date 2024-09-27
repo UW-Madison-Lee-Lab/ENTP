@@ -52,19 +52,15 @@ EXTRA_LARGE: dict[str, Any] = {
 }
 
 BASE_CONFIG: dict[str, Any] = {
-    "task": "reversed_addition_len_gen",
-    "data_dir": "data/addition",
-    "results_dir": "results/len_gen",
-    "n_train": 100000,
-    "n_val": 10000,
-    "n_test": 10000,
-    "n_digits": 10,
+    "task": "len_gen_counting",
+    "train_len_max": 24,
+    "test_len_max": 48,
     "max_iters": 100000,
     "lr_decay_iters": 100000,
     "warmup_iters": 500,
-    "block_size": 96,
-    "batch_size": 32,
-    "test_batch_size": 64,
+    "block_size": 64,
+    "batch_size": 64,
+    "test_batch_size": 128,
     "eval_interval": 500,
     "test_accuracy_during_training": True,
 }
@@ -81,7 +77,7 @@ if __name__ == "__main__":
     for size in [SMALL_DEEP]:
         for decoder in [True, False]:
             for seed in range(1):
-                name = "reversed_addition_len_gen_v2"
+                name = "len_gen_counting"
                 name += f"_{size['size_name']}"
                 name += "_decoder" if decoder else "_encoder"
                 name += f"_{seed}"

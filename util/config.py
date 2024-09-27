@@ -1,5 +1,5 @@
 import json
-from typing import Any, Literal
+from typing import Any
 
 
 class Config:
@@ -39,14 +39,11 @@ class Config:
     results_dir: str = "results"
     resume: bool = False
     seed: int = 42
-    task: Literal[
-        "plain_addition",
-        "reversed_addition",
-        "shakespeare",
-        "counting",
-    ] = "plain_addition"
-    test_batch_size: int = 2048
+    task: str = "plain_addition"
     test_accuracy_during_training: bool = False
+    test_batch_size: int = 2048
+    test_len_max: int = 32
+    train_len_max: int = 16
     use_delimiter: bool = True
     use_wpe: bool = True
     warmup_iters: int = 100

@@ -21,8 +21,14 @@ class AdditionGenerator:
             x = self.generate_number(random.randint(1, self.n_digits_max))
             y = self.generate_number(random.randint(1, self.n_digits_max))
         else:
-            x = self.generate_number(random.randint(1, self.n_digits_max + self.extra_test_digits))
-            y = self.generate_number(random.randint(self.n_digits_max + 1, self.n_digits_max + self.extra_test_digits))
+            x = self.generate_number(
+                random.randint(1, self.n_digits_max + self.extra_test_digits)
+            )
+            y = self.generate_number(
+                random.randint(
+                    self.n_digits_max + 1, self.n_digits_max + self.extra_test_digits
+                )
+            )
 
         if random.choice((True, False)):
             x, y = y, x
@@ -72,7 +78,6 @@ if __name__ == "__main__":
     while len(test_data) < config.n_test:
         x, y, z = gen.generate_example(train=False)
         test_data[(x, y)] = str(z)[::-1]
-
 
     make_file(config, train_data, "train_reversed_addition_len_gen")
 
