@@ -1,4 +1,6 @@
-# AWS
+# Encoder-only Next Token Prediction
+
+### AWS Settings
 - amazon/Deep Learning Base AMI (Amazon Linux 2) Version 57.8
 ```bash
 mkdir -p ~/miniconda3
