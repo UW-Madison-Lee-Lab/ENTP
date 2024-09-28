@@ -10,7 +10,7 @@ plt.rcParams["text.usetex"] = True
 plt.rcParams["font.family"] = "serif"
 plt.rcParams["text.latex.preamble"] = r"\usepackage{amsmath}"
 plt.rcParams["axes.prop_cycle"] = cycler(
-    color=["#e63946", "#457b9d", "#05b070", "#000000"]
+    color=["#e63946", "#457b9d", "#05b070", "#A050A0"]
 )
 
 FONTSIZE: int = 8
