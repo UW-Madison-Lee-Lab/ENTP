@@ -3,7 +3,7 @@ import random
 import sys
 from typing import TypeVar
 
-from util import Config
+from util import Config, Environment
 
 T = TypeVar("T")
 
@@ -60,6 +60,9 @@ if __name__ == "__main__":
         exit(1)
 
     config = Config.from_json(sys.argv[1])
+
+    env = Environment()
+    env.seed_everything(config.seed)
 
     gen = AdditionGenerator(config)
 
