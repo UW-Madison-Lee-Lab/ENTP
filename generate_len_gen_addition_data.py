@@ -63,18 +63,18 @@ if __name__ == "__main__":
 
     gen = AdditionGenerator(config)
 
-    train_data = {}
+    train_data: dict[tuple[int, int], str] = {}
     while len(train_data) < config.n_train:
         x, y, z = gen.generate_example(train=True)
         train_data[(x, y)] = str(z)[::-1]
 
-    val_data = {}
+    val_data: dict[tuple[int, int], str] = {}
     while len(val_data) < config.n_val:
         x, y, z = gen.generate_example(train=True)
         if (x, y) not in train_data:
             val_data[(x, y)] = str(z)[::-1]
 
-    test_data = {}
+    test_data: dict[tuple[int, int], str] = {}
     while len(test_data) < config.n_test:
         x, y, z = gen.generate_example(train=False)
         test_data[(x, y)] = str(z)[::-1]

@@ -40,7 +40,7 @@ class LenGenCountingGenerator:
         return [self.bos, start, end, self.to] + seq + [self.eos]
 
     def generate_train_block(self) -> list[int]:
-        block = []
+        block: list[int] = []
         while len(block) <= self.block_size:
             block += self.generate_sequence(random.randint(1, self.train_len_max))
 

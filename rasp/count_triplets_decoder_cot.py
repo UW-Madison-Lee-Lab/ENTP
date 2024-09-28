@@ -2,7 +2,7 @@ import random
 
 import numpy as np
 
-from rasp import full, indices, kqv, sel_width, select, tok_map
+from rasp import full, indices, kqv, sel_width, select, tok_map  # type: ignore
 
 EOS = -1
 
