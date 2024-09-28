@@ -4,12 +4,14 @@ from typing import Any, Callable, Optional, Sequence
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd  # type: ignore
+from cycler import cycler
 
 plt.rcParams["text.usetex"] = True
-plt.rcParams["font.family"] = "serif"  # Use serif font
-plt.rcParams[
-    "text.latex.preamble"
-] = r"\usepackage{amsmath}"  # Use additional packages if needed
+plt.rcParams["font.family"] = "serif"
+plt.rcParams["text.latex.preamble"] = r"\usepackage{amsmath}"
+plt.rcParams["axes.prop_cycle"] = cycler(
+    color=["#e63946", "#457b9d", "#05b070", "#000000"]
+)
 
 FONTSIZE: int = 8
 
@@ -57,6 +59,7 @@ def plot_results(
             reduced[k],
             marker="o",
             ms=4,
+            linewidth=1,
             label=k[-7:],
         )
 
@@ -67,6 +70,7 @@ def plot_results(
     plt.yticks(fontsize=int(0.6667 * FONTSIZE))
     plt.title(title_prefix + task.replace("_", " "), fontsize=FONTSIZE)
     plt.legend(fontsize=FONTSIZE)
+    plt.grid(True, linestyle="-", linewidth=0.5)
 
     if save_path is not None:
         plt.savefig(save_path, bbox_inches="tight")
@@ -96,6 +100,7 @@ def plot_results_errorbar(
             yerr=stds[k],
             fmt="-o",
             ms=4,
+            linewidth=1,
             capsize=4,
             label=k[-7:].capitalize() + "-only",
         )
@@ -107,6 +112,7 @@ def plot_results_errorbar(
     if title:
         plt.title(title_prefix + task.replace("_", " "), fontsize=FONTSIZE)
     plt.legend(fontsize=FONTSIZE)
+    plt.grid(True, linestyle="-", linewidth=0.5)
 
     if save_path is not None:
         plt.savefig(save_path, bbox_inches="tight")
@@ -137,6 +143,7 @@ def plot_results_from_two_df(
         reduced1[task + ("_decoder" if decoder else "_encoder")],
         marker="o",
         ms=4,
+        linewidth=1,
         label=label1,
     )
 
@@ -145,6 +152,7 @@ def plot_results_from_two_df(
         reduced2[task + ("_decoder" if decoder else "_encoder")],
         marker="o",
         ms=4,
+        linewidth=1,
         label=label2,
     )
 
@@ -157,6 +165,7 @@ def plot_results_from_two_df(
         fontsize=FONTSIZE,
     )
     plt.legend(fontsize=FONTSIZE)
+    plt.grid(True, linestyle="-", linewidth=0.5)
 
     if save_path is not None:
         plt.savefig(save_path, bbox_inches="tight")
@@ -207,6 +216,7 @@ def plot_multiple_keys(
 
     plt.xticks(fontsize=int(0.6667 * FONTSIZE))
     plt.yticks(fontsize=int(0.6667 * FONTSIZE))
+    plt.grid(True, linestyle="-", linewidth=0.5)
 
     if save_path is not None:
         plt.savefig(save_path, bbox_inches="tight")
@@ -285,6 +295,7 @@ def plot_two_sets_of_multiple_keys(
     ax2.tick_params(axis="y", labelsize=8)
 
     plt.tight_layout()
+    plt.grid(True, linestyle="-", linewidth=0.5)
 
     if save_path is not None:
         plt.savefig(save_path, bbox_inches="tight")
