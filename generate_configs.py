@@ -58,18 +58,34 @@ EXTRA_LARGE: dict[str, Any] = {
     "size_name": "extra_large",
 }
 
+# BASE_CONFIG: dict[str, Any] = {
+#     "task": "triplet_detection",
+#     "data_gen_seed_max": 64,
+#     "max_iters": 100000,
+#     "lr_decay_iters": 100000,
+#     "warmup_iters": 500,
+#     "block_size": 64,
+#     "batch_size": 64,
+#     "test_batch_size": 256,
+#     "eval_interval": 500,
+#     "test_accuracy_during_training": True,
+# }
+
+
 BASE_CONFIG: dict[str, Any] = {
-    # "task": "len_gen_counting",
-    # "train_len_max": 16,
-    # "test_len_max": 48,
-    "task": "triplet_detection",
-    "data_gen_seed_max": 64,
+    "task": "reversed_addition_len_gen",
+    "data_dir": "data/addition",
+    "results_dir": "results/len_gen",
+    "n_train": 100000,
+    "n_val": 10000,
+    "n_test": 10000,
+    "n_digits": 10,
     "max_iters": 100000,
     "lr_decay_iters": 100000,
     "warmup_iters": 500,
-    "block_size": 64,
-    "batch_size": 64,
-    "test_batch_size": 256,
+    "block_size": 96,
+    "batch_size": 32,
+    "test_batch_size": 64,
     "eval_interval": 500,
     "test_accuracy_during_training": True,
 }
@@ -83,9 +99,26 @@ def n_train_str(n_train: int) -> str:
 
 
 if __name__ == "__main__":
-    for size in [MEDIUM]:
+    for size in [SMALL_DEEP]:
         for decoder in [True, False]:
-            for seed in range(1):
+            for seed in range(1, 2):
+                name = BASE_CONFIG["task"]
+                name += f"_{size['size_name']}"
+                name += "_decoder" if decoder else "_encoder"
+                name += f"_{seed}"
+
+                config = copy.deepcopy(BASE_CONFIG | size)
+                config["name"] = name
+                config["decoder"] = decoder
+                config["seed"] = seed
+
+                config_path = f"configs/{name}.json"
+                with open(config_path, "w") as f:
+                    json.dump(config, f)
+
+    for size in [EXTRA_SMALL_DEEP]:
+        for decoder in [True, False]:
+            for seed in range(3):
                 name = BASE_CONFIG["task"]
                 name += f"_{size['size_name']}"
                 name += "_decoder" if decoder else "_encoder"
