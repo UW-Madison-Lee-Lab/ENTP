@@ -69,7 +69,7 @@ def train(config: Config, env: Environment) -> None:
 
     env.seed_everything(config.seed)
 
-    data_generator = DATA_GENERATORS[config.task](config, env)
+    data_generator = DATA_GENERATORS[config.task](config)
 
     model_config = TransformerConfig(
         n_positions=config.block_size,

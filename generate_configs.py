@@ -59,11 +59,13 @@ EXTRA_LARGE: dict[str, Any] = {
 }
 
 BASE_CONFIG: dict[str, Any] = {
-    "task": "len_gen_counting",
-    "train_len_max": 16,
-    "test_len_max": 48,
-    "max_iters": 10000,
-    "lr_decay_iters": 10000,
+    # "task": "len_gen_counting",
+    # "train_len_max": 16,
+    # "test_len_max": 48,
+    "task": "triplet_detection",
+    "data_gen_seed_max": 64,
+    "max_iters": 100000,
+    "lr_decay_iters": 100000,
     "warmup_iters": 500,
     "block_size": 64,
     "batch_size": 64,
@@ -81,10 +83,10 @@ def n_train_str(n_train: int) -> str:
 
 
 if __name__ == "__main__":
-    for size in [EXTRA_SMALL_DEEP]:
+    for size in [MEDIUM]:
         for decoder in [True, False]:
             for seed in range(1):
-                name = "len_gen_counting"
+                name = BASE_CONFIG["task"]
                 name += f"_{size['size_name']}"
                 name += "_decoder" if decoder else "_encoder"
                 name += f"_{seed}"
