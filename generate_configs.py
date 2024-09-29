@@ -91,7 +91,7 @@ if __name__ == "__main__":
                 name = BASE_CONFIG["task"]
                 name += f"_{size['size_name']}"
                 name += "_decoder" if decoder else "_encoder"
-                name += f"_{seed}"
+                name += f"_{seed}_fixed"
 
                 config = copy.deepcopy(BASE_CONFIG | size)
                 config["name"] = name
