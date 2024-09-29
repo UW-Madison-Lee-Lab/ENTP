@@ -58,20 +58,6 @@ EXTRA_LARGE: dict[str, Any] = {
     "size_name": "extra_large",
 }
 
-# BASE_CONFIG: dict[str, Any] = {
-#     "task": "triplet_detection",
-#     "data_gen_seed_max": 64,
-#     "max_iters": 100000,
-#     "lr_decay_iters": 100000,
-#     "warmup_iters": 500,
-#     "block_size": 64,
-#     "batch_size": 64,
-#     "test_batch_size": 256,
-#     "eval_interval": 500,
-#     "test_accuracy_during_training": True,
-# }
-
-
 BASE_CONFIG: dict[str, Any] = {
     "task": "reversed_addition_len_gen",
     "data_dir": "data/addition",
@@ -80,12 +66,12 @@ BASE_CONFIG: dict[str, Any] = {
     "n_val": 10000,
     "n_test": 10000,
     "n_digits": 10,
-    "max_iters": 100000,
-    "lr_decay_iters": 100000,
+    "max_iters": 50000,
+    "lr_decay_iters": 50000,
     "warmup_iters": 500,
-    "block_size": 96,
-    "batch_size": 32,
-    "test_batch_size": 64,
+    "block_size": 64,
+    "batch_size": 64,
+    "test_batch_size": 128,
     "eval_interval": 500,
     "test_accuracy_during_training": True,
 }
