@@ -108,17 +108,12 @@ class TripletDetectionDataGenerator(DataGenerator):
         if batch_size is None:
             batch_size = self.batch_size
 
-        # x = torch.randint(0, self.seed_max, (batch_size, self.block_size))
-        # y = torch.empty_like(x)
-
         x = [
             [random.randint(0, self.seed_max - 1) for _ in range(self.block_size)]
             for _ in range(self.batch_size)
         ]
+
         y: list[list[int]] = []
-        # for i in range(batch_size):
-        #     for j in range(self.block_size):
-        #         y[i, j] = self.f(x[i, : j + 1])
         for i in range(batch_size):
             y.append([])
             for j in range(self.block_size):
