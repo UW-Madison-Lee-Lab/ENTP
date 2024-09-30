@@ -37,8 +37,9 @@ def evaluate_split_with_model(
 
     lines = test_text.split("\n")[:-1]
     line_lens = [len(line) for line in lines]
+    line_plus_idxs = [line.find("+") for line in lines]
     line_eq_idxs = [line.find("=") for line in lines]
-    lines_data = [t for t in zip(line_lens, line_eq_idxs)]
+    lines_data = [t for t in zip(line_lens, line_plus_idxs, line_eq_idxs)]
 
     line_groups = defaultdict(list)
 
@@ -46,19 +47,21 @@ def evaluate_split_with_model(
         line_groups[line_data].append(line)
 
     batches: list[Tensor] = []
+    batch_plus_idxs: list[int] = []
     batch_eq_idxs: list[int] = []
 
-    for (_, eq_idx), grouped_lines in line_groups.items():
+    for (_, plus_idx, eq_idx), grouped_lines in line_groups.items():
         for i in range(0, len(grouped_lines), config.test_batch_size):
             unencoded_batch = grouped_lines[i : i + config.test_batch_size]
             batches.append(encode(unencoded_batch, char2int))
+            batch_plus_idxs.append(plus_idx)
             batch_eq_idxs.append(eq_idx)
             assert torch.all(batches[-1][:, batch_eq_idxs[-1]] == char2int["="])
 
     n_correct = defaultdict(int)
     n_total = defaultdict(int)
 
-    for batch, eq_idx in zip(batches, batch_eq_idxs):
+    for batch, plus_idx, eq_idx in zip(batches, batch_plus_idxs, batch_eq_idxs):
         batch = batch.to(env.device)
 
         with env.context:
@@ -71,14 +74,14 @@ def evaluate_split_with_model(
 
         correct = torch.all(output_ids == target_ids, dim=1)
 
-        ans_len = batch.shape[1] - eq_idx - 2
+        n_digits = max(plus_idx - 1, eq_idx - plus_idx - 1)
 
-        n_correct[ans_len] += int(torch.sum(correct.int()))
-        n_total[ans_len] += len(correct)
+        n_correct[n_digits] += int(torch.sum(correct.int()))
+        n_total[n_digits] += len(correct)
 
-    for ans_len in n_correct.keys():
-        ans_len_acc = n_correct[ans_len] / n_total[ans_len]
-        wandb.log({f"{split}_acc_ans_len_{ans_len}": ans_len_acc}, step=step)
+    for n_digits in n_correct.keys():
+        n_digits_acc = n_correct[n_digits] / n_total[n_digits]
+        wandb.log({f"{split}_acc_n_digits_{n_digits}": n_digits_acc}, step=step)
 
     total_acc = sum(n_correct.values()) / sum(n_total.values())
     wandb.log({f"{split}_acc": total_acc}, step=step)

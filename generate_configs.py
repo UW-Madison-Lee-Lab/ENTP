@@ -65,8 +65,8 @@ BASE_CONFIG: dict[str, Any] = {
     "n_train": 100000,
     "n_val": 5000,
     "n_test": 25000,
-    "n_digits": 12,
-    "n_digits_test": 18,
+    "n_digits": 10,
+    "n_digits_test": 15,
     "max_iters": 50000,
     "lr_decay_iters": 50000,
     "warmup_iters": 500,
@@ -88,7 +88,7 @@ def n_train_str(n_train: int) -> str:
 if __name__ == "__main__":
     for size in [EXTRA_SMALL_DEEP]:
         for decoder in [True, False]:
-            for seed in range(1, 3):
+            for seed in range(3):
                 name = BASE_CONFIG["task"]
                 name += f"_{size['size_name']}"
                 name += "_decoder" if decoder else "_encoder"
@@ -98,6 +98,9 @@ if __name__ == "__main__":
                 config["name"] = name
                 config["decoder"] = decoder
                 config["seed"] = seed
+
+                if not decoder:
+                    config["max_iter"] = 30000
 
                 config_path = f"configs/{name}.json"
                 with open(config_path, "w") as f:

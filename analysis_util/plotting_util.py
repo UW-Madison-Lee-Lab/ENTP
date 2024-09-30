@@ -8,6 +8,7 @@ from cycler import cycler
 
 plt.rcParams["text.usetex"] = True
 plt.rcParams["font.family"] = "serif"
+plt.rcParams["font.serif"] = ["Times"]
 plt.rcParams["text.latex.preamble"] = r"\usepackage{amsmath}"
 plt.rcParams["axes.prop_cycle"] = cycler(
     color=["#e63946", "#457b9d", "#05b070", "#A050A0"]
@@ -81,14 +82,17 @@ def plot_results(
 def plot_results_errorbar(
     df: pd.DataFrame,
     task: str,
-    title_prefix="",
     title=True,
     n_trains=[1250, 2500, 3750, 5000, 10000, 15000, 20000],
     save_path: Optional[str] = None,
     figsize=(8, 4),
     dpi=128,
+    log_scale=False,
 ) -> None:
     plt.figure(figsize=figsize, dpi=dpi)
+
+    if log_scale:
+        plt.yscale("log")
 
     means = reduce_results(df, "accuracy_test", np.mean)
     stds = reduce_results(df, "accuracy_test", np.std)
@@ -96,7 +100,7 @@ def plot_results_errorbar(
     for k in [f"{task}_decoder", f"{task}_encoder"]:
         plt.errorbar(
             n_trains,
-            means[k],
+            1 - np.array(means[k]),
             yerr=stds[k],
             fmt="-o",
             ms=4,
@@ -105,12 +109,16 @@ def plot_results_errorbar(
             label=k[-7:].capitalize() + "-only",
         )
 
-    plt.ylabel("\\textbf{Test Accuracy}", fontsize=FONTSIZE)
+    plt.ylabel("\\textbf{Test Error}", fontsize=FONTSIZE)
     plt.xlabel("\\textbf{Number of Training Examples}", fontsize=FONTSIZE)
     plt.xticks(fontsize=int(0.6667 * FONTSIZE))
     plt.yticks(fontsize=int(0.6667 * FONTSIZE))
     if title:
-        plt.title(title_prefix + task.replace("_", " "), fontsize=FONTSIZE)
+        title = "\\textbf{"
+        title += "".join(w.capitalize() + " " for w in task.replace("_", " ").split())
+        title += "Format}"
+        plt.title(title, fontsize=FONTSIZE)
+
     plt.legend(fontsize=FONTSIZE)
     plt.grid(True, linestyle="-", linewidth=0.5)
 
