@@ -13,11 +13,12 @@ all_true_selector = rasp.Select(rasp.tokens, rasp.tokens, rasp.Comparison.TRUE)
 n = rasp.Map(lambda a: max(a, 1), rasp.SelectorWidth(all_true_selector))
 last_idxs = rasp.Map(lambda a: a - 1, n)
 last_x = kqv(k=idxs, q=last_idxs, v=x, pred=rasp.Comparison.EQ)
-y = rasp.SequenceMap(lambda a, b: a % b, n - x, n)
-z = rasp.SequenceMap(lambda a, b: a % b, x + last_x, n)
+y = rasp.SequenceMap(lambda a, b: a if a < b else a - b, n - x, n)
+z = rasp.SequenceMap(lambda a, b: a if a < b else a - b, x + last_x, n)
 row_counts = rasp.SelectorWidth(rasp.Select(y, z, rasp.Comparison.EQ))
-count = rasp.Aggregate(all_true_selector, row_counts) * n
-count_triplets = rasp.SequenceMap(lambda a, b: a % b, count, n)
+c = rasp.Aggregate(all_true_selector, row_counts * n)
+c = c - idxs * n
+count_triplets = kqv(k=c, q=n, v=c, pred=lambda a, b: 0 <= a and a < b)
 
 
 if __name__ == "__main__":

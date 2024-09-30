@@ -57,9 +57,8 @@ def count_triplets_rasp(x):
 
 def count_triplets_rasp_no_div(x):
     idxs = indices(x)
-    last_idx = kqv(k=x, q=x, v=idxs, pred=true, reduction="max")
-    last_x = kqv(k=idxs, q=last_idx, v=x, pred=equals, reduction="mean")
-    n = last_idx + 1
+    n = sel_width(select(k=x, q=x, pred=true))
+    last_x = kqv(k=idxs, q=n - 1, v=x, pred=equals, reduction="mean")
     y = seq_map(n - x, n, lambda a, b: a if a < b else a - b)
     z = seq_map(x + last_x, n, lambda a, b: a if a < b else a - b)
     row_counts = sel_width(select(k=y, q=z, pred=equals))
@@ -71,8 +70,7 @@ def count_triplets_rasp_no_div(x):
         reduction="mean",
     )
     c = c - idxs * n
-    c = kqv(k=c, q=full(x, 0), v=c, pred=lambda a, b: a >= b, reduction="min")
-    c = seq_map(c, n, lambda a, b: a if a < b else a - b)
+    c = kqv(k=c, q=n, v=c, pred=lambda a, b: 0 <= a and a < b, reduction="mean")
     return c
 
 
