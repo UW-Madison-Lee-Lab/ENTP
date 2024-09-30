@@ -7,6 +7,7 @@ import torch
 from torch import Tensor
 from tqdm import tqdm  # type: ignore
 
+import wandb
 from nano_transformer import TransformerConfig, TransformerLMHead
 from util import Config, Environment, decode, encode
 
@@ -17,8 +18,8 @@ def evaluate_split_with_model(
     config: Config,
     env: Environment,
     split: Literal["train", "val", "test"],
-    log_incorrect_examples=False,
-) -> float:
+    step: int,
+) -> None:
     data_path = path.join(config.data_dir, f"{split}_{config.task}.txt")
     with open(data_path, "r", encoding="utf-8") as f:
         test_text = f.read()
@@ -31,7 +32,6 @@ def evaluate_split_with_model(
         assert vocab_size == 13
 
     char2int = {c: i for i, c in enumerate(chars)}
-    int2char = {i: c for i, c in enumerate(chars)}
 
     model.eval()
 
@@ -55,8 +55,8 @@ def evaluate_split_with_model(
             batch_eq_idxs.append(eq_idx)
             assert torch.all(batches[-1][:, batch_eq_idxs[-1]] == char2int["="])
 
-    n_correct = 0
-    n_total = 0
+    n_correct = defaultdict(int)
+    n_total = defaultdict(int)
 
     for batch, eq_idx in zip(batches, batch_eq_idxs):
         batch = batch.to(env.device)
@@ -71,18 +71,17 @@ def evaluate_split_with_model(
 
         correct = torch.all(output_ids == target_ids, dim=1)
 
-        if log_incorrect_examples:
-            for i, c in enumerate(correct):
-                if not c:
-                    batch_str = decode(batch[i], int2char)
-                    output_str = decode(output_ids[i], int2char).removesuffix("\n")
-                    target_str = decode(target_ids[i], int2char).removesuffix("\n")
-                    print(f"{batch_str}, {output_str}, {target_str}\n")
+        ans_len = batch.shape[1] - eq_idx - 2
 
-        n_correct += int(torch.sum(correct.int()))
-        n_total += len(correct)
+        n_correct[ans_len] += int(torch.sum(correct.int()))
+        n_total[ans_len] += len(correct)
 
-    return n_correct / n_total
+    for ans_len in n_correct.keys():
+        ans_len_acc = n_correct[ans_len] / n_total[ans_len]
+        wandb.log({f"{split}_acc_ans_len_{ans_len}": ans_len_acc}, step=step)
+
+    total_acc = sum(n_correct.values()) / sum(n_total.values())
+    wandb.log({f"{split}_acc": total_acc}, step=step)
 
 
 @torch.no_grad()

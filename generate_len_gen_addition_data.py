@@ -9,9 +9,9 @@ T = TypeVar("T")
 
 
 class AdditionGenerator:
-    def __init__(self, config: Config, extra_test_digits=2) -> None:
+    def __init__(self, config: Config) -> None:
         self.n_digits_max = config.n_digits
-        self.extra_test_digits = extra_test_digits
+        self.extra_test_digits = max(0, config.n_digits_test - config.n_digits)
 
     def generate_number(self, n_digits: int) -> int:
         return random.randint(10 ** (n_digits - 1), 10**n_digits - 1)

@@ -28,6 +28,7 @@ class Config:
     mod_sorted_sum_mod_before: bool = True
     model_dir: str = "models"
     n_digits: int = 3
+    n_digits_test: int = 20
     n_embd: int = 384
     n_head: int = 6
     n_layer: int = 6
