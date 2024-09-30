@@ -63,7 +63,7 @@ BASE_CONFIG: dict[str, Any] = {
     "data_dir": "data/addition",
     "results_dir": "results",
     "n_train": 100000,
-    "n_val": 25000,
+    "n_val": 5000,
     "n_test": 25000,
     "n_digits": 12,
     "n_digits_test": 18,
