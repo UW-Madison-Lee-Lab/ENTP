@@ -61,7 +61,7 @@ EXTRA_LARGE: dict[str, Any] = {
 BASE_CONFIG: dict[str, Any] = {
     "task": "reversed_addition_len_gen",
     "data_dir": "data/addition",
-    "results_dir": "results/len_gen",
+    "results_dir": "results",
     "n_train": 100000,
     "n_val": 25000,
     "n_test": 25000,
