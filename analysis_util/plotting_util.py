@@ -91,11 +91,20 @@ def plot_results_errorbar(
 ) -> None:
     plt.figure(figsize=figsize, dpi=dpi)
 
-    if log_scale:
-        plt.yscale("log")
-
     means = reduce_results(df, "accuracy_test", np.mean)
     stds = reduce_results(df, "accuracy_test", np.std)
+
+    if log_scale:
+        plt.xscale("log")
+        plt.yscale("log")
+        plt.xlim(min(n_trains) - 250, max(n_trains) + 5000)
+        plt.xticks(
+            n_trains,
+            labels=[str(x) for x in n_trains],
+            fontsize=int(0.6667 * FONTSIZE),
+        )
+    else:
+        plt.xticks(n_trains, fontsize=int(0.6667 * FONTSIZE))
 
     for k in [f"{task}_decoder", f"{task}_encoder"]:
         plt.errorbar(
@@ -103,15 +112,14 @@ def plot_results_errorbar(
             1 - np.array(means[k]),
             yerr=stds[k],
             fmt="-o",
-            ms=4,
+            ms=2,
             linewidth=1,
-            capsize=4,
-            label=k[-7:].capitalize() + "-only",
+            capsize=3,
+            label=k[-7:].capitalize(),
         )
 
-    plt.ylabel("\\textbf{Test Error}", fontsize=FONTSIZE)
+    plt.ylabel("\\textbf{Test Error Rate}", fontsize=FONTSIZE)
     plt.xlabel("\\textbf{Number of Training Examples}", fontsize=FONTSIZE)
-    plt.xticks(fontsize=int(0.6667 * FONTSIZE))
     plt.yticks(fontsize=int(0.6667 * FONTSIZE))
     if title:
         title = "\\textbf{"
