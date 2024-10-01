@@ -115,7 +115,7 @@ def plot_results_errorbar(
             ms=2,
             linewidth=1,
             capsize=3,
-            label=k[-7:].capitalize(),
+            label=k[-7:].capitalize().replace("Encoder", "ENTP"),
         )
 
     plt.ylabel("\\textbf{Test Error Rate}", fontsize=FONTSIZE)
@@ -177,7 +177,7 @@ def plot_results_from_two_df(
     plt.xticks(fontsize=int(0.6667 * FONTSIZE))
     plt.yticks(fontsize=int(0.6667 * FONTSIZE))
     plt.title(
-        task.replace("_", " ") + (" decoder" if decoder else " encoder"),
+        task.replace("_", " ") + (" Decoder" if decoder else " ENTP"),
         fontsize=FONTSIZE,
     )
     plt.legend(fontsize=FONTSIZE)
