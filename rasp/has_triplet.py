@@ -39,17 +39,21 @@ def true(a, b):
 def has_triplet_rasp(x):
     idxs = indices(x)
     first_x = kqv(k=idxs, q=full(x, 0), v=x, pred=equals, reduction="mean", causal=True)
-    y = -x & 127
-    z = (first_x + x) & 127
-    row_counts = sel_width(select(k=y, q=z, pred=equals))
+
+    # use bitmask to compute mod
+    y = -x & 127  # y[i] = -x[i] % 128
+    z = (first_x + x) & 127  # z[i] = (x[0] + x[i]) % 128
+
+    # max_count[-1] > 0 if there exists (i, j) such that y[i] == z[j]
     max_count = kqv(
         k=full(x, 1),
         q=full(x, 1),
-        v=row_counts,
+        v=sel_width(select(k=y, q=z, pred=equals)),
         pred=equals,
         reduction="max",
     )
-    return tok_map(max_count, lambda a: 1 if a > 0 else 0)
+
+    return tok_map(max_count, lambda a: min(a, 1))  # return 0 or 1
 
 
 if __name__ == "__main__":
