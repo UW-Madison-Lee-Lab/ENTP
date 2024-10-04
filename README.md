@@ -4,7 +4,6 @@ Link to full paper: https://arxiv.org/abs/2410.01600
 
 Link to website: https://sites.google.com/wisc.edu/entp/home
 
-
 ### AWS Settings
 - amazon/Deep Learning Base AMI (Amazon Linux 2) Version 57.8
 ```bash
