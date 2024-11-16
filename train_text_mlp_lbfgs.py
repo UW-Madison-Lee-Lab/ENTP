@@ -11,7 +11,7 @@ from torch.utils import data
 import wandb
 from evaluate_addition import evaluate_split_with_model
 from nano_transformer import TransformerConfig, flat_cross_entropy
-from util import Config, Environment, LRSchedule, load_data
+from util import Config, Environment, load_data
 
 
 class LanguageMLP(nn.Module):
@@ -132,7 +132,6 @@ def train(config: Config, env: Environment) -> None:
 
     optimizer = optim.LBFGS(model.parameters(), lr=1.0)  # type: ignore
 
-    lr_schedule = LRSchedule(config)
     i = 0
     best_val_loss = float("inf")
     n_evals_without_improving = 0
