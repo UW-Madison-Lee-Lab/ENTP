@@ -70,7 +70,7 @@ BASE_CONFIG: dict[str, Any] = {
     "lr_decay_iters": 2500,
     "warmup_iters": 100,
     "block_size": 64,
-    "batch_size": 64,
+    "batch_size": 256,
     "test_batch_size": 2048,
     "eval_interval": 100,
     "use_delimiter": True,
@@ -94,6 +94,7 @@ if __name__ == "__main__":
             config = copy.deepcopy(BASE_CONFIG)
             config["name"] = name
             config["seed"] = seed
+            config["n_train"] = n_train
 
             config_path = f"configs/{name}.json"
             with open(config_path, "w") as f:
