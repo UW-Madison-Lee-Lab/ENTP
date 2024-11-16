@@ -64,12 +64,12 @@ class Transformer(nn.Module):
         decoder: bool = True,
         forward_idxs: Optional[Sequence[int]] = None,
     ) -> Tensor:
-        assert (input_ids is not None) ^ (input_embds is not None)
-
         if input_ids is not None:
             x = self.wte(input_ids)
-        else:
+        elif input_embds is not None:
             x = input_embds
+        else:
+            raise ValueError("`input_ids` and `input_embds` cannot both be `None`.")
 
         T = x.shape[1]
         assert T <= self.config.n_positions

@@ -59,21 +59,20 @@ EXTRA_LARGE: dict[str, Any] = {
 }
 
 BASE_CONFIG: dict[str, Any] = {
-    "task": "reversed_addition_len_gen",
+    "task": "reversed_addition",
     "data_dir": "data/addition",
     "results_dir": "results",
-    "n_train": 100000,
-    "n_val": 5000,
-    "n_test": 25000,
-    "n_digits": 10,
-    "n_digits_test": 15,
-    "max_iters": 50000,
-    "lr_decay_iters": 50000,
-    "warmup_iters": 500,
+    "n_val": 10000,
+    "n_test": 70000,
+    "n_digits": 3,
+    "max_iters": 10000,
+    "lr_decay_iters": 5000,
+    "warmup_iters": 100,
     "block_size": 64,
-    "batch_size": 64,
-    "test_batch_size": 128,
-    "eval_interval": 500,
+    "batch_size": 2,
+    "test_batch_size": 2048,
+    "eval_interval": 1,
+    "use_delimiter": True,
     "test_accuracy_during_training": True,
 }
 
@@ -86,22 +85,15 @@ def n_train_str(n_train: int) -> str:
 
 
 if __name__ == "__main__":
-    for size in [EXTRA_SMALL_DEEP]:
-        for decoder in [True, False]:
-            for seed in range(3):
-                name = BASE_CONFIG["task"]
-                name += f"_{size['size_name']}"
-                name += "_decoder" if decoder else "_encoder"
-                name += f"_{seed}_new"
+    for n_train in [1250, 2500, 3750, 5000, 10000, 15000, 20000]:
+        for seed in range(1):
+            name = BASE_CONFIG["task"]
+            name += f"_mlp_{n_train}_{seed}"
 
-                config = copy.deepcopy(BASE_CONFIG | size)
-                config["name"] = name
-                config["decoder"] = decoder
-                config["seed"] = seed
+            config = copy.deepcopy(BASE_CONFIG)
+            config["name"] = name
+            config["seed"] = seed
 
-                if not decoder:
-                    config["max_iter"] = 30000
-
-                config_path = f"configs/{name}.json"
-                with open(config_path, "w") as f:
-                    json.dump(config, f)
+            config_path = f"configs/{name}.json"
+            with open(config_path, "w") as f:
+                json.dump(config, f)

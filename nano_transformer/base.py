@@ -103,7 +103,7 @@ def configure_optimizer(
     weight_decay: float = 0.01,
     custom_optim_groups: list[dict[str, Any]] = [],
     device: str = "cpu",
-) -> optim.AdamW:
+) -> optim.AdamW:  # type: ignore
     """Configures AdamW optimizer."""
     custom_params = set(sum([d["params"] for d in custom_optim_groups], []))
     filtered_params = [
@@ -126,4 +126,4 @@ def configure_optimizer(
 
     optim_groups += custom_optim_groups
 
-    return optim.AdamW(optim_groups, lr=lr, betas=betas, fused=device == "cuda")
+    return optim.AdamW(optim_groups, lr=lr, betas=betas, fused=device == "cuda")  # type: ignore
