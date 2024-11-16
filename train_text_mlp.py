@@ -23,7 +23,6 @@ class LanguageMLP(nn.Module):
         super().__init__()
         self.config = config
         self.wte = nn.Embedding(config.vocab_size, config.n_embd)
-        self.wpe = nn.Embedding(config.n_positions, config.n_embd)
         self.n_features = config.n_positions * config.n_embd
         self.fc1 = nn.Linear(self.n_features, self.n_features)
         self.fc2 = nn.Linear(self.n_features, config.vocab_size)
@@ -208,6 +207,7 @@ def train(config: Config, env: Environment) -> None:
                     n_evals_without_improving += 1
 
                 if config.test_accuracy_during_training:
+                    evaluate_split_with_model(model, config, env, split="train", step=i)  # type: ignore
                     evaluate_split_with_model(model, config, env, split="val", step=i)  # type: ignore
                     evaluate_split_with_model(model, config, env, split="test", step=i)  # type: ignore
 
