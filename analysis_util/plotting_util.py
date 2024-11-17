@@ -317,3 +317,74 @@ def plot_two_sets_of_multiple_keys(
         plt.savefig(save_path, bbox_inches="tight")
 
     plt.show()
+
+
+def plot_results_errorbar_with_extra_data(
+    df: pd.DataFrame,
+    extra_means: Sequence[float],
+    extra_stds: Sequence[float],
+    extra_label: str,
+    task: str,
+    title=True,
+    n_trains=[1250, 2500, 3750, 5000, 10000, 15000, 20000],
+    save_path: Optional[str] = None,
+    figsize=(8, 4),
+    dpi=128,
+    log_scale=False,
+) -> None:
+    plt.figure(figsize=figsize, dpi=dpi)
+
+    means = reduce_results(df, "accuracy_test", np.mean)
+    stds = reduce_results(df, "accuracy_test", np.std)
+
+    if log_scale:
+        plt.xscale("log")
+        plt.yscale("log")
+        plt.xlim(min(n_trains) - 250, max(n_trains) + 5000)
+        plt.xticks(
+            n_trains,
+            labels=[str(x) for x in n_trains],
+            fontsize=int(0.6667 * FONTSIZE),
+        )
+    else:
+        plt.xticks(n_trains, fontsize=int(0.6667 * FONTSIZE))
+
+    for k in [f"{task}_decoder", f"{task}_encoder"]:
+        plt.errorbar(
+            n_trains,
+            1 - np.array(means[k]),
+            yerr=stds[k],
+            fmt="-o",
+            ms=2,
+            linewidth=1,
+            capsize=3,
+            label=k[-7:].capitalize().replace("Encoder", "ENTP"),
+        )
+
+    plt.errorbar(
+        n_trains,
+        1 - np.array(extra_means),
+        yerr=extra_stds,
+        fmt="-o",
+        ms=2,
+        linewidth=1,
+        capsize=3,
+        label=extra_label,
+    )
+
+    plt.ylabel("\\textbf{Test Error Rate}", fontsize=FONTSIZE)
+    plt.xlabel("\\textbf{Number of Training Examples}", fontsize=FONTSIZE)
+    plt.yticks(fontsize=int(0.6667 * FONTSIZE))
+    if title:
+        title = "\\textbf{"
+        title += "".join(w.capitalize() + " " for w in task.replace("_", " ").split())
+        title += "Format}"
+        plt.title(title, fontsize=FONTSIZE)
+
+    plt.legend(fontsize=FONTSIZE)
+    plt.grid(True, linestyle="-", linewidth=0.5)
+
+    if save_path is not None:
+        plt.savefig(save_path, bbox_inches="tight")
+
+    plt.show()
