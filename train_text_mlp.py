@@ -68,7 +68,7 @@ def evaluate_loss(
     env: Environment,
     model: LanguageMLP,
     dataset: data.Dataset,
-    max_iters=1,
+    max_iters=100,
 ) -> float:
     """Evaluates `model` loss on `dataset`."""
     model.eval()
@@ -155,6 +155,11 @@ def train(config: Config, env: Environment) -> None:
         optimizer.load_state_dict(checkpoint["optimizer"])
         i = checkpoint["i"]
         best_val_loss = checkpoint["best_val_loss"]
+    
+    if config.test_accuracy_during_training:
+        evaluate_split_with_model(model, config, env, split="train", step=i)  # type: ignore
+        evaluate_split_with_model(model, config, env, split="val", step=i)  # type: ignore
+        evaluate_split_with_model(model, config, env, split="test", step=i)  # type: ignore
 
     while True:
         train_data_loader = data.DataLoader(
@@ -187,24 +192,27 @@ def train(config: Config, env: Environment) -> None:
 
             wandb.log({"train_loss": loss.item()}, step=i)
 
-            if i % config.eval_interval == 0:
-                val_loss = evaluate_loss(config, env, model, val_dataset)
-                wandb.log({"val_loss": val_loss}, step=i)
+            val_loss = evaluate_loss(config, env, model, val_dataset, max_iters=1)
+            wandb.log({"val_loss": val_loss}, step=i)
 
-                if val_loss < best_val_loss:
-                    n_evals_without_improving = 0
-                    print(f"saved checkpoint    {f'{i=}':8}  {val_loss=:.3f}")
-                    best_val_loss = val_loss
-                    checkpoint = {
-                        "model": model.state_dict(),
-                        "optimizer": optimizer.state_dict(),
-                        "i": i,
-                        "best_val_loss": best_val_loss,
-                    }
-                    save_path = os.path.join(config.model_dir, config.checkpoint_name)
-                    torch.save(checkpoint, save_path)
-                else:
-                    n_evals_without_improving += 1
+            if i % config.eval_interval == 0:
+                # val_loss = evaluate_loss(config, env, model, val_dataset)
+                # wandb.log({"val_loss": val_loss}, step=i)
+
+                # if val_loss < best_val_loss:
+                #     n_evals_without_improving = 0
+                #     print(f"saved checkpoint    {f'{i=}':8}  {val_loss=:.3f}")
+                #     best_val_loss = val_loss
+                #     checkpoint = {
+                #         "model": model.state_dict(),
+                #         "optimizer": optimizer.state_dict(),
+                #         "i": i,
+                #         "best_val_loss": best_val_loss,
+                #     }
+                #     save_path = os.path.join(config.model_dir, config.checkpoint_name)
+                #     torch.save(checkpoint, save_path)
+                # else:
+                #     n_evals_without_improving += 1
 
                 if config.test_accuracy_during_training:
                     evaluate_split_with_model(model, config, env, split="train", step=i)  # type: ignore
