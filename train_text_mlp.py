@@ -24,8 +24,8 @@ class LanguageMLP(nn.Module):
         self.config = config
         self.wte = nn.Embedding(config.vocab_size, config.n_embd)
         self.n_features = config.n_positions * config.n_embd
-        self.fc1 = nn.Linear(self.n_features, self.n_features)
-        self.fc2 = nn.Linear(self.n_features, config.vocab_size)
+        self.fc1 = nn.Linear(self.n_features, 4 * self.n_features)
+        self.fc2 = nn.Linear(4 * self.n_features, config.vocab_size)
 
     @staticmethod
     def gelu(x: Tensor) -> Tensor:

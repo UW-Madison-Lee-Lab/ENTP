@@ -62,7 +62,7 @@ BASE_CONFIG: dict[str, Any] = {
     "task": "reversed_addition",
     "data_dir": "data/addition",
     "results_dir": "results",
-    "n_embd": 128,
+    "n_embd": 192,
     "n_val": 10000,
     "n_test": 70000,
     "n_digits": 3,
@@ -89,7 +89,7 @@ def n_train_str(n_train: int) -> str:
 
 if __name__ == "__main__":
     for n_train in [1250, 2500, 3750, 5000, 10000, 15000, 20000]:
-        for seed in range(5):
+        for seed in range(3):
             name = BASE_CONFIG["task"]
             name += f"_mlp_{n_train}_{seed}"
 
