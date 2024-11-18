@@ -66,15 +66,13 @@ BASE_CONFIG: dict[str, Any] = {
     "n_val": 10000,
     "n_test": 70000,
     "n_digits": 3,
-    "max_iters": 2000,
-    "min_lr": 2.5e-4,
-    "max_lr": 2.5e-3,
-    "lr_decay_iters": 2000,
+    "max_iters": 5000,
+    "lr_decay_iters": 5000,
     "warmup_iters": 50,
     "block_size": 64,
-    "batch_size": 512,
+    "batch_size": 64,
     "test_batch_size": 4096,
-    "eval_interval": 50,
+    "eval_interval": 100,
     "use_delimiter": True,
     "test_accuracy_during_training": True,
 }
@@ -88,7 +86,7 @@ def n_train_str(n_train: int) -> str:
 
 
 if __name__ == "__main__":
-    for n_train in [1250, 2500, 3750, 5000, 10000, 15000, 20000]:
+    for n_train in [5000]:
         for seed in range(3):
             name = BASE_CONFIG["task"]
             name += f"_mlp_{n_train}_{seed}"

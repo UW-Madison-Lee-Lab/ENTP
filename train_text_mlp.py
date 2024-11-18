@@ -192,8 +192,8 @@ def train(config: Config, env: Environment) -> None:
 
             wandb.log({"train_loss": loss.item()}, step=i)
 
-            val_loss = evaluate_loss(config, env, model, val_dataset, max_iters=1)
-            wandb.log({"val_loss": val_loss}, step=i)
+            # val_loss = evaluate_loss(config, env, model, val_dataset, max_iters=1)
+            # wandb.log({"val_loss": val_loss}, step=i)
 
             if i % config.eval_interval == 0:
                 # val_loss = evaluate_loss(config, env, model, val_dataset)
