@@ -61,10 +61,8 @@ EXTRA_LARGE: dict[str, Any] = {
 BASE_CONFIG: dict[str, Any] = {
     "task": "ner",
     "results_dir": "results",
-    "n_test": 75000,
     "max_iters": 50000,
-    "linear_probe_training_iters": 5000,
-    "lr_decay_iters": 50000,
+    "lr_decay_iters": 25000,
     "warmup_iters": 100,
     "block_size": 48,
     "batch_size": 64,
@@ -81,11 +79,12 @@ def n_train_str(n_train: int) -> str:
 
 
 if __name__ == "__main__":
+    size = SMALL
     for decoder in [True, False]:
         name = BASE_CONFIG["task"]
-        name += f"_finetune_{'decoder' if decoder else 'encoder'}"
+        name += f"_{size["size_name"]}_{'decoder' if decoder else 'encoder'}"
 
-        config = copy.deepcopy(BASE_CONFIG)
+        config = copy.deepcopy(BASE_CONFIG | size)
         config["name"] = name
         config["decoder"] = decoder
 

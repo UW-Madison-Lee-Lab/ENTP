@@ -15,15 +15,6 @@ from nano_transformer import (
 )
 from util import Config, Environment, LRSchedule, SeqAlignmentBlockDataset
 
-
-def get_label(tag: int) -> int:
-    table = {0: 0, 96: 1, 44: 2, 95: 3, 43: 4, 31: 5, 64: 6, 32: 7, 26: 8, 101: 9}
-    if tag in table:
-        return table[tag]
-    
-    return 10
-
-
 def load_and_split_data(config: Config) -> tuple[SeqAlignmentBlockDataset, SeqAlignmentBlockDataset, int]:
     tokenizer = tiktoken.get_encoding("gpt2")
     ds = load_dataset("YurtsAI/named_entity_recognition_document_context")
@@ -39,7 +30,7 @@ def load_and_split_data(config: Config) -> tuple[SeqAlignmentBlockDataset, SeqAl
                 continue
 
             train_data += x
-            train_labels += [get_label(tag)] * len(x)
+            train_labels += [bool(tag)] * len(x)
 
         train_data.append(tokenizer.eot_token)
         train_labels.append(0)
@@ -138,23 +129,27 @@ def train(config: Config, env: Environment) -> None:
 
     env.seed_everything(config.seed)
 
-    train_dataset, test_dataset, voacb_size = load_and_split_data(config)
+    train_dataset, test_dataset, _ = load_and_split_data(config)
 
     model_config = TransformerConfig(
-        n_positions=config.block_size,
-        vocab_size=voacb_size,
-        n_layer=config.n_layer,
-        n_head=config.n_head,
-        n_embd=config.n_embd,
-        dropout=config.dropout,
-        use_wpe=config.use_wpe,
+        n_positions=48,
+        vocab_size=50304,
+        n_layer=24,
+        n_head=6,
+        n_embd=384,
+        dropout=0,
+        use_wpe=True,
     )
     
     model = TransformerLMHead(model_config, env.compile_blocks).to(env.device)
-    model.lm_head = torch.nn.Linear(model.lm_head.in_features, 11, device=env.device)
+    checkpoint_path = f"models/seperate/{'decoder' if config.decoder else 'encoder'}_medium_deep_openwebtext.pt"
+    checkpoint = torch.load(checkpoint_path, weights_only=False)
+    model.load_state_dict(checkpoint["model"])
+    model.lm_head = torch.nn.Linear(model.lm_head.in_features, 2, device=env.device)
 
+    # train probe
     optimizer = configure_optimizer(
-        model,
+        model.lm_head,
         lr=config.min_lr,
         betas=(config.beta1, config.beta2),
         weight_decay=config.weight_decay,
@@ -168,6 +163,57 @@ def train(config: Config, env: Environment) -> None:
     test_accuracy, test_loss = evaluate_accuracy_and_loss(config, env, model, test_dataset)
     print(f"{i=}, {test_accuracy=:.4f}, {test_loss=:.4f}")
     wandb.log({"test_accuracy": test_accuracy, "test_loss": test_loss}, step=i)
+
+    while i < config.linear_probe_training_iters:
+        train_data_loader = data.DataLoader(
+            train_dataset,
+            batch_size=config.batch_size,
+            shuffle=True,
+            pin_memory=env.pin_memory,
+            pin_memory_device=env.pin_memory_device,
+        )
+
+        for x, y in train_data_loader:
+            i += 1
+
+            model.train()
+
+            lr = lr_schedule(i)
+            for param_group in optimizer.param_groups:
+                param_group["lr"] = lr
+
+            x = x.to(env.device)
+            y = y.to(env.device)
+
+            with env.context:
+                logits = model(x, decoder=config.decoder)
+                loss = flat_cross_entropy(logits, y)
+                
+            loss.backward()
+            optimizer.step()
+            optimizer.zero_grad(set_to_none=True)
+
+            wandb.log({"train_loss": loss.item()}, step=i)
+
+            if i % config.eval_interval == 0:
+                test_accuracy, test_loss = evaluate_accuracy_and_loss(config, env, model, test_dataset)
+                print(f"{i=}, {test_accuracy=:.4f}, {test_loss=:.4f}")
+                wandb.log({"test_accuracy": test_accuracy, "test_loss": test_loss}, step=i)
+
+            if i >= config.linear_probe_training_iters:
+                break
+    
+    # train model
+    optimizer = configure_optimizer(
+        model,
+        lr=config.min_lr,
+        betas=(config.beta1, config.beta2),
+        weight_decay=config.weight_decay,
+        custom_optim_groups=config.custom_optim_groups,
+        device=env.device,
+    )
+
+    lr_schedule = LRSchedule(config)
 
     while True:
         train_data_loader = data.DataLoader(
