@@ -1,0 +1,19 @@
+{
+    "task": "openwebtext", 
+    "data_dir": "data/openwebtext",
+    "warmup_iters": 2000,
+    "lr_decay_iters": 600000, 
+    "min_lr": 0.0006, 
+    "max_lr": 6e-05, 
+    "beta1": 0.9, 
+    "beta2": 0.95, 
+    "weight_decay": 0.1,
+    "block_size": 48, 
+    "batch_size": 16, 
+    "eval_interval": 500, 
+    "n_layer": 24, 
+    "n_head": 6, 
+    "n_embd": 384, 
+    "name": "medium_deep_openwebtext", 
+    "seed": 0
+}

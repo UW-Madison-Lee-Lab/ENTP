@@ -59,22 +59,17 @@ EXTRA_LARGE: dict[str, Any] = {
 }
 
 BASE_CONFIG: dict[str, Any] = {
-    "task": "reversed_addition",
-    "data_dir": "data/addition",
+    "task": "ner",
     "results_dir": "results",
-    "n_embd": 192,
-    "n_val": 10000,
-    "n_test": 70000,
-    "n_digits": 3,
-    "max_iters": 5000,
-    "lr_decay_iters": 5000,
-    "warmup_iters": 50,
-    "block_size": 64,
+    "n_test": 75000,
+    "max_iters": 50000,
+    "linear_probe_training_iters": 5000,
+    "lr_decay_iters": 50000,
+    "warmup_iters": 100,
+    "block_size": 48,
     "batch_size": 64,
-    "test_batch_size": 4096,
-    "eval_interval": 100,
-    "use_delimiter": True,
-    "test_accuracy_during_training": True,
+    "test_batch_size": 2048,
+    "eval_interval": 1000,
 }
 
 
@@ -86,16 +81,14 @@ def n_train_str(n_train: int) -> str:
 
 
 if __name__ == "__main__":
-    for n_train in [5000]:
-        for seed in range(3):
-            name = BASE_CONFIG["task"]
-            name += f"_mlp_{n_train}_{seed}"
+    for decoder in [True, False]:
+        name = BASE_CONFIG["task"]
+        name += f"_finetune_{'decoder' if decoder else 'encoder'}"
 
-            config = copy.deepcopy(BASE_CONFIG)
-            config["name"] = name
-            config["seed"] = seed
-            config["n_train"] = n_train
+        config = copy.deepcopy(BASE_CONFIG)
+        config["name"] = name
+        config["decoder"] = decoder
 
-            config_path = f"configs/{name}.json"
-            with open(config_path, "w") as f:
-                json.dump(config, f)
+        config_path = f"configs/{name}.json"
+        with open(config_path, "w") as f:
+            json.dump(config, f)

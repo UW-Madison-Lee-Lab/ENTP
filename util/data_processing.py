@@ -26,6 +26,25 @@ class BlockDataset(data.Dataset):
         y = self.data[j + 1 : j + self.block_size + 1]
         return x, y
 
+    
+class SeqAlignmentBlockDataset(data.Dataset):
+    """Groups time series data into blocks."""
+
+    def __init__(self, data: Tensor, labels: Tensor, config: Config):
+        self.data = data
+        self.labels = labels
+        self.block_size = config.block_size
+        self.block_idxs = np.random.permutation(len(data) - self.block_size)
+
+    def __len__(self) -> int:
+        return len(self.block_idxs)
+
+    def __getitem__(self, i: int) -> tuple[Tensor, Tensor]:
+        j = self.block_idxs[i]
+        x = self.data[j : j + self.block_size]
+        y = self.labels[j : j + self.block_size]
+        return x, y
+
 
 def encode(text: str | list[str], char2int: dict[str, int]) -> Tensor:
     """Encodes `text` at character level."""

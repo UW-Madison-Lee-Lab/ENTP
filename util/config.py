@@ -18,6 +18,7 @@ class Config:
     decoder: bool = True
     dropout: float = 0.0
     eval_interval: int = 100
+    linear_probe_training_iters: int = 1000
     log_wpe_norm: bool = False
     lr_decay_iters: int = 5000
     max_evals_without_improving: int = 1000
