@@ -3,9 +3,9 @@ from typing import Literal, Sequence
 
 import numpy as np
 import torch
+import torch.nn.functional as F
 from torch import Tensor
 from torch.utils import data
-import torch.nn.functional as F
 
 from .config import Config
 
@@ -25,25 +25,6 @@ class BlockDataset(data.Dataset):
         j = self.block_idxs[i]
         x = self.data[j : j + self.block_size]
         y = self.data[j + 1 : j + self.block_size + 1]
-        return x, y
-
-    
-class SeqAlignmentBlockDataset(data.Dataset):
-    """Groups time series data into blocks."""
-
-    def __init__(self, data: Tensor, labels: Tensor, config: Config):
-        self.data = data
-        self.labels = labels
-        self.block_size = config.block_size
-        self.block_idxs = np.random.permutation(len(data) - self.block_size)
-
-    def __len__(self) -> int:
-        return len(self.block_idxs)
-
-    def __getitem__(self, i: int) -> tuple[Tensor, Tensor]:
-        j = self.block_idxs[i]
-        x = self.data[j : j + self.block_size]
-        y = self.labels[j : j + self.block_size]
         return x, y
 
 
@@ -83,7 +64,9 @@ class SequenceDataset(data.Dataset):
 def left_pad_collate(batch: list[tuple[Tensor, Tensor]], value: int):
     xs, ys = zip(*batch)
     max_len = max(len(x) for x in xs)
-    x_batch = torch.stack([F.pad(x, (max_len - len(x), 0), value=value) for x in xs], dim=0)
+    x_batch = torch.stack(
+        [F.pad(x, (max_len - len(x), 0), value=value) for x in xs], dim=0
+    )
     y_batch = torch.stack(ys, dim=0)
     return x_batch, y_batch
 
@@ -91,8 +74,12 @@ def left_pad_collate(batch: list[tuple[Tensor, Tensor]], value: int):
 def left_pad_collate_both(batch: list[tuple[Tensor, Tensor]], value1: int, value2: int):
     xs, ys = zip(*batch)
     max_len = max(len(x) for x in xs)
-    x_batch = torch.stack([F.pad(x, (max_len - len(x), 0), value=value1) for x in xs], dim=0)
-    y_batch = torch.stack([F.pad(y, (max_len - len(y), 0), value=value2) for y in ys], dim=0)
+    x_batch = torch.stack(
+        [F.pad(x, (max_len - len(x), 0), value=value1) for x in xs], dim=0
+    )
+    y_batch = torch.stack(
+        [F.pad(y, (max_len - len(y), 0), value=value2) for y in ys], dim=0
+    )
     return x_batch, y_batch
 
 

@@ -1,12 +1,13 @@
-import os
 import sys
+from functools import partial
 from pprint import pprint
 
-import torch
-from torch.utils import data
 import tiktoken
-import wandb
+import torch
 from datasets import load_dataset
+from torch.utils import data
+
+import wandb
 from nano_transformer import (
     TransformerConfig,
     TransformerLMHead,
@@ -14,7 +15,7 @@ from nano_transformer import (
     flat_cross_entropy,
 )
 from util import Config, Environment, LRSchedule, SequenceDataset, left_pad_collate_both
-from functools import partial
+
 
 def get_label(tag: int) -> int:
     table = {
@@ -42,21 +43,23 @@ def get_label(tag: int) -> int:
     }
     if tag in table:
         return table[tag]
-    
+
     return 21
 
 
-def load_and_split_data(config: Config) -> tuple[SequenceDataset, SequenceDataset, tiktoken.Encoding]:
+def load_and_split_data(
+    config: Config,
+) -> tuple[SequenceDataset, SequenceDataset, tiktoken.Encoding]:
     tokenizer = tiktoken.get_encoding("gpt2")
     ds = load_dataset("YurtsAI/named_entity_recognition_document_context")
 
     train_data = []
     train_labels = []
 
-    for example in ds["train"]:
+    for example in ds["train"]:  # type: ignore
         tokens = []
         labels = []
-        for word, tag in zip(example["tokens"], example["ner_tags"]):
+        for word, tag in zip(example["tokens"], example["ner_tags"]):  # type: ignore
             try:
                 x = tokenizer.encode_ordinary(word)
             except Exception:
@@ -70,14 +73,14 @@ def load_and_split_data(config: Config) -> tuple[SequenceDataset, SequenceDatase
         if len(tokens) <= config.batch_size:
             train_data.append(torch.tensor(tokens))
             train_labels.append(torch.tensor(labels))
-    
+
     test_data = []
     test_labels = []
 
-    for example in ds["test"]:
+    for example in ds["test"]:  # type: ignore
         tokens = []
         labels = []
-        for word, tag in zip(example["tokens"], example["ner_tags"]):
+        for word, tag in zip(example["tokens"], example["ner_tags"]):  # type: ignore
             try:
                 x = tokenizer.encode_ordinary(word)
             except Exception:
@@ -93,7 +96,6 @@ def load_and_split_data(config: Config) -> tuple[SequenceDataset, SequenceDatase
             test_data.append(torch.tensor(tokens))
             test_labels.append(torch.tensor(labels))
 
-    
     train_dataset = SequenceDataset(train_data, train_labels, config)
     test_dataset = SequenceDataset(test_data, test_labels, config)
 
@@ -119,7 +121,9 @@ def evaluate_accuracy_and_loss(
         shuffle=True,
         pin_memory=env.pin_memory,
         pin_memory_device=env.pin_memory_device,
-        collate_fn=partial(left_pad_collate_both, value1=tokenizer.eot_token, value2=-1),
+        collate_fn=partial(
+            left_pad_collate_both, value1=tokenizer.eot_token, value2=-1
+        ),
     )
 
     loss_sum = 0.0
@@ -139,7 +143,9 @@ def evaluate_accuracy_and_loss(
         loss_sum += loss.cpu().item() * len(x)
         for i in range(len(x)):
             idxs = y[i] != -1
-            n_correct += torch.sum((torch.argmax(logits[i, idxs], dim=1) == y[i, idxs]).float()) / len(y[i, idxs])
+            n_correct += torch.sum(
+                (torch.argmax(logits[i, idxs], dim=1) == y[i, idxs]).float()
+            ).item() / len(y[i, idxs])
 
         cnt += len(x)
 
@@ -177,7 +183,7 @@ def train(config: Config, env: Environment) -> None:
         dropout=config.dropout,
         use_wpe=config.use_wpe,
     )
-    
+
     model = TransformerLMHead(model_config, env.compile_blocks).to(env.device)
     model.lm_head = torch.nn.Linear(model.lm_head.in_features, 22, device=env.device)
 
@@ -193,7 +199,9 @@ def train(config: Config, env: Environment) -> None:
     lr_schedule = LRSchedule(config)
     i = 0
 
-    test_accuracy, test_loss = evaluate_accuracy_and_loss(config, env, model, tokenizer, test_dataset)
+    test_accuracy, test_loss = evaluate_accuracy_and_loss(
+        config, env, model, tokenizer, test_dataset
+    )
     print(f"{i=}, {test_accuracy=:.4f}, {test_loss=:.4f}")
     wandb.log({"test_accuracy": test_accuracy, "test_loss": test_loss}, step=i)
 
@@ -204,7 +212,9 @@ def train(config: Config, env: Environment) -> None:
             shuffle=True,
             pin_memory=env.pin_memory,
             pin_memory_device=env.pin_memory_device,
-            collate_fn=partial(left_pad_collate_both, value1=tokenizer.eot_token, value2=-1),
+            collate_fn=partial(
+                left_pad_collate_both, value1=tokenizer.eot_token, value2=-1
+            ),
         )
 
         for x, y in train_data_loader:
@@ -222,7 +232,7 @@ def train(config: Config, env: Environment) -> None:
             with env.context:
                 logits = model(x, decoder=config.decoder)
                 loss = flat_cross_entropy(logits, y, ignore_index=-1)
-                
+
             loss.backward()
             optimizer.step()
             optimizer.zero_grad(set_to_none=True)
@@ -230,14 +240,17 @@ def train(config: Config, env: Environment) -> None:
             wandb.log({"train_loss": loss.item()}, step=i)
 
             if i % config.eval_interval == 0:
-                test_accuracy, test_loss = evaluate_accuracy_and_loss(config, env, model, tokenizer, test_dataset)
+                test_accuracy, test_loss = evaluate_accuracy_and_loss(
+                    config, env, model, tokenizer, test_dataset
+                )
                 print(f"{i=}, {test_accuracy=:.4f}, {test_loss=:.4f}")
-                wandb.log({"test_accuracy": test_accuracy, "test_loss": test_loss}, step=i)
+                wandb.log(
+                    {"test_accuracy": test_accuracy, "test_loss": test_loss}, step=i
+                )
 
             if i >= config.max_iters:
                 run.finish()
                 return
-
 
 
 if __name__ == "__main__":
