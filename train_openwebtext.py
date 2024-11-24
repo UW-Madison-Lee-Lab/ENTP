@@ -183,10 +183,16 @@ def train(config: Config, env: Environment) -> None:
 
         x, y = get_batch(config, env, split="train")
 
+        if config.sample_forward_idxs is not None:
+            n_idxs = int(np.ceil(config.sample_forward_idxs * config.block_size))
+            forward_idxs = sorted(int(i) for i in np.random.permutation(config.block_size)[:n_idxs])
+        else:
+            forward_idxs = None
+
         # train step for decoder
         with env.context:
-            logits = decoder_model(x, decoder=True)
-            loss = flat_cross_entropy(logits, y)
+            logits = decoder_model(x, forward_idxs=forward_idxs, decoder=True)
+            loss = flat_cross_entropy(logits[:, forward_idxs], y[:, forward_idxs])
 
         loss.backward()
         decoder_optimizer.step()
@@ -196,8 +202,8 @@ def train(config: Config, env: Environment) -> None:
 
         # train step for encoder
         with env.context:
-            logits = encoder_model(x, decoder=False)
-            loss = flat_cross_entropy(logits, y)
+            logits = encoder_model(x, forward_idxs=forward_idxs, decoder=False)
+            loss = flat_cross_entropy(logits[:, forward_idxs], y[:, forward_idxs])
 
         loss.backward()
         encoder_optimizer.step()

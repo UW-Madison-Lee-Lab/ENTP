@@ -1,8 +1,11 @@
 import os
 import sys
 from pprint import pprint
-
+from functools import partial
+from sklearn.model_selection import train_test_split
 import torch
+from torch.utils.data import TensorDataset
+import pandas as pd
 from torch.utils import data
 import tiktoken
 import wandb
@@ -13,91 +16,32 @@ from nano_transformer import (
     configure_optimizer,
     flat_cross_entropy,
 )
-from util import Config, Environment, LRSchedule, SequenceDataset, left_pad_collate_both
-from functools import partial
-
-def get_label(tag: int) -> int:
-    table = {
-        0: 0,
-        96: 1,
-        44: 2,
-        95: 3,
-        43: 4,
-        31: 5,
-        64: 6,
-        32: 7,
-        26: 8,
-        101: 9,
-        54: 10,
-        39: 11,
-        102: 12,
-        25: 13,
-        42: 14,
-        63: 15,
-        20: 16,
-        88: 17,
-        41: 18,
-        19: 19,
-        105: 20,
-    }
-    if tag in table:
-        return table[tag]
-    
-    return 21
+from util import Config, Environment, LRSchedule, SequenceDataset, left_pad_collate
 
 
-def load_and_split_data(config: Config) -> tuple[SequenceDataset, SequenceDataset, tiktoken.Encoding]:
-    tokenizer = tiktoken.get_encoding("gpt2")
-    ds = load_dataset("YurtsAI/named_entity_recognition_document_context")
+def load_and_split_data(tokenizer: tiktoken.Encoding, config: Config) -> tuple[SequenceDataset, SequenceDataset, int]:
+    df = pd.read_csv(f"{config.data_dir}/data.csv")
+    train_df, test_df = train_test_split(df, test_size=0.1, random_state=config.seed)
 
-    train_data = []
+    labels_set = set()
+    train_ids = []
     train_labels = []
-
-    for example in ds["train"]:
-        tokens = []
-        labels = []
-        for word, tag in zip(example["tokens"], example["ner_tags"]):
-            try:
-                x = tokenizer.encode_ordinary(word)
-            except Exception:
-                continue
-
-            tokens += x
-            labels += [bool(tag)] * len(x)
-
-        tokens.append(tokenizer.eot_token)
-        labels.append(0)
-        if len(tokens) <= config.batch_size:
-            train_data.append(torch.tensor(tokens))
-            train_labels.append(torch.tensor(labels))
+    for _, row in train_df.iterrows():
+        x = tokenizer.encode_ordinary(row["text"])
+        if len(x) <= config.block_size: 
+            train_ids.append(torch.tensor(x))
+            train_labels.append(torch.tensor(row["target"]))
+            labels_set.add(row["target"])
     
-    test_data = []
+    test_ids = []
     test_labels = []
-
-    for example in ds["test"]:
-        tokens = []
-        labels = []
-        for word, tag in zip(example["tokens"], example["ner_tags"]):
-            try:
-                x = tokenizer.encode_ordinary(word)
-            except Exception:
-                continue
-
-            tokens += x
-            labels += [bool(tag)] * len(x)
-
-        tokens.append(tokenizer.eot_token)
-        labels.append(0)
-
-        if len(tokens) <= config.batch_size:
-            test_data.append(torch.tensor(tokens))
-            test_labels.append(torch.tensor(labels))
-
+    for _, row in test_df.iterrows():
+        x = tokenizer.encode_ordinary(row["text"])
+        if len(x) <= config.block_size and row["target"] in labels_set: 
+            test_ids.append(torch.tensor(x))
+            test_labels.append(torch.tensor(row["target"]))
     
-    train_dataset = SequenceDataset(train_data, train_labels, config)
-    test_dataset = SequenceDataset(test_data, test_labels, config)
-
-    return train_dataset, test_dataset, tokenizer
+    return SequenceDataset(train_ids, train_labels, config), SequenceDataset(test_ids, test_labels, config), len(labels_set)
 
 
 @torch.no_grad()
@@ -110,8 +54,6 @@ def evaluate_accuracy_and_loss(
     max_iters=100,
 ) -> tuple[float, float]:
     """Evaluates `model` loss on `dataset`."""
-    tokenizer = tiktoken.get_encoding("gpt2")
-
     model.eval()
     data_loader = data.DataLoader(
         dataset,
@@ -119,7 +61,7 @@ def evaluate_accuracy_and_loss(
         shuffle=True,
         pin_memory=env.pin_memory,
         pin_memory_device=env.pin_memory_device,
-        collate_fn=partial(left_pad_collate_both, value1=tokenizer.eot_token, value2=-1),
+        collate_fn=partial(left_pad_collate, value=tokenizer.eot_token),
     )
 
     loss_sum = 0.0
@@ -133,14 +75,11 @@ def evaluate_accuracy_and_loss(
         y = y.to(env.device)
 
         with env.context:
-            logits = model(x, decoder=config.decoder)
-            loss = flat_cross_entropy(logits, y, ignore_index=-1)
+            logits = model(x, forward_idxs=[x.shape[1] - 1], decoder=config.decoder)[:, -1]
+            loss = flat_cross_entropy(logits, y)
 
         loss_sum += loss.cpu().item() * len(x)
-        for i in range(len(x)):
-            idxs = y[i] != -1
-            n_correct += torch.sum((torch.argmax(logits[i, idxs], dim=1) == y[i, idxs]).float()) / len(y[i, idxs])
-
+        n_correct += torch.mean((torch.argmax(logits, dim=1) == y).float()).item() * len(x)
         cnt += len(x)
 
     return n_correct / cnt, loss_sum / cnt
@@ -166,7 +105,8 @@ def train(config: Config, env: Environment) -> None:
 
     env.seed_everything(config.seed)
 
-    train_dataset, test_dataset, tokenizer = load_and_split_data(config)
+    tokenizer = tiktoken.get_encoding("gpt2")
+    train_dataset, test_dataset, n_classes = load_and_split_data(tokenizer, config)
 
     model_config = TransformerConfig(
         n_positions=config.block_size,
@@ -179,7 +119,7 @@ def train(config: Config, env: Environment) -> None:
     )
     
     model = TransformerLMHead(model_config, env.compile_blocks).to(env.device)
-    model.lm_head = torch.nn.Linear(model.lm_head.in_features, 22, device=env.device)
+    model.lm_head = torch.nn.Linear(model.lm_head.in_features, n_classes, device=env.device)
 
     optimizer = configure_optimizer(
         model,
@@ -204,7 +144,7 @@ def train(config: Config, env: Environment) -> None:
             shuffle=True,
             pin_memory=env.pin_memory,
             pin_memory_device=env.pin_memory_device,
-            collate_fn=partial(left_pad_collate_both, value1=tokenizer.eot_token, value2=-1),
+            collate_fn=partial(left_pad_collate, value=tokenizer.eot_token),
         )
 
         for x, y in train_data_loader:
@@ -220,8 +160,8 @@ def train(config: Config, env: Environment) -> None:
             y = y.to(env.device)
 
             with env.context:
-                logits = model(x, decoder=config.decoder)
-                loss = flat_cross_entropy(logits, y, ignore_index=-1)
+                logits = model(x, forward_idxs=[x.shape[1] - 1], decoder=config.decoder)[:, -1]
+                loss = flat_cross_entropy(logits, y)
                 
             loss.backward()
             optimizer.step()

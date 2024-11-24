@@ -92,8 +92,8 @@ class Block(nn.Module):
         return x
 
 
-def flat_cross_entropy(logits: Tensor, target: Tensor) -> Tensor:
-    return F.cross_entropy(logits.view(-1, logits.shape[-1]), target.view(-1))
+def flat_cross_entropy(logits: Tensor, target: Tensor, ignore_index=-100) -> Tensor:
+    return F.cross_entropy(logits.view(-1, logits.shape[-1]), target.view(-1), ignore_index=ignore_index)
 
 
 def configure_optimizer(

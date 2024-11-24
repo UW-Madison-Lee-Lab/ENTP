@@ -40,6 +40,7 @@ class Config:
     resample_data: bool = True
     results_dir: str = "results"
     resume: bool = False
+    sample_forward_idxs: float | None = None
     seed: int = 42
     task: str = "plain_addition"
     test_accuracy_during_training: bool = False

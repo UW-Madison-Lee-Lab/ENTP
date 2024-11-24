@@ -15,5 +15,5 @@ testing/models/*.pt
 results.tar.gz
 figures/*.pdf
 figures/*.svg
-data/ner_dataset.csv
+data/disaster_tweets/data.csv
 *.DS_Store
