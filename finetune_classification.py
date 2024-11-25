@@ -1,15 +1,15 @@
-import os
+import ast
 import sys
-from pprint import pprint
+from collections import defaultdict
 from functools import partial
-from sklearn.model_selection import train_test_split
-import torch
-from torch.utils.data import TensorDataset
-import pandas as pd
-from torch.utils import data
+from pprint import pprint
+
 import tiktoken
-import wandb
+import torch
 from datasets import load_dataset
+from torch.utils import data
+
+import wandb
 from nano_transformer import (
     TransformerConfig,
     TransformerLMHead,
@@ -17,65 +17,66 @@ from nano_transformer import (
     flat_cross_entropy,
 )
 from util import Config, Environment, LRSchedule, SequenceDataset, left_pad_collate
-import ast
-from collections import defaultdict
 
 
 def load_and_split_data(
-    tokenizer: tiktoken.Encoding, 
+    tokenizer: tiktoken.Encoding,
     config: Config,
 ) -> tuple[SequenceDataset, SequenceDataset, dict[int, SequenceDataset]]:
     ds = load_dataset("CLUTRR/v1", "gen_train234_test2to10")
 
     train_ids = []
     train_labels = []
-    for row in ds["train"]:
-        if row["target"] not in [1, 9, 12, 13, 20]:
-            q = ast.literal_eval(row["query"])
+    for row in ds["train"]:  # type: ignore
+        if row["target"] not in [1, 9, 12, 13, 20]:  # type: ignore
+            q = ast.literal_eval(row["query"])  # type: ignore
             prompt = tokenizer.encode_ordinary(
-                row["story"].replace("[", "").replace("]", "") + f" {q[1]} is {q[0]}'s"
+                row["story"].replace("[", "").replace("]", "") + f" {q[1]} is {q[0]}'s"  # type: ignore
             )
-            ans = tokenizer.encode_ordinary(" " + row["target_text"])
+            ans = tokenizer.encode_ordinary(" " + row["target_text"])  # type: ignore
             if len(prompt) <= config.block_size and len(ans) == 1:
                 train_ids.append(torch.tensor(prompt))
                 train_labels.append(torch.tensor(ans[0]))
 
     val_ids = []
     val_labels = []
-    for row in ds["validation"]:
-        if row["target"] not in [1, 9, 12, 13, 20]:
-            q = ast.literal_eval(row["query"])
+    for row in ds["validation"]:  # type: ignore
+        if row["target"] not in [1, 9, 12, 13, 20]:  # type: ignore
+            q = ast.literal_eval(row["query"])  # type: ignore
             prompt = tokenizer.encode_ordinary(
-                row["story"].replace("[", "").replace("]", "") + f" {q[1]} is {q[0]}'s"
+                row["story"].replace("[", "").replace("]", "") + f" {q[1]} is {q[0]}'s"  # type: ignore
             )
-            ans = tokenizer.encode_ordinary(" " + row["target_text"])
+            ans = tokenizer.encode_ordinary(" " + row["target_text"])  # type: ignore
             if len(prompt) <= config.block_size and len(ans) == 1:
                 val_ids.append(torch.tensor(prompt))
                 val_labels.append(torch.tensor(ans[0]))
 
     test_ids = defaultdict(list)
     test_labels = defaultdict(list)
-    for row in ds["test"]:
-        if row["target"] not in [1, 9, 12, 13, 20]:
-            level = int(row["task_name"].split(".")[-1])
-            q = ast.literal_eval(row["query"])
+    for row in ds["test"]:  # type: ignore
+        if row["target"] not in [1, 9, 12, 13, 20]:  # type: ignore
+            level = int(row["task_name"].split(".")[-1])  # type: ignore
+            q = ast.literal_eval(row["query"])  # type: ignore
             prompt = tokenizer.encode_ordinary(
-                row["story"].replace("[", "").replace("]", "") + f" {q[1]} is {q[0]}'s"
+                row["story"].replace("[", "").replace("]", "") + f" {q[1]} is {q[0]}'s"  # type: ignore
             )
-            ans = tokenizer.encode_ordinary(" " + row["target_text"])
+            ans = tokenizer.encode_ordinary(" " + row["target_text"])  # type: ignore
             if len(prompt) <= config.block_size and len(ans) == 1:
                 test_ids[level].append(torch.tensor(prompt))
                 test_labels[level].append(torch.tensor(ans[0]))
 
     test_datasets = {}
     for level in test_ids:
-        test_datasets[level] = SequenceDataset(test_ids[level], test_labels[level], config)
-    
+        test_datasets[level] = SequenceDataset(
+            test_ids[level], test_labels[level], config
+        )
+
     return (
-        SequenceDataset(train_ids, train_labels, config), 
+        SequenceDataset(train_ids, train_labels, config),
         SequenceDataset(val_ids, val_labels, config),
         test_datasets,
     )
+
 
 @torch.no_grad()
 def evaluate_accuracy_and_loss(
@@ -108,11 +109,15 @@ def evaluate_accuracy_and_loss(
         y = y.to(env.device)
 
         with env.context:
-            logits = model(x, forward_idxs=[x.shape[1] - 1], decoder=config.decoder)[:, -1]
+            logits = model(x, forward_idxs=[x.shape[1] - 1], decoder=config.decoder)[
+                :, -1
+            ]
             loss = flat_cross_entropy(logits, y)
 
         loss_sum += loss.cpu().item() * len(x)
-        n_correct += torch.mean((torch.argmax(logits, dim=1) == y).float()).item() * len(x)
+        n_correct += torch.mean(
+            (torch.argmax(logits, dim=1) == y).float()
+        ).item() * len(x)
         cnt += len(x)
 
     return n_correct / cnt, loss_sum / cnt
@@ -147,9 +152,13 @@ def test_model(
             y = y.to(env.device)
 
             with env.context:
-                logits = model(x, forward_idxs=[x.shape[1] - 1], decoder=config.decoder)[:, -1]
+                logits = model(
+                    x, forward_idxs=[x.shape[1] - 1], decoder=config.decoder
+                )[:, -1]
 
-            n_correct += torch.mean((torch.argmax(logits, dim=1) == y).float()).item() * len(x)
+            n_correct += torch.mean(
+                (torch.argmax(logits, dim=1) == y).float()
+            ).item() * len(x)
             cnt += len(x)
 
         wandb.log({f"test_accuracy_{level}": n_correct / cnt}, step=step)
@@ -187,7 +196,7 @@ def train(config: Config, env: Environment) -> None:
         dropout=config.dropout,
         use_wpe=config.use_wpe,
     )
-    
+
     model = TransformerLMHead(model_config, env.compile_blocks).to(env.device)
     checkpoint_path = f"models/seperate/{'decoder' if config.decoder else 'encoder'}_medium_openwebtext.pt"
     checkpoint = torch.load(checkpoint_path, weights_only=False)
@@ -229,9 +238,11 @@ def train(config: Config, env: Environment) -> None:
             y = y.to(env.device)
 
             with env.context:
-                logits = model(x, forward_idxs=[x.shape[1] - 1], decoder=config.decoder)[:, -1]
+                logits = model(
+                    x, forward_idxs=[x.shape[1] - 1], decoder=config.decoder
+                )[:, -1]
                 loss = flat_cross_entropy(logits, y)
-                
+
             loss.backward()
             optimizer.step()
             optimizer.zero_grad(set_to_none=True)
@@ -239,7 +250,9 @@ def train(config: Config, env: Environment) -> None:
             wandb.log({"train_loss": loss.item()}, step=i)
 
             if i % config.eval_interval == 0:
-                val_accuracy, val_loss = evaluate_accuracy_and_loss(config, env, model, tokenizer, val_dataset)
+                val_accuracy, val_loss = evaluate_accuracy_and_loss(
+                    config, env, model, tokenizer, val_dataset
+                )
                 print(f"{i=}, {val_accuracy=:.4f}, {val_loss=:.4f}")
                 wandb.log({"val_accuracy": val_accuracy, "val_loss": val_loss}, step=i)
                 test_model(config, env, model, tokenizer, test_datasets, step=i)
@@ -247,7 +260,6 @@ def train(config: Config, env: Environment) -> None:
             if i >= config.max_iters:
                 run.finish()
                 return
-
 
 
 if __name__ == "__main__":
@@ -261,7 +273,6 @@ if __name__ == "__main__":
     train(config, env)
 
 
-
 # def load_and_split_data(tokenizer: tiktoken.Encoding, config: Config) -> tuple[SequenceDataset, SequenceDataset, int]:
 #     df = pd.read_csv(f"{config.data_dir}/data.csv")
 #     train_df, test_df = train_test_split(df, test_size=0.1, random_state=config.seed)
@@ -271,18 +282,17 @@ if __name__ == "__main__":
 #     train_labels = []
 #     for _, row in train_df.iterrows():
 #         x = tokenizer.encode_ordinary(row["text"])
-#         if len(x) <= config.block_size: 
+#         if len(x) <= config.block_size:
 #             train_ids.append(torch.tensor(x))
 #             train_labels.append(torch.tensor(row["target"]))
 #             labels_set.add(row["target"])
-    
+
 #     test_ids = []
 #     test_labels = []
 #     for _, row in test_df.iterrows():
 #         x = tokenizer.encode_ordinary(row["text"])
-#         if len(x) <= config.block_size and row["target"] in labels_set: 
+#         if len(x) <= config.block_size and row["target"] in labels_set:
 #             test_ids.append(torch.tensor(x))
 #             test_labels.append(torch.tensor(row["target"]))
-    
-#     return SequenceDataset(train_ids, train_labels, config), SequenceDataset(test_ids, test_labels, config), len(labels_set)
 
+#     return SequenceDataset(train_ids, train_labels, config), SequenceDataset(test_ids, test_labels, config), len(labels_set)
