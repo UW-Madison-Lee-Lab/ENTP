@@ -1,1 +1,0 @@
-{"task": "ner", "results_dir": "results", "n_test": 75000, "max_iters": 50000, "linear_probe_training_iters": 2000, "lr_decay_iters": 50000, "warmup_iters": 100, "block_size": 48, "batch_size": 64, "test_batch_size": 2048, "eval_interval": 1000, "name": "ner_finetune_encoder", "decoder": false}

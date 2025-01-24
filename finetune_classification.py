@@ -28,6 +28,9 @@ def load_and_split_data(
     train_ids = []
     train_labels = []
     for row in ds["train"]:  # type: ignore
+        if len(train_ids) >= config.n_train:
+            break
+
         if row["target"] not in [1, 9, 12, 13, 20]:  # type: ignore
             q = ast.literal_eval(row["query"])  # type: ignore
             prompt = tokenizer.encode_ordinary(
@@ -255,7 +258,7 @@ def train(config: Config, env: Environment) -> None:
                 )
                 print(f"{i=}, {val_accuracy=:.4f}, {val_loss=:.4f}")
                 wandb.log({"val_accuracy": val_accuracy, "val_loss": val_loss}, step=i)
-                test_model(config, env, model, tokenizer, test_datasets, step=i)
+                # test_model(config, env, model, tokenizer, test_datasets, step=i)
 
             if i >= config.max_iters:
                 run.finish()

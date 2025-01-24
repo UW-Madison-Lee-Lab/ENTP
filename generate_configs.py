@@ -64,7 +64,7 @@ BASE_CONFIG: dict[str, Any] = {
     "max_iters": 10000,
     "lr_decay_iters": 10000, 
     "max_lr": 1e-5,
-    "min_lr": 1e-5,
+    "min_lr": 1e-6,
     "beta1": 0.9, 
     "beta2": 0.95, 
     "weight_decay": 0.1,
@@ -75,10 +75,19 @@ BASE_CONFIG: dict[str, Any] = {
     "n_layer": 6, 
     "n_head": 6, 
     "n_embd": 384, 
-    "vocab_size"
     "seed": 0
 }
 
+# BASE_CONFIG: dict[str, Any] = {
+#     "task": "ner",
+#     "warmup_iters": 50,
+#     "lr_decay_iters": 15000, 
+#     "block_size": 64,
+#     "batch_size": 64,
+#     "test_batch_size": 1024,
+#     "eval_interval": 50, 
+#     "seed": 0
+# }
 
 def n_train_str(n_train: int) -> str:
     if n_train % 1000 == 0:
@@ -89,26 +98,32 @@ def n_train_str(n_train: int) -> str:
 
 if __name__ == "__main__":
     for decoder in [True, False]:
-        name = BASE_CONFIG["task"]
-        name += f"_finetuning_{'decoder' if decoder else 'encoder'}"
+        for n_train in [1250, 2500, 5000, 7500]:  # full train set is 11000
+            name = BASE_CONFIG["task"]
+            name += f"_finetuning_{n_train_str(n_train)}_{'decoder' if decoder else 'encoder'}"
 
-        config = copy.deepcopy(BASE_CONFIG)
-        config["name"] = name
-        config["decoder"] = decoder
+            config = copy.deepcopy(BASE_CONFIG)
+            config["name"] = name
+            config["decoder"] = decoder
+            config["n_train"] = n_train
+            config["max_iters"] = n_train
 
-        config_path = f"configs/{name}.json"
-        with open(config_path, "w") as f:
-            json.dump(config, f)
+            config_path = f"configs/{name}.json"
+            with open(config_path, "w") as f:
+                json.dump(config, f)
 
-    # for size in [EXTRA_SMALL, SMALL, MEDIUM]:
-    #     for decoder in [True, False]:
-    #         name = BASE_CONFIG["task"]
-    #         name += f"_{size["size_name"]}_{'decoder' if decoder else 'encoder'}_scratch"
+    # for size in [SMALL]:
+    #     for n_train in [250, 500, 1000, 2000, 4000]:
+    #         for decoder in [True, False]:
+    #             name = BASE_CONFIG["task"]
+    #             name += f"_{n_train_str(n_train)}_{size["size_name"]}_{'decoder' if decoder else 'encoder'}"
 
-    #         config = copy.deepcopy(BASE_CONFIG | size)
-    #         config["name"] = name
-    #         config["decoder"] = decoder
+    #             config = copy.deepcopy(BASE_CONFIG | size)
+    #             config["name"] = name
+    #             config["n_train"] = n_train
+    #             config["decoder"] = decoder
+    #             config["max_iters"] = 4 * n_train
 
-    #         config_path = f"configs/{name}.json"
-    #         with open(config_path, "w") as f:
-    #             json.dump(config, f)
+    #             config_path = f"configs/{name}.json"
+    #             with open(config_path, "w") as f:
+    #                 json.dump(config, f)

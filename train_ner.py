@@ -57,6 +57,9 @@ def load_and_split_data(
     train_labels = []
 
     for example in ds["train"]:  # type: ignore
+        if len(train_data) >= config.n_train:
+            break
+
         tokens = []
         labels = []
         for word, tag in zip(example["tokens"], example["ner_tags"]):  # type: ignore
@@ -109,7 +112,7 @@ def evaluate_accuracy_and_loss(
     model: TransformerLMHead,
     tokenizer: tiktoken.Encoding,
     dataset: data.Dataset,
-    max_iters=100,
+    max_iters=400,
 ) -> tuple[float, float]:
     """Evaluates `model` loss on `dataset`."""
     tokenizer = tiktoken.get_encoding("gpt2")
