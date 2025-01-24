@@ -14,7 +14,7 @@ plt.rcParams["axes.prop_cycle"] = cycler(
     color=["#e63946", "#457b9d", "#05b070", "#A050A0"]
 )
 
-FONTSIZE: int = 8
+FONTSIZE: int = 10
 
 
 def reduce_results(

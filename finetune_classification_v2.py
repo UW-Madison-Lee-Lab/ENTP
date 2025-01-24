@@ -1,15 +1,14 @@
-import os
 import sys
-from pprint import pprint
 from functools import partial
-from sklearn.model_selection import train_test_split
-import torch
-from torch.utils.data import TensorDataset
+from pprint import pprint
+
 import pandas as pd
-from torch.utils import data
 import tiktoken
+import torch
+from sklearn.model_selection import train_test_split
+from torch.utils import data
+
 import wandb
-from datasets import load_dataset
 from nano_transformer import (
     TransformerConfig,
     TransformerLMHead,
@@ -17,11 +16,11 @@ from nano_transformer import (
     flat_cross_entropy,
 )
 from util import Config, Environment, LRSchedule, SequenceDataset, left_pad_collate
-import ast
-from collections import defaultdict
 
 
-def load_and_split_data(tokenizer: tiktoken.Encoding, config: Config) -> tuple[SequenceDataset, SequenceDataset, int]:
+def load_and_split_data(
+    tokenizer: tiktoken.Encoding, config: Config
+) -> tuple[SequenceDataset, SequenceDataset, int]:
     df = pd.read_csv(f"{config.data_dir}/data.csv")
     train_df, test_df = train_test_split(df, test_size=0.1, random_state=config.seed)
 
@@ -30,20 +29,25 @@ def load_and_split_data(tokenizer: tiktoken.Encoding, config: Config) -> tuple[S
     train_labels = []
     for _, row in train_df.iterrows():
         x = tokenizer.encode_ordinary(row["text"])
-        if len(x) <= config.block_size: 
+        if len(x) <= config.block_size:
             train_ids.append(torch.tensor(x))
             train_labels.append(torch.tensor(row["target"]))
             labels_set.add(row["target"])
-    
+
     test_ids = []
     test_labels = []
     for _, row in test_df.iterrows():
         x = tokenizer.encode_ordinary(row["text"])
-        if len(x) <= config.block_size and row["target"] in labels_set: 
+        if len(x) <= config.block_size and row["target"] in labels_set:
             test_ids.append(torch.tensor(x))
             test_labels.append(torch.tensor(row["target"]))
-    
-    return SequenceDataset(train_ids, train_labels, config), SequenceDataset(test_ids, test_labels, config), len(labels_set)
+
+    return (
+        SequenceDataset(train_ids, train_labels, config),
+        SequenceDataset(test_ids, test_labels, config),
+        len(labels_set),
+    )
+
 
 @torch.no_grad()
 def evaluate_accuracy_and_loss(
@@ -76,11 +80,15 @@ def evaluate_accuracy_and_loss(
         y = y.to(env.device)
 
         with env.context:
-            logits = model(x, forward_idxs=[x.shape[1] - 1], decoder=config.decoder)[:, -1]
+            logits = model(x, forward_idxs=[x.shape[1] - 1], decoder=config.decoder)[
+                :, -1
+            ]
             loss = flat_cross_entropy(logits, y)
 
         loss_sum += loss.cpu().item() * len(x)
-        n_correct += torch.mean((torch.argmax(logits, dim=1) == y).float()).item() * len(x)
+        n_correct += torch.mean(
+            (torch.argmax(logits, dim=1) == y).float()
+        ).item() * len(x)
         cnt += len(x)
 
     return n_correct / cnt, loss_sum / cnt
@@ -115,9 +123,13 @@ def test_model(
             y = y.to(env.device)
 
             with env.context:
-                logits = model(x, forward_idxs=[x.shape[1] - 1], decoder=config.decoder)[:, -1]
+                logits = model(
+                    x, forward_idxs=[x.shape[1] - 1], decoder=config.decoder
+                )[:, -1]
 
-            n_correct += torch.mean((torch.argmax(logits, dim=1) == y).float()).item() * len(x)
+            n_correct += torch.mean(
+                (torch.argmax(logits, dim=1) == y).float()
+            ).item() * len(x)
             cnt += len(x)
 
         wandb.log({f"test_accuracy_{level}": n_correct / cnt}, step=step)
@@ -155,12 +167,14 @@ def train(config: Config, env: Environment) -> None:
         dropout=config.dropout,
         use_wpe=config.use_wpe,
     )
-    
+
     model = TransformerLMHead(model_config, env.compile_blocks).to(env.device)
     checkpoint_path = f"models/seperate/{'decoder' if config.decoder else 'encoder'}_medium_openwebtext.pt"
     checkpoint = torch.load(checkpoint_path, weights_only=False)
     model.load_state_dict(checkpoint["model"])
-    model.lm_head = torch.nn.Linear(model.lm_head.in_features, n_classes, device=env.device)
+    model.lm_head = torch.nn.Linear(
+        model.lm_head.in_features, n_classes, device=env.device
+    )
 
     # train lm_head
     optimizer = configure_optimizer(
@@ -198,9 +212,11 @@ def train(config: Config, env: Environment) -> None:
             y = y.to(env.device)
 
             with env.context:
-                logits = model(x, forward_idxs=[x.shape[1] - 1], decoder=config.decoder)[:, -1]
+                logits = model(
+                    x, forward_idxs=[x.shape[1] - 1], decoder=config.decoder
+                )[:, -1]
                 loss = flat_cross_entropy(logits, y)
-                
+
             loss.backward()
             optimizer.step()
             optimizer.zero_grad(set_to_none=True)
@@ -208,7 +224,9 @@ def train(config: Config, env: Environment) -> None:
             wandb.log({"train_loss": loss.item()}, step=i)
 
             if i % config.eval_interval == 0:
-                val_accuracy, val_loss = evaluate_accuracy_and_loss(config, env, model, tokenizer, val_dataset)
+                val_accuracy, val_loss = evaluate_accuracy_and_loss(
+                    config, env, model, tokenizer, val_dataset
+                )
                 print(f"{i=}, {val_accuracy=:.4f}, {val_loss=:.4f}")
                 wandb.log({"val_accuracy": val_accuracy, "val_loss": val_loss}, step=i)
 
@@ -248,9 +266,11 @@ def train(config: Config, env: Environment) -> None:
             y = y.to(env.device)
 
             with env.context:
-                logits = model(x, forward_idxs=[x.shape[1] - 1], decoder=config.decoder)[:, -1]
+                logits = model(
+                    x, forward_idxs=[x.shape[1] - 1], decoder=config.decoder
+                )[:, -1]
                 loss = flat_cross_entropy(logits, y)
-                
+
             loss.backward()
             optimizer.step()
             optimizer.zero_grad(set_to_none=True)
@@ -258,15 +278,15 @@ def train(config: Config, env: Environment) -> None:
             wandb.log({"train_loss": loss.item()}, step=i)
 
             if i % config.eval_interval == 0:
-                val_accuracy, val_loss = evaluate_accuracy_and_loss(config, env, model, tokenizer, val_dataset)
+                val_accuracy, val_loss = evaluate_accuracy_and_loss(
+                    config, env, model, tokenizer, val_dataset
+                )
                 print(f"{i=}, {val_accuracy=:.4f}, {val_loss=:.4f}")
                 wandb.log({"val_accuracy": val_accuracy, "val_loss": val_loss}, step=i)
 
             if i >= config.max_iters:
                 run.finish()
                 return
-        
-
 
 
 if __name__ == "__main__":
@@ -278,8 +298,3 @@ if __name__ == "__main__":
     env = Environment()
 
     train(config, env)
-
-
-
-
-
